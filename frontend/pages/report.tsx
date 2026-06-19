@@ -10,6 +10,8 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  LineChart,
+  Line,
 } from "recharts";
 import { PrinterIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { api } from "../lib/api";
@@ -221,6 +223,40 @@ export default function ReportPage() {
           ))}
         </div>
       </div>
+
+      {/* Category Breakdown */}
+      {(report.category_breakdown ?? []).length > 0 && (
+        <div className="card p-6 animate-slide-up" style={{ animationDelay: "0.2s" }}>
+          <h2 className="text-sm font-semibold text-slate-700 mb-4">Risk by Category</h2>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={report.category_breakdown} barCategoryGap="25%">
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <XAxis dataKey="category" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "13px" }} />
+              <Bar dataKey="red" name="Red" stackId="a" fill="#ef4444" radius={[0,0,0,0]} />
+              <Bar dataKey="amber" name="Amber" stackId="a" fill="#f59e0b" />
+              <Bar dataKey="green" name="Green" stackId="a" fill="#10b981" radius={[4,4,0,0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Score Trend */}
+      {(report.score_trend ?? []).length > 1 && (
+        <div className="card p-6 animate-slide-up" style={{ animationDelay: "0.25s" }}>
+          <h2 className="text-sm font-semibold text-slate-700 mb-4">Portfolio Risk Trend</h2>
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={report.score_trend}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} domain={[0, 100]} />
+              <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "13px" }} />
+              <Line type="monotone" dataKey="avg_score" stroke="#6366f1" strokeWidth={2} dot={false} name="Avg Score" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       {/* Red Flag Vendors */}
       {(report.red_flag_vendors ?? []).length > 0 && (

@@ -84,6 +84,8 @@ def normalise_row(raw: dict[str, Any]) -> dict[str, Any]:
     r["concentration_risk"]  = str(raw.get("concentration_risk", "") or "").strip().upper()
     r["last_assessment_date"]= _norm_date(str(raw.get("last_assessment_date", "") or "")) or ""
     r["under_investigation"] = int(_norm_bool(raw.get("under_investigation")) or False)
+    r["contact_name"]  = str(raw.get("contact_name", "") or "").strip() or None
+    r["contact_email"] = str(raw.get("contact_email", "") or "").strip() or None
 
     # Run enrichment for any missing fields
     r = enrich(r)
@@ -157,14 +159,16 @@ def ingest_csv_bytes(content: bytes, filename: str = "upload.csv") -> dict:
                         soc2_type2, soc2_expiry, iso27001, gdpr_dpa,
                         breach_notification_sla_hours, breach_history,
                         financial_rating, data_residency, sub_processor_count,
-                        concentration_risk, last_assessment_date, under_investigation
+                        concentration_risk, last_assessment_date, under_investigation,
+                        contact_name, contact_email
                     ) VALUES (
                         :vendor_id, :name, :category, :contract_start, :contract_end,
                         :systems, :data_sensitivity, :access_type, :access_last_used_at,
                         :soc2_type2, :soc2_expiry, :iso27001, :gdpr_dpa,
                         :breach_notification_sla_hours, :breach_history,
                         :financial_rating, :data_residency, :sub_processor_count,
-                        :concentration_risk, :last_assessment_date, :under_investigation
+                        :concentration_risk, :last_assessment_date, :under_investigation,
+                        :contact_name, :contact_email
                     )
                     ON CONFLICT(vendor_id) DO UPDATE SET
                         name=excluded.name, category=excluded.category,
@@ -185,9 +189,11 @@ def ingest_csv_bytes(content: bytes, filename: str = "upload.csv") -> dict:
                         sub_processor_count=excluded.sub_processor_count,
                         concentration_risk=excluded.concentration_risk,
                         last_assessment_date=excluded.last_assessment_date,
-                        under_investigation=excluded.under_investigation
+                        under_investigation=excluded.under_investigation,
+                        contact_name=excluded.contact_name,
+                        contact_email=excluded.contact_email
                     """,
-                    normed,
+                    {**normed, "contact_name": normed.get("contact_name"), "contact_email": normed.get("contact_email")},
                 )
 
             # Score and persist

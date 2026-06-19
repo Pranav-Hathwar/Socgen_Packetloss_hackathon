@@ -108,6 +108,8 @@ def row_to_vendor_score(raw: dict[str, Any]) -> VendorScore:
         vendor_id=raw["vendor_id"],
         name=raw["name"],
         category=raw.get("category", ""),
+        contact_name=raw.get("contact_name") or None,
+        contact_email=raw.get("contact_email") or None,
         contract_start=_d(raw.get("contract_start")),
         contract_end=_d(raw.get("contract_end")),
         data_access=DataAccess(

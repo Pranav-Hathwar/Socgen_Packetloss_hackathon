@@ -1,11 +1,11 @@
 import json
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import date
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from ..db import fetch_all_vendors
+from ..db import fetch_all_vendors, get_conn
 from ..deps import AnyUser
 
 router = APIRouter(prefix="/report", tags=["report"])
@@ -56,6 +56,46 @@ def get_report(_user: AnyUser):
             "risk_factors": risk_factors,
         })
 
+    # Category breakdown
+    cat_map: dict = defaultdict(lambda: {"count": 0, "avg_score": 0.0, "red": 0, "amber": 0, "green": 0, "scores": []})
+    for r in rows:
+        cat = r.get("category") or "Uncategorised"
+        cat_map[cat]["count"] += 1
+        cat_map[cat]["scores"].append(r.get("risk_score") or 0.0)
+        rag = r.get("rag", "GREEN")
+        if rag == "RED":
+            cat_map[cat]["red"] += 1
+        elif rag == "AMBER":
+            cat_map[cat]["amber"] += 1
+        else:
+            cat_map[cat]["green"] += 1
+
+    category_breakdown = []
+    for cat, d in sorted(cat_map.items()):
+        sc = d["scores"]
+        category_breakdown.append({
+            "category": cat,
+            "count": d["count"],
+            "avg_score": round(sum(sc) / len(sc), 1) if sc else 0.0,
+            "red": d["red"],
+            "amber": d["amber"],
+            "green": d["green"],
+        })
+
+    # Score trend (last 30 history points across all vendors)
+    with get_conn() as conn:
+        trend_rows = conn.execute(
+            """
+            SELECT DATE(scored_at) as day, AVG(risk_score) as avg_score,
+                   SUM(CASE WHEN rag='RED' THEN 1 ELSE 0 END) as red_count
+            FROM score_history
+            GROUP BY DATE(scored_at)
+            ORDER BY day DESC
+            LIMIT 30
+            """
+        ).fetchall()
+    score_trend = [{"date": r["day"], "avg_score": round(r["avg_score"], 1), "red_count": r["red_count"]} for r in reversed(trend_rows)]
+
     return JSONResponse({
         "generated_at": TODAY.isoformat(),
         "total_vendors": total,
@@ -76,6 +116,8 @@ def get_report(_user: AnyUser):
             "iso27001": _compliance_stat("iso27001"),
             "gdpr_dpa": _compliance_stat("gdpr_dpa"),
         },
+        "category_breakdown": category_breakdown,
+        "score_trend": score_trend,
         "top_risks": [
             {
                 "vendor_id": r["vendor_id"],
