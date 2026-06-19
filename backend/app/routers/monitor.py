@@ -18,10 +18,11 @@ import json
 from datetime import date, datetime, timedelta
 from typing import Annotated, Any, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from ..db import fetch_all_vendors, fetch_vendor, get_conn, save_scores
+from ..deps import AnyUser, require_role
 from ..engine import score_vendor, W, TODAY as ENGINE_TODAY
 from ..hydrate import row_to_vendor_score
 
@@ -49,7 +50,7 @@ class BreachInjectResponse(BaseModel):
 
 
 @router.post("/monitor/inject-breach", response_model=BreachInjectResponse)
-def inject_breach(req: BreachInjectRequest):
+def inject_breach(req: BreachInjectRequest, _user=Depends(require_role("ADMIN", "ANALYST"))):
     row = fetch_vendor(req.vendor_id)
     if not row:
         raise HTTPException(status_code=404, detail=f"Vendor {req.vendor_id} not found")
@@ -111,7 +112,7 @@ class AdvanceTimeResponse(BaseModel):
 
 
 @router.post("/monitor/advance-time", response_model=AdvanceTimeResponse)
-def advance_time(req: AdvanceTimeRequest):
+def advance_time(req: AdvanceTimeRequest, _user=Depends(require_role("ADMIN", "ANALYST"))):
     """
     Simulate time passing by shifting all date comparisons forward.
     Scores every vendor with the new reference date and returns those
@@ -190,7 +191,7 @@ class WhatIfResponse(BaseModel):
 
 
 @router.post("/whatif", response_model=WhatIfResponse)
-def whatif(req: WhatIfRequest):
+def whatif(req: WhatIfRequest, _user=Depends(require_role("ADMIN", "ANALYST"))):
     row = fetch_vendor(req.vendor_id)
     if not row:
         raise HTTPException(status_code=404, detail=f"Vendor {req.vendor_id} not found")
@@ -244,7 +245,7 @@ class ContractTextRequest(BaseModel):
 
 
 @router.post("/contract/extract-text")
-def extract_contract_text(req: ContractTextRequest):
+def extract_contract_text(req: ContractTextRequest, _user: AnyUser):
     """Extract structured fields from pasted contract text (regex, no LLM)."""
     from ..contract import extract_from_text
     return extract_from_text(req.text, vendor_id=req.vendor_id)

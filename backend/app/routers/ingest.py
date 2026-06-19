@@ -1,5 +1,6 @@
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter, Depends, File, UploadFile
 
+from ..deps import require_role
 from ..ingest import ingest_csv_bytes
 from ..schema import IngestResponse
 
@@ -7,7 +8,10 @@ router = APIRouter(prefix="/ingest", tags=["ingest"])
 
 
 @router.post("", response_model=IngestResponse)
-async def ingest(file: UploadFile = File(...)):
+async def ingest(
+    file: UploadFile = File(...),
+    _user=Depends(require_role("ADMIN", "ANALYST")),
+):
     content = await file.read()
     result = ingest_csv_bytes(content, filename=file.filename or "upload.csv")
     return IngestResponse(

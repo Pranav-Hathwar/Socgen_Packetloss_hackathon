@@ -9,28 +9,37 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { api } from "../../lib/api";
+import { useAuth } from "../../contexts/AuthContext";
 import { RagBadge } from "../../components/RagBadge";
 import type { VendorScore } from "../../types/vendor";
 
 export default function VendorDetail() {
+  const { user, logout } = useAuth();
   const router = useRouter();
   const { id } = router.query;
   const [vendor, setVendor] = useState<VendorScore | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof id === "string") {
+    if (!user && typeof window !== "undefined") {
+      const stored = sessionStorage.getItem("vl_token");
+      if (!stored) router.replace("/login");
+    }
+  }, [user, router]);
+
+  useEffect(() => {
+    if (typeof id === "string" && user) {
       api.vendors.get(id).then(setVendor).catch((e) => setError(String(e)));
     }
-  }, [id]);
+  }, [id, user]);
+
+  if (!user) return null;
 
   if (error) {
     return (
       <main className="p-8 text-red-600">
         {error}{" "}
-        <Link href="/" className="underline text-indigo-600">
-          Back
-        </Link>
+        <Link href="/" className="underline text-indigo-600">Back</Link>
       </main>
     );
   }
@@ -38,6 +47,8 @@ export default function VendorDetail() {
   if (!vendor) {
     return <main className="p-8 text-gray-400">Loading…</main>;
   }
+
+  const canSimulate = user.role === "ADMIN" || user.role === "ANALYST";
 
   const radarData = [
     { subject: "Data Exposure", value: vendor.score_breakdown.data_exposure },
@@ -48,12 +59,18 @@ export default function VendorDetail() {
   ];
 
   return (
-    <main className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-5xl mx-auto">
-        <Link href="/" className="text-indigo-600 text-sm hover:underline">
-          ← Dashboard
-        </Link>
+    <main className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 px-8 py-3 flex items-center justify-between">
+        <Link href="/" className="text-indigo-600 text-sm hover:underline">← Dashboard</Link>
+        <div className="flex items-center gap-3 text-sm text-gray-500">
+          <span>{user.email}</span>
+          <span className="text-xs font-semibold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{user.role}</span>
+          <button onClick={() => { logout(); router.replace("/login"); }} className="text-gray-400 hover:text-gray-700">Log out</button>
+        </div>
+      </header>
 
+      <div className="max-w-5xl mx-auto p-8">
         <div className="mt-4 flex items-center gap-4">
           <h1 className="text-2xl font-bold text-gray-900">{vendor.name}</h1>
           <RagBadge rag={vendor.rag} />
@@ -149,7 +166,19 @@ export default function VendorDetail() {
           </div>
         )}
 
-        <div className="mt-6 text-right">
+        <div className="mt-6 flex items-center justify-between">
+          {canSimulate ? (
+            <span className="text-xs text-gray-400 italic">
+              What-if simulator available via API for ADMIN / ANALYST roles
+            </span>
+          ) : (
+            <span
+              title="Simulation controls are disabled for AUDITOR role (SOX segregation of duties)"
+              className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded cursor-default"
+            >
+              🔒 Simulation disabled — Auditor read-only access
+            </span>
+          )}
           <Link
             href={`/chat?vendor_id=${vendor.vendor_id}`}
             className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700"
