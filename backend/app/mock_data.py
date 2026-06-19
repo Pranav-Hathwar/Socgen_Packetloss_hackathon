@@ -1,4 +1,4 @@
-"""Single source of mock vendor used across all stub endpoints."""
+"""Single source of mock vendors used across all stub endpoints."""
 from datetime import date, datetime
 
 from .schema import (
@@ -18,115 +18,461 @@ from .schema import (
     VendorSummary,
 )
 
-MOCK_VENDOR = VendorScore(
-    vendor_id="V001",
-    name="Acme Cloud Services",
-    category="Cloud Infrastructure",
-    contract_start=date(2023, 1, 1),
-    contract_end=date(2025, 12, 31),
-    data_access=DataAccess(
-        systems=["CRM", "ERP", "Data Warehouse"],
-        data_sensitivity=DataSensitivity.HIGH,
-        access_type=AccessType.READ_WRITE,
-        access_last_used_at=datetime(2024, 6, 10, 14, 30),
+MOCK_VENDORS: list[VendorScore] = [
+    # ── V001  CRITICAL / RED ──
+    VendorScore(
+        vendor_id="V001",
+        name="Acme Cloud Services",
+        category="Cloud Infrastructure",
+        contract_start=date(2023, 1, 1),
+        contract_end=date(2025, 12, 31),
+        data_access=DataAccess(
+            systems=["CRM", "ERP", "Data Warehouse"],
+            data_sensitivity=DataSensitivity.HIGH,
+            access_type=AccessType.READ_WRITE,
+            access_last_used_at=datetime(2024, 6, 10, 14, 30),
+        ),
+        data_residency=DataResidency.EU,
+        sub_processor_count=12,
+        concentration_risk=ConcentrationRisk.HIGH,
+        last_assessment_date=date(2024, 3, 15),
+        compliance=Compliance(
+            soc2_type2=True,
+            soc2_expiry=date(2024, 12, 31),
+            iso27001=False,
+            gdpr_dpa=True,
+            breach_notification_sla_hours=72,
+        ),
+        breach_history=[
+            BreachEvent(
+                date=date(2023, 8, 22),
+                severity="MEDIUM",
+                description="Unauthorised access to staging environment; no PII exposed.",
+            ),
+            BreachEvent(
+                date=date(2024, 2, 14),
+                severity="HIGH",
+                description="API key leak in public repository exposing customer metadata.",
+            ),
+        ],
+        financial_rating="BB+",
+        risk_score=82.5,
+        risk_level=RiskLevel.CRITICAL,
+        rag=RAG.RED,
+        score_breakdown=ScoreBreakdown(
+            data_exposure=85.0,
+            compliance_gaps=60.0,
+            breach_history=70.0,
+            financial_health=55.0,
+            concentration=90.0,
+        ),
+        risk_factors=[
+            "High data sensitivity with read-write access",
+            "No ISO 27001 certification",
+            "High concentration risk — no alternative vendor identified",
+            "SOC 2 expiry within 6 months",
+            "Multiple breach events in the last 18 months",
+        ],
+        anomaly_flags=[
+            "Sub-processor count increased 40% since last assessment",
+            "Contract renewal overdue",
+        ],
+        recommendation=Recommendation(
+            action="ESCALATE",
+            detail="Schedule urgent review with CISO. Obtain updated ISO 27001 roadmap and sub-processor list within 30 days.",
+        ),
+        alerts=[
+            "SOC 2 Type II expires in < 6 months",
+            "ISO 27001 not certified",
+            "Contract renewal overdue",
+        ],
     ),
-    data_residency=DataResidency.EU,
-    sub_processor_count=12,
-    concentration_risk=ConcentrationRisk.HIGH,
-    last_assessment_date=date(2024, 3, 15),
-    compliance=Compliance(
-        soc2_type2=True,
-        soc2_expiry=date(2024, 12, 31),
-        iso27001=False,
-        gdpr_dpa=True,
-        breach_notification_sla_hours=72,
+    # ── V002  LOW / GREEN ──
+    VendorScore(
+        vendor_id="V002",
+        name="SafePay Ltd",
+        category="Payment Processing",
+        contract_start=date(2022, 6, 1),
+        contract_end=date(2026, 5, 31),
+        data_access=DataAccess(
+            systems=["Payment Gateway", "Finance ERP"],
+            data_sensitivity=DataSensitivity.MEDIUM,
+            access_type=AccessType.READ,
+            access_last_used_at=datetime(2024, 6, 18, 9, 0),
+        ),
+        data_residency=DataResidency.EU,
+        sub_processor_count=3,
+        concentration_risk=ConcentrationRisk.LOW,
+        last_assessment_date=date(2024, 5, 1),
+        compliance=Compliance(
+            soc2_type2=True,
+            soc2_expiry=date(2025, 5, 1),
+            iso27001=True,
+            gdpr_dpa=True,
+            breach_notification_sla_hours=24,
+        ),
+        breach_history=[],
+        financial_rating="A",
+        risk_score=18.0,
+        risk_level=RiskLevel.LOW,
+        rag=RAG.GREEN,
+        score_breakdown=ScoreBreakdown(
+            data_exposure=30.0,
+            compliance_gaps=10.0,
+            breach_history=0.0,
+            financial_health=20.0,
+            concentration=15.0,
+        ),
+        risk_factors=[],
+        anomaly_flags=[],
+        recommendation=Recommendation(
+            action="MONITOR",
+            detail="No immediate action required. Schedule routine review in 12 months.",
+        ),
+        alerts=[],
     ),
-    breach_history=[
-        BreachEvent(
-            date=date(2023, 8, 22),
-            severity="MEDIUM",
-            description="Unauthorised access to staging environment; no PII exposed.",
-        )
-    ],
-    financial_rating="BB+",
-    risk_score=72.5,
-    risk_level=RiskLevel.HIGH,
-    rag=RAG.RED,
-    score_breakdown=ScoreBreakdown(
-        data_exposure=85.0,
-        compliance_gaps=60.0,
-        breach_history=70.0,
-        financial_health=55.0,
-        concentration=90.0,
+    # ── V003  HIGH / RED ──
+    VendorScore(
+        vendor_id="V003",
+        name="DataMind Analytics",
+        category="Analytics & BI",
+        contract_start=date(2023, 3, 15),
+        contract_end=date(2025, 3, 14),
+        data_access=DataAccess(
+            systems=["Data Lake", "Customer Analytics Platform"],
+            data_sensitivity=DataSensitivity.HIGH,
+            access_type=AccessType.READ_WRITE,
+            access_last_used_at=datetime(2024, 6, 15, 11, 0),
+        ),
+        data_residency=DataResidency.NON_EU,
+        sub_processor_count=8,
+        concentration_risk=ConcentrationRisk.MEDIUM,
+        last_assessment_date=date(2024, 1, 20),
+        compliance=Compliance(
+            soc2_type2=True,
+            soc2_expiry=date(2025, 1, 20),
+            iso27001=False,
+            gdpr_dpa=False,
+            breach_notification_sla_hours=48,
+        ),
+        breach_history=[
+            BreachEvent(
+                date=date(2024, 1, 5),
+                severity="HIGH",
+                description="Customer PII exposed via misconfigured S3 bucket.",
+            ),
+        ],
+        financial_rating="BBB",
+        risk_score=74.0,
+        risk_level=RiskLevel.HIGH,
+        rag=RAG.RED,
+        score_breakdown=ScoreBreakdown(
+            data_exposure=80.0,
+            compliance_gaps=75.0,
+            breach_history=65.0,
+            financial_health=45.0,
+            concentration=60.0,
+        ),
+        risk_factors=[
+            "Non-EU data residency with EU citizen data (GDPR violation risk)",
+            "No GDPR DPA signed",
+            "No ISO 27001 certification",
+            "Recent HIGH-severity data breach",
+        ],
+        anomaly_flags=[
+            "Data residency changed from EU to non-EU since last assessment",
+        ],
+        recommendation=Recommendation(
+            action="ESCALATE",
+            detail="Immediately engage DPO. Enforce GDPR DPA signing within 14 days or suspend data flows.",
+        ),
+        alerts=[
+            "GDPR DPA not signed — HIGH risk for EU data processing",
+            "Recent data breach (Jan 2024)",
+            "Non-EU data residency for EU citizen data",
+        ],
     ),
-    risk_factors=[
-        "High data sensitivity with read-write access",
-        "No ISO 27001 certification",
-        "High concentration risk — no alternative vendor identified",
-        "SOC 2 expiry within 6 months",
-    ],
-    anomaly_flags=[
-        "Sub-processor count increased 40% since last assessment",
-        "Contract renewal overdue",
-    ],
-    recommendation=Recommendation(
-        action="ESCALATE",
-        detail="Schedule urgent review with CISO. Obtain updated ISO 27001 roadmap and sub-processor list within 30 days.",
+    # ── V004  MEDIUM / AMBER ──
+    VendorScore(
+        vendor_id="V004",
+        name="PeopleForce HR",
+        category="HR SaaS",
+        contract_start=date(2022, 9, 1),
+        contract_end=date(2025, 8, 31),
+        data_access=DataAccess(
+            systems=["HR Management System", "Payroll"],
+            data_sensitivity=DataSensitivity.HIGH,
+            access_type=AccessType.READ_WRITE,
+            access_last_used_at=datetime(2024, 6, 17, 16, 0),
+        ),
+        data_residency=DataResidency.EU,
+        sub_processor_count=5,
+        concentration_risk=ConcentrationRisk.MEDIUM,
+        last_assessment_date=date(2024, 4, 10),
+        compliance=Compliance(
+            soc2_type2=True,
+            soc2_expiry=date(2025, 4, 10),
+            iso27001=True,
+            gdpr_dpa=True,
+            breach_notification_sla_hours=48,
+        ),
+        breach_history=[],
+        financial_rating="A-",
+        risk_score=45.0,
+        risk_level=RiskLevel.MEDIUM,
+        rag=RAG.AMBER,
+        score_breakdown=ScoreBreakdown(
+            data_exposure=55.0,
+            compliance_gaps=25.0,
+            breach_history=0.0,
+            financial_health=35.0,
+            concentration=50.0,
+        ),
+        risk_factors=[
+            "High data sensitivity (employee PII including payroll data)",
+            "Medium concentration risk — limited alternatives in market",
+        ],
+        anomaly_flags=[],
+        recommendation=Recommendation(
+            action="REVIEW",
+            detail="Schedule quarterly access reviews. Evaluate alternative HR SaaS vendors for contingency planning.",
+        ),
+        alerts=[
+            "Employee PII access requires enhanced monitoring",
+        ],
     ),
-    alerts=[
-        "SOC 2 Type II expires in < 6 months",
-        "ISO 27001 not certified",
-        "Contract renewal overdue",
-    ],
-)
+    # ── V005  LOW / GREEN ──
+    VendorScore(
+        vendor_id="V005",
+        name="ShieldNet Cyber",
+        category="Cybersecurity",
+        contract_start=date(2023, 7, 1),
+        contract_end=date(2026, 6, 30),
+        data_access=DataAccess(
+            systems=["SIEM", "Endpoint Protection"],
+            data_sensitivity=DataSensitivity.LOW,
+            access_type=AccessType.READ,
+            access_last_used_at=datetime(2024, 6, 19, 8, 30),
+        ),
+        data_residency=DataResidency.EU,
+        sub_processor_count=2,
+        concentration_risk=ConcentrationRisk.LOW,
+        last_assessment_date=date(2024, 6, 1),
+        compliance=Compliance(
+            soc2_type2=True,
+            soc2_expiry=date(2025, 12, 31),
+            iso27001=True,
+            gdpr_dpa=True,
+            breach_notification_sla_hours=4,
+        ),
+        breach_history=[],
+        financial_rating="AA-",
+        risk_score=12.0,
+        risk_level=RiskLevel.LOW,
+        rag=RAG.GREEN,
+        score_breakdown=ScoreBreakdown(
+            data_exposure=15.0,
+            compliance_gaps=5.0,
+            breach_history=0.0,
+            financial_health=10.0,
+            concentration=10.0,
+        ),
+        risk_factors=[],
+        anomaly_flags=[],
+        recommendation=Recommendation(
+            action="MONITOR",
+            detail="Exemplary vendor. Continue annual assessment cycle.",
+        ),
+        alerts=[],
+    ),
+    # ── V006  CRITICAL / RED ──
+    VendorScore(
+        vendor_id="V006",
+        name="GlobalStore DWH",
+        category="Data Warehouse",
+        contract_start=date(2021, 4, 1),
+        contract_end=date(2024, 3, 31),
+        data_access=DataAccess(
+            systems=["Central Data Warehouse", "Reporting Platform", "ML Pipeline"],
+            data_sensitivity=DataSensitivity.HIGH,
+            access_type=AccessType.READ_WRITE,
+            access_last_used_at=datetime(2024, 6, 19, 7, 0),
+        ),
+        data_residency=DataResidency.NON_EU,
+        sub_processor_count=18,
+        concentration_risk=ConcentrationRisk.HIGH,
+        last_assessment_date=date(2023, 9, 1),
+        compliance=Compliance(
+            soc2_type2=False,
+            soc2_expiry=None,
+            iso27001=False,
+            gdpr_dpa=False,
+            breach_notification_sla_hours=96,
+        ),
+        breach_history=[
+            BreachEvent(
+                date=date(2023, 5, 12),
+                severity="CRITICAL",
+                description="Full database exfiltration — 2.3M customer records exposed.",
+            ),
+            BreachEvent(
+                date=date(2024, 3, 1),
+                severity="HIGH",
+                description="Privilege escalation vulnerability exploited in production.",
+            ),
+        ],
+        financial_rating="B-",
+        risk_score=92.0,
+        risk_level=RiskLevel.CRITICAL,
+        rag=RAG.RED,
+        score_breakdown=ScoreBreakdown(
+            data_exposure=95.0,
+            compliance_gaps=90.0,
+            breach_history=95.0,
+            financial_health=70.0,
+            concentration=85.0,
+        ),
+        risk_factors=[
+            "Contract expired — operating without valid agreement",
+            "No SOC 2, No ISO 27001, No GDPR DPA",
+            "CRITICAL breach with 2.3M records exposed",
+            "Non-EU data residency processing EU data",
+            "18 sub-processors with no oversight",
+            "96-hour breach notification SLA (non-compliant)",
+        ],
+        anomaly_flags=[
+            "Contract expired 3 months ago",
+            "Assessment overdue by 9 months",
+            "Financial rating downgraded from BB to B-",
+        ],
+        recommendation=Recommendation(
+            action="ESCALATE",
+            detail="IMMEDIATE ACTION: Suspend data flows. Engage legal for contract remediation. Board-level escalation required.",
+        ),
+        alerts=[
+            "CONTRACT EXPIRED — immediate legal action required",
+            "No compliance certifications (SOC2/ISO/GDPR)",
+            "CRITICAL breach history — 2.3M records",
+            "Non-EU data residency violation",
+            "Assessment overdue (9 months)",
+        ],
+    ),
+    # ── V007  MEDIUM / AMBER ──
+    VendorScore(
+        vendor_id="V007",
+        name="MailJet Pro",
+        category="Marketing & Communications",
+        contract_start=date(2023, 11, 1),
+        contract_end=date(2025, 10, 31),
+        data_access=DataAccess(
+            systems=["Email Platform", "CRM Integration"],
+            data_sensitivity=DataSensitivity.MEDIUM,
+            access_type=AccessType.READ,
+            access_last_used_at=datetime(2024, 6, 18, 14, 0),
+        ),
+        data_residency=DataResidency.EU,
+        sub_processor_count=6,
+        concentration_risk=ConcentrationRisk.LOW,
+        last_assessment_date=date(2024, 2, 15),
+        compliance=Compliance(
+            soc2_type2=True,
+            soc2_expiry=date(2025, 2, 15),
+            iso27001=True,
+            gdpr_dpa=True,
+            breach_notification_sla_hours=24,
+        ),
+        breach_history=[
+            BreachEvent(
+                date=date(2023, 6, 10),
+                severity="LOW",
+                description="Phishing campaign targeted at vendor employees; contained within 2 hours.",
+            ),
+        ],
+        financial_rating="BBB+",
+        risk_score=38.0,
+        risk_level=RiskLevel.MEDIUM,
+        rag=RAG.AMBER,
+        score_breakdown=ScoreBreakdown(
+            data_exposure=40.0,
+            compliance_gaps=20.0,
+            breach_history=30.0,
+            financial_health=35.0,
+            concentration=25.0,
+        ),
+        risk_factors=[
+            "Medium data sensitivity with CRM integration",
+            "Minor breach history (contained phishing incident)",
+        ],
+        anomaly_flags=[
+            "Sub-processor count doubled in last 6 months",
+        ],
+        recommendation=Recommendation(
+            action="REVIEW",
+            detail="Review sub-processor expansion. Request updated vendor security questionnaire within 60 days.",
+        ),
+        alerts=[
+            "Sub-processor count increase detected",
+        ],
+    ),
+    # ── V008  HIGH / RED ──
+    VendorScore(
+        vendor_id="V008",
+        name="LexiComply Legal",
+        category="Legal & Compliance Tech",
+        contract_start=date(2022, 1, 15),
+        contract_end=date(2025, 1, 14),
+        data_access=DataAccess(
+            systems=["Contract Management", "Regulatory Filing System"],
+            data_sensitivity=DataSensitivity.HIGH,
+            access_type=AccessType.READ_WRITE,
+            access_last_used_at=datetime(2024, 6, 12, 10, 0),
+        ),
+        data_residency=DataResidency.EU,
+        sub_processor_count=4,
+        concentration_risk=ConcentrationRisk.HIGH,
+        last_assessment_date=date(2023, 12, 1),
+        compliance=Compliance(
+            soc2_type2=True,
+            soc2_expiry=date(2024, 6, 30),
+            iso27001=False,
+            gdpr_dpa=True,
+            breach_notification_sla_hours=48,
+        ),
+        breach_history=[],
+        financial_rating="BBB-",
+        risk_score=68.0,
+        risk_level=RiskLevel.HIGH,
+        rag=RAG.RED,
+        score_breakdown=ScoreBreakdown(
+            data_exposure=70.0,
+            compliance_gaps=65.0,
+            breach_history=0.0,
+            financial_health=60.0,
+            concentration=80.0,
+        ),
+        risk_factors=[
+            "SOC 2 certification expiring imminently (June 2024)",
+            "No ISO 27001 — handles sensitive legal/regulatory data",
+            "High concentration risk — sole legal tech provider",
+            "Assessment overdue by 6 months",
+        ],
+        anomaly_flags=[
+            "SOC 2 expiry imminent — less than 30 days",
+            "Financial rating under review for potential downgrade",
+        ],
+        recommendation=Recommendation(
+            action="ESCALATE",
+            detail="Demand SOC 2 renewal evidence immediately. Initiate ISO 27001 requirement in next contract cycle. Identify backup legal tech vendor.",
+        ),
+        alerts=[
+            "SOC 2 Type II expiry IMMINENT (June 2024)",
+            "ISO 27001 not certified",
+            "Assessment overdue by 6 months",
+        ],
+    ),
+]
 
-MOCK_VENDOR_2 = VendorScore(
-    vendor_id="V002",
-    name="SafePay Ltd",
-    category="Payment Processing",
-    contract_start=date(2022, 6, 1),
-    contract_end=date(2026, 5, 31),
-    data_access=DataAccess(
-        systems=["Payment Gateway", "Finance ERP"],
-        data_sensitivity=DataSensitivity.MEDIUM,
-        access_type=AccessType.READ,
-        access_last_used_at=datetime(2024, 6, 18, 9, 0),
-    ),
-    data_residency=DataResidency.EU,
-    sub_processor_count=3,
-    concentration_risk=ConcentrationRisk.LOW,
-    last_assessment_date=date(2024, 5, 1),
-    compliance=Compliance(
-        soc2_type2=True,
-        soc2_expiry=date(2025, 5, 1),
-        iso27001=True,
-        gdpr_dpa=True,
-        breach_notification_sla_hours=24,
-    ),
-    breach_history=[],
-    financial_rating="A",
-    risk_score=28.0,
-    risk_level=RiskLevel.LOW,
-    rag=RAG.GREEN,
-    score_breakdown=ScoreBreakdown(
-        data_exposure=30.0,
-        compliance_gaps=10.0,
-        breach_history=0.0,
-        financial_health=20.0,
-        concentration=15.0,
-    ),
-    risk_factors=[],
-    anomaly_flags=[],
-    recommendation=Recommendation(
-        action="MONITOR",
-        detail="No immediate action required. Schedule routine review in 12 months.",
-    ),
-    alerts=[],
-)
-
-ALL_VENDORS: dict[str, VendorScore] = {
-    v.vendor_id: v for v in [MOCK_VENDOR, MOCK_VENDOR_2]
-}
+ALL_VENDORS: dict[str, VendorScore] = {v.vendor_id: v for v in MOCK_VENDORS}
 
 MOCK_SUMMARIES = [
     VendorSummary(
@@ -138,15 +484,16 @@ MOCK_SUMMARIES = [
         rag=v.rag,
         alerts=v.alerts,
     )
-    for v in ALL_VENDORS.values()
+    for v in MOCK_VENDORS
 ]
 
 MOCK_ALERTS = [
     AlertItem(
-        vendor_id=MOCK_VENDOR.vendor_id,
-        vendor_name=MOCK_VENDOR.name,
+        vendor_id=v.vendor_id,
+        vendor_name=v.name,
         alert=a,
-        rag=MOCK_VENDOR.rag,
+        rag=v.rag,
     )
-    for a in MOCK_VENDOR.alerts
+    for v in MOCK_VENDORS
+    for a in v.alerts
 ]
