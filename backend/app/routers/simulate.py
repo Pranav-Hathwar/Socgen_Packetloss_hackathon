@@ -1,10 +1,10 @@
-"""What-If Simulator endpoint — returns a simulated vendor score with adjusted metrics."""
-import copy
-
+"""What-If Simulator — uses real DB scores, not mock data."""
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from ..mock_data import ALL_VENDORS
+from ..db import fetch_vendor, save_scores
+from ..deps import AnyUser
+from ..engine import score_vendor
 from ..schema import RiskLevel, RAG, ScoreBreakdown
 
 router = APIRouter(prefix="/simulate", tags=["simulate"])
@@ -29,61 +29,50 @@ class SimulateResponse(BaseModel):
     actions_applied: list[str]
 
 
-def _classify(score: float) -> tuple[RiskLevel, RAG]:
-    if score >= 75:
-        return RiskLevel.CRITICAL, RAG.RED
-    elif score >= 50:
-        return RiskLevel.HIGH, RAG.RED
-    elif score >= 30:
-        return RiskLevel.MEDIUM, RAG.AMBER
-    else:
-        return RiskLevel.LOW, RAG.GREEN
-
-
 @router.post("", response_model=SimulateResponse)
-def simulate(body: SimulateRequest):
-    vendor = ALL_VENDORS.get(body.vendor_id)
-    if not vendor:
+def simulate(body: SimulateRequest, _user: AnyUser):
+    row = fetch_vendor(body.vendor_id)
+    if not row:
         raise HTTPException(status_code=404, detail=f"Vendor {body.vendor_id} not found")
 
-    original = vendor.score_breakdown
-    sim = ScoreBreakdown(
-        data_exposure=original.data_exposure,
-        compliance_gaps=original.compliance_gaps,
-        breach_history=original.breach_history,
-        financial_health=original.financial_health,
-        concentration=original.concentration,
-    )
+    raw = dict(row)
+    # Ensure vendor is scored
+    orig_scored = score_vendor(raw)
+
+    # Clone and apply hypothetical changes
+    modified = dict(raw)
     actions: list[str] = []
 
     if body.renew_soc2:
-        sim.compliance_gaps = max(0, sim.compliance_gaps - 25)
+        modified["soc2_type2"] = 1
+        # Push expiry 2 years out from engine TODAY
+        from ..engine import TODAY as ENG_TODAY
+        from datetime import timedelta
+        modified["soc2_expiry"] = (ENG_TODAY + timedelta(days=730)).isoformat()
         actions.append("Renewed SOC 2 Type II certification")
 
     if body.sign_dpa:
-        sim.compliance_gaps = max(0, sim.compliance_gaps - 20)
-        sim.data_exposure = max(0, sim.data_exposure - 10)
+        modified["gdpr_dpa"] = 1
         actions.append("Signed GDPR Data Processing Agreement")
 
     if body.revoke_access:
-        sim.data_exposure = max(0, sim.data_exposure - 30)
-        sim.concentration = max(0, sim.concentration - 15)
-        actions.append("Revoked system access privileges")
+        modified["access_type"] = "read"
+        modified["data_sensitivity"] = "LOW"
+        actions.append("Revoked write/sensitive system access")
 
-    simulated_score = round(
-        (sim.data_exposure + sim.compliance_gaps + sim.breach_history +
-         sim.financial_health + sim.concentration) / 5, 1
-    )
-    risk_level, rag = _classify(simulated_score)
+    new_scored = score_vendor(modified)
+
+    orig_bd = orig_scored["score_breakdown"]
+    new_bd = new_scored["score_breakdown"]
 
     return SimulateResponse(
         vendor_id=body.vendor_id,
-        original_score=vendor.risk_score,
-        simulated_score=simulated_score,
-        delta=round(simulated_score - vendor.risk_score, 1),
-        original_breakdown=original,
-        simulated_breakdown=sim,
-        simulated_risk_level=risk_level,
-        simulated_rag=rag,
+        original_score=orig_scored["risk_score"],
+        simulated_score=new_scored["risk_score"],
+        delta=round(new_scored["risk_score"] - orig_scored["risk_score"], 1),
+        original_breakdown=ScoreBreakdown(**orig_bd),
+        simulated_breakdown=ScoreBreakdown(**new_bd),
+        simulated_risk_level=RiskLevel(new_scored["risk_level"]),
+        simulated_rag=RAG(new_scored["rag"]),
         actions_applied=actions,
     )
