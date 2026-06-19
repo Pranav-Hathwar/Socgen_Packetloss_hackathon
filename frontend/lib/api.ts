@@ -8,6 +8,9 @@ import type {
   SimulateResponse,
   VendorScore,
   VendorSummary,
+  ScoreHistoryPoint,
+  RemediationRecord,
+  RemediationRequest,
 } from "../types/vendor";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -47,10 +50,25 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+async function patch<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authHeader() },
+    body: JSON.stringify(body),
+  });
+  if (res.status === 401) { handle401(); throw new Error("Unauthorized"); }
+  if (!res.ok) throw new Error(`PATCH ${path} → ${res.status}`);
+  return res.json() as Promise<T>;
+}
+
 export const api = {
   vendors: {
     list: () => get<VendorSummary[]>("/vendors"),
     get: (id: string) => get<VendorScore>(`/vendors/${id}`),
+    history: (id: string) => get<ScoreHistoryPoint[]>(`/vendors/${id}/history`),
+    remediations: (id: string) => get<RemediationRecord[]>(`/vendors/${id}/remediations`),
+    remediate: (id: string, body: RemediationRequest) => post<RemediationRecord>(`/vendors/${id}/remediate`, body),
+    update: (id: string, body: Record<string, unknown>) => patch<{ status: string; new_risk_score: number; new_risk_level: string }>(`/vendors/${id}`, body),
   },
   alerts: {
     list: () => get<AlertItem[]>("/alerts"),
