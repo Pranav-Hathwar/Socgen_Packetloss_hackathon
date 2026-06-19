@@ -156,3 +156,28 @@ export interface SandboxResponse {
   detail: string;
   new_risk_score: number;
 }
+
+export interface ScoreHistoryPoint {
+  scored_at: string;
+  risk_score: number;
+  risk_level: string;
+  rag: string;
+  trigger: string;
+}
+
+export interface RemediationRecord {
+  id: number;
+  vendor_id: string;
+  issue: string;
+  resolved_by: string;
+  resolved_at: string;
+  score_before: number;
+  score_after: number;
+  note?: string;
+}
+
+export interface RemediationRequest {
+  issue: string;
+  resolved_by: string;
+  note?: string;
+}

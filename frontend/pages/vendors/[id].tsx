@@ -9,6 +9,11 @@ import {
   Radar,
   ResponsiveContainer,
   Tooltip,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
 } from "recharts";
 import {
   ArrowLeftIcon,
@@ -21,7 +26,7 @@ import {
 import { api } from "../../lib/api";
 import { RagBadge } from "../../components/RagBadge";
 import { ErrorState } from "../../components/ErrorState";
-import type { VendorScore, SimulateResponse } from "../../types/vendor";
+import type { VendorScore, SimulateResponse, ScoreHistoryPoint, RemediationRecord } from "../../types/vendor";
 
 export default function VendorDetail() {
   const router = useRouter();
@@ -36,19 +41,50 @@ export default function VendorDetail() {
   const [simResult, setSimResult] = useState<SimulateResponse | null>(null);
   const [simLoading, setSimLoading] = useState(false);
 
+  // Score history
+  const [history, setHistory] = useState<ScoreHistoryPoint[]>([]);
+
+  // Remediation
+  const [remediations, setRemediations] = useState<RemediationRecord[]>([]);
+  const [remOpen, setRemOpen] = useState(false);
+  const [remForm, setRemForm] = useState({ issue: "", resolved_by: "", note: "" });
+  const [remLoading, setRemLoading] = useState(false);
+
   function fetchVendor() {
     if (typeof id !== "string") return;
     setLoading(true);
     setError(null);
-    api.vendors
-      .get(id)
-      .then((v) => { setVendor(v); setLoading(false); })
-      .catch((e) => { setError(String(e)); setLoading(false); });
+    Promise.all([
+      api.vendors.get(id),
+      api.vendors.history(id).catch(() => [] as ScoreHistoryPoint[]),
+      api.vendors.remediations(id).catch(() => [] as RemediationRecord[]),
+    ]).then(([v, h, r]) => {
+      setVendor(v);
+      setHistory(h);
+      setRemediations(r);
+      setLoading(false);
+    }).catch((e) => { setError(String(e)); setLoading(false); });
   }
 
   useEffect(() => {
     fetchVendor();
   }, [id]);
+
+  async function submitRemediation() {
+    if (!vendor || !remForm.issue || !remForm.resolved_by) return;
+    setRemLoading(true);
+    try {
+      const rec = await api.vendors.remediate(vendor.vendor_id, remForm);
+      setRemediations((prev) => [rec, ...prev]);
+      setRemForm({ issue: "", resolved_by: "", note: "" });
+      setRemOpen(false);
+      fetchVendor();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setRemLoading(false);
+    }
+  }
 
   async function runSimulation() {
     if (!vendor) return;
@@ -323,6 +359,120 @@ export default function VendorDetail() {
                 <dd className="font-semibold text-slate-900">{vendor.data_access.access_last_used_at}</dd>
               </div>
             </dl>
+          </div>
+
+          {/* Score History */}
+          {history.length > 1 && (
+            <div className="card p-6 animate-slide-up" style={{ animationDelay: "0.4s" }}>
+              <h2 className="text-sm font-semibold text-slate-700 mb-4">Score History</h2>
+              <ResponsiveContainer width="100%" height={180}>
+                <LineChart data={history.slice().reverse()}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis
+                    dataKey="scored_at"
+                    tick={{ fontSize: 10, fill: "#94a3b8" }}
+                    tickFormatter={(v: string) => v.slice(0, 10)}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "12px" }}
+                    labelFormatter={(v: string) => v.slice(0, 10)}
+                    formatter={(value: number, _: string, props: { payload?: ScoreHistoryPoint }) => [
+                      `${value.toFixed(1)} (${props.payload?.risk_level ?? ""})`,
+                      "Risk Score",
+                    ]}
+                  />
+                  <Line type="monotone" dataKey="risk_score" stroke="#6366f1" strokeWidth={2} dot={{ r: 3 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+          {/* Remediation Tracking */}
+          <div className="card p-6 animate-slide-up" style={{ animationDelay: "0.45s" }}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-slate-700">Remediation Log</h2>
+              <button
+                onClick={() => setRemOpen(!remOpen)}
+                className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700 transition-colors"
+              >
+                + Log Action
+              </button>
+            </div>
+
+            {remOpen && (
+              <div className="mb-4 p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                <input
+                  type="text"
+                  placeholder="Issue resolved (e.g. SOC 2 renewed)"
+                  value={remForm.issue}
+                  onChange={(e) => setRemForm((f) => ({ ...f, issue: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                />
+                <input
+                  type="text"
+                  placeholder="Resolved by (name / team)"
+                  value={remForm.resolved_by}
+                  onChange={(e) => setRemForm((f) => ({ ...f, resolved_by: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                />
+                <input
+                  type="text"
+                  placeholder="Notes (optional)"
+                  value={remForm.note}
+                  onChange={(e) => setRemForm((f) => ({ ...f, note: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={submitRemediation}
+                    disabled={remLoading || !remForm.issue || !remForm.resolved_by}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+                  >
+                    {remLoading ? "Saving…" : "Save"}
+                  </button>
+                  <button
+                    onClick={() => setRemOpen(false)}
+                    className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {remediations.length === 0 ? (
+              <p className="text-sm text-slate-400">No remediation actions logged yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {remediations.map((r) => (
+                  <div key={r.id} className="flex items-start gap-3 px-4 py-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+                      <span className="text-emerald-600 text-sm">✓</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-800">{r.issue}</p>
+                      <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+                        <span>{r.resolved_by}</span>
+                        <span>·</span>
+                        <span>{r.resolved_at.slice(0, 10)}</span>
+                        {r.score_before !== r.score_after && (
+                          <>
+                            <span>·</span>
+                            <span className={r.score_after < r.score_before ? "text-emerald-600" : "text-red-600"}>
+                              {r.score_before.toFixed(1)} → {r.score_after.toFixed(1)}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      {r.note && <p className="text-xs text-slate-400 mt-1">{r.note}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
