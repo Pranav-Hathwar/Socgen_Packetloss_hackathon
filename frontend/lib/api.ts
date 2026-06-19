@@ -3,6 +3,9 @@ import type {
   AskRequest,
   AskResponse,
   ReportSummary,
+  SandboxResponse,
+  SimulateRequest,
+  SimulateResponse,
   VendorScore,
   VendorSummary,
 } from "../types/vendor";
@@ -20,7 +23,6 @@ function authHeader(): Record<string, string> {
 }
 
 function handle401() {
-  // Clear token and redirect to login
   _token = null;
   sessionStorage.removeItem("vl_token");
   sessionStorage.removeItem("vl_user");
@@ -57,6 +59,11 @@ export const api = {
     get: () => get<ReportSummary>("/report"),
   },
   ask: (body: AskRequest) => post<AskResponse>("/ask", body),
+  simulate: (body: SimulateRequest) => post<SimulateResponse>("/simulate", body),
+  sandbox: {
+    injectBreach: () => post<SandboxResponse>("/sandbox/inject-breach", {}),
+    advanceTime: () => post<SandboxResponse>("/sandbox/advance-time", {}),
+  },
   monitor: {
     injectBreach: (body: object) => post("/monitor/inject-breach", body),
     advanceTime: (days: number) => post("/monitor/advance-time", { days }),
