@@ -87,11 +87,11 @@ export default function ReportPage() {
     count: report.risk_level_summary[level],
   }));
 
-  const complianceData = [
+  const complianceData = report.compliance_coverage ? [
     { name: "SOC 2 Type II", ...report.compliance_coverage.soc2_type2 },
     { name: "ISO 27001", ...report.compliance_coverage.iso27001 },
     { name: "GDPR DPA", ...report.compliance_coverage.gdpr_dpa },
-  ];
+  ] : [];
 
   return (
     <div className="p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
@@ -133,7 +133,7 @@ export default function ReportPage() {
         </div>
         <div className="card p-5">
           <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Red Flag Vendors</p>
-          <p className="text-3xl font-bold text-red-600 mt-1">{report.red_flag_vendors.length}</p>
+          <p className="text-3xl font-bold text-red-600 mt-1">{(report.red_flag_vendors ?? []).length}</p>
         </div>
         <div className="card p-5">
           <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Green Status</p>
@@ -223,13 +223,13 @@ export default function ReportPage() {
       </div>
 
       {/* Red Flag Vendors */}
-      {report.red_flag_vendors.length > 0 && (
+      {(report.red_flag_vendors ?? []).length > 0 && (
         <div className="card overflow-hidden animate-slide-up" style={{ animationDelay: "0.2s" }}>
           <div className="px-6 py-4 border-b border-slate-100">
             <h2 className="text-sm font-semibold text-slate-700">Red-Flag Vendors — Required Actions</h2>
           </div>
           <div className="divide-y divide-slate-50">
-            {report.red_flag_vendors.map((v) => (
+            {(report.red_flag_vendors ?? []).map((v) => (
               <div key={v.vendor_id} className="px-6 py-5">
                 <div className="flex items-center gap-3 mb-2">
                   <span className="font-semibold text-slate-900">{v.name}</span>

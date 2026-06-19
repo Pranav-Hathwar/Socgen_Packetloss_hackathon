@@ -16,6 +16,7 @@ TODAY = date(2024, 6, 19)
 @router.get("")
 def get_report(_user: AnyUser):
     rows = [dict(r) for r in fetch_all_vendors()]
+    total = len(rows)
 
     rag_counts = Counter(r.get("rag", "GREEN") for r in rows)
     level_counts = Counter(r.get("risk_level", "LOW") for r in rows)
@@ -28,29 +29,36 @@ def get_report(_user: AnyUser):
         reverse=True,
     )[:10]
 
-    # Vendors needing immediate action
-    critical = [r for r in rows if r.get("risk_level") == "CRITICAL"]
-    orphaned = []
-    expiring_contracts = []
-    expiring_certs = []
+    def _compliance_stat(field: str) -> dict:
+        count = sum(1 for r in rows if int(r.get(field, 0) or 0))
+        pct = round(count / total * 100) if total else 0
+        return {"count": count, "total": total, "percentage": pct}
 
+    red_flag_vendors = []
     for r in rows:
-        alerts = []
+        if r.get("rag") != "RED":
+            continue
         try:
-            alerts = json.loads(r.get("alerts") or "[]")
+            risk_factors = json.loads(r.get("risk_factors") or "[]")
         except Exception:
-            pass
-        for a in alerts:
-            if "ISOLATE" in a or "expired" in a.lower() and "access" in a.lower():
-                orphaned.append({"vendor_id": r["vendor_id"], "name": r["name"], "alert": a})
-            if "contract expires" in a.lower():
-                expiring_contracts.append({"vendor_id": r["vendor_id"], "name": r["name"], "alert": a})
-            if "soc 2" in a.lower() and "expire" in a.lower():
-                expiring_certs.append({"vendor_id": r["vendor_id"], "name": r["name"], "alert": a})
+            risk_factors = []
+        action = r.get("recommendation_action") or "ESCALATE"
+        detail = r.get("recommendation_detail") or "Immediate review required."
+        red_flag_vendors.append({
+            "vendor_id": r["vendor_id"],
+            "name": r["name"],
+            "category": r.get("category", ""),
+            "risk_score": r.get("risk_score", 0.0),
+            "risk_level": r.get("risk_level", ""),
+            "rag": r.get("rag", "RED"),
+            "required_actions": detail,
+            "action_type": action,
+            "risk_factors": risk_factors,
+        })
 
     return JSONResponse({
         "generated_at": TODAY.isoformat(),
-        "total_vendors": len(rows),
+        "total_vendors": total,
         "rag_summary": {
             "RED": rag_counts.get("RED", 0),
             "AMBER": rag_counts.get("AMBER", 0),
@@ -63,6 +71,11 @@ def get_report(_user: AnyUser):
             "LOW": level_counts.get("LOW", 0),
         },
         "average_risk_score": avg_score,
+        "compliance_coverage": {
+            "soc2_type2": _compliance_stat("soc2_type2"),
+            "iso27001": _compliance_stat("iso27001"),
+            "gdpr_dpa": _compliance_stat("gdpr_dpa"),
+        },
         "top_risks": [
             {
                 "vendor_id": r["vendor_id"],
@@ -73,12 +86,5 @@ def get_report(_user: AnyUser):
             }
             for r in top_risks
         ],
-        "action_required": {
-            "critical_vendors": [
-                {"vendor_id": r["vendor_id"], "name": r["name"]} for r in critical
-            ],
-            "orphaned_access": orphaned,
-            "contracts_expiring_soon": expiring_contracts,
-            "certs_expiring_soon": expiring_certs,
-        },
+        "red_flag_vendors": red_flag_vendors,
     })
