@@ -9,19 +9,19 @@ export interface DataAccess {
   systems: string[];
   data_sensitivity: DataSensitivity;
   access_type: AccessType;
-  access_last_used_at: string; // ISO datetime
+  access_last_used_at: string;
 }
 
 export interface Compliance {
   soc2_type2: boolean;
-  soc2_expiry: string | null; // ISO date
+  soc2_expiry: string | null;
   iso27001: boolean;
   gdpr_dpa: boolean;
   breach_notification_sla_hours: number;
 }
 
 export interface BreachEvent {
-  date: string; // ISO date
+  date: string;
   severity: string;
   description: string;
 }
@@ -40,34 +40,19 @@ export interface Recommendation {
 }
 
 export interface VendorScore {
-  // Identity
   vendor_id: string;
   name: string;
   category: string;
-
-  // Contract
-  contract_start: string; // ISO date
-  contract_end: string;   // ISO date
-
-  // Data access
+  contract_start: string;
+  contract_end: string;
   data_access: DataAccess;
-
-  // Enrichment
   data_residency: DataResidency;
   sub_processor_count: number;
   concentration_risk: ConcentrationRisk;
-  last_assessment_date: string; // ISO date
-
-  // Compliance
+  last_assessment_date: string;
   compliance: Compliance;
-
-  // Breach history
   breach_history: BreachEvent[];
-
-  // Financial
   financial_rating: string;
-
-  // Engine output
   risk_score: number;
   risk_level: RiskLevel;
   rag: RAG;
@@ -115,6 +100,50 @@ export interface ReportSummary {
   generated_at: string;
   total_vendors: number;
   rag_summary: { RED: number; AMBER: number; GREEN: number };
+  risk_level_summary: { CRITICAL: number; HIGH: number; MEDIUM: number; LOW: number };
   average_risk_score: number;
+  compliance_coverage: {
+    soc2_type2: { count: number; total: number; percentage: number };
+    iso27001: { count: number; total: number; percentage: number };
+    gdpr_dpa: { count: number; total: number; percentage: number };
+  };
   top_risks: { vendor_id: string; name: string; risk_score: number }[];
+  red_flag_vendors: {
+    vendor_id: string;
+    name: string;
+    category: string;
+    risk_score: number;
+    risk_level: string;
+    rag: string;
+    required_actions: string;
+    action_type: string;
+    risk_factors: string[];
+  }[];
+}
+
+export interface SimulateRequest {
+  vendor_id: string;
+  renew_soc2: boolean;
+  sign_dpa: boolean;
+  revoke_access: boolean;
+}
+
+export interface SimulateResponse {
+  vendor_id: string;
+  original_score: number;
+  simulated_score: number;
+  delta: number;
+  original_breakdown: ScoreBreakdown;
+  simulated_breakdown: ScoreBreakdown;
+  simulated_risk_level: RiskLevel;
+  simulated_rag: RAG;
+  actions_applied: string[];
+}
+
+export interface SandboxResponse {
+  action: string;
+  vendor_id: string;
+  vendor_name: string;
+  detail: string;
+  new_risk_score: number;
 }

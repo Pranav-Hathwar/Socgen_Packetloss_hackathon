@@ -15,6 +15,7 @@ const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const AuthContext = createContext<AuthState>({
   user: null,
   token: null,
+  loading: true,
   login: async () => {},
   logout: () => {},
 });
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthState>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setTokenState] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Restore session from sessionStorage on mount
   useEffect(() => {
@@ -38,6 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         sessionStorage.removeItem("vl_user");
       }
     }
+    setLoading(false);
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -83,8 +86,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, token, login, logout }),
-    [user, token, login, logout]
+    () => ({ user, token, loading, login, logout }),
+    [user, token, loading, login, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
