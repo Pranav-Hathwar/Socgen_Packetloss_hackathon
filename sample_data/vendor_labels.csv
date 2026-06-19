@@ -1,0 +1,31 @@
+vendor_id,is_anomaly,anomaly_type,severity,explanation
+V001,False,,,"Fully compliant, low-risk payment processor."
+V002,False,,,"Low sensitivity HR tool, all certs valid."
+V003,False,,,"Legal docs vendor, compliant."
+V004,False,,,"Marketing, ISO not required for this category."
+V005,False,,,"Security vendor, fully certified."
+V025,False,,,Exemplary compliance posture.
+V028,False,,,"Low-sensitivity, limited access."
+V029,False,,,Low-sensitivity comms tool.
+V030,False,,,Compliant backup vendor.
+V006,True,cert_expiring_soon,MEDIUM,SOC2 expires in <30 days; handles HIGH sensitivity data.
+V007,True,missing_compliance,HIGH,No SOC2 or ISO27001; read-write access to ERP and Finance ERP.
+V008,True,missing_gdpr_dpa,HIGH,No GDPR DPA; stores HIGH sensitivity data outside EU.
+V009,True,cert_expiring_soon,MEDIUM,SOC2 expiring in <90 days; financial instability (B rating).
+V010,True,recent_breach,HIGH,Breach in last 12 months; SOC2 expiring end of year.
+V011,True,recent_breach,HIGH,HIGH severity breach (SQL injection) in last 12 months; exposed customer records.
+V012,True,missing_compliance,HIGH,"No SOC2, no ISO, no GDPR DPA; handles HIGH sensitivity analytical data."
+V013,True,under_investigation,CRITICAL,Under investigation for ransomware; potential PII exfiltration.
+V014,True,recent_breach_pii,CRITICAL,CRITICAL breach in last 12 months; 50k payment records; still has full read-write access.
+V015,True,orphaned_access,CRITICAL,Contract expired 6 months ago; system access used 30 days ago. Access must be revoked immediately.
+V016,True,expired_cert,HIGH,SOC2 Type II expired Dec 2023; still has HIGH sensitivity read-write access.
+V017,True,concentration_risk,HIGH,Single-vendor dependency for 5 critical systems; no documented alternative.
+V018,True,missing_compliance,MEDIUM,"No SOC2, no ISO, no GDPR DPA for a legal & compliance tool."
+V019,True,repeat_breach,CRITICAL,Two breaches including insider threat; HIGH sensitivity; no certs; CCC financial rating.
+V020,True,missing_gdpr_dpa,HIGH,No GDPR DPA; processes customer PII for marketing; HIGH sensitivity.
+V021,True,contract_expiring,MEDIUM,Contract expires in <30 days; no renewal in sight.
+V022,True,cert_expiring_soon,HIGH,SOC2 expires in <60 days; HIGH sensitivity identity access.
+V023,True,non_eu_residency_pii,HIGH,Non-EU data residency; handles PII; no GDPR DPA.
+V024,True,high_sub_processor_count,MEDIUM,25 sub-processors; supply chain risk not fully assessed.
+V026,True,under_investigation,CRITICAL,Under investigation; full DB dump exfiltrated; non-EU; no certs.
+V027,True,stale_assessment,MEDIUM,Last risk assessment >12 months ago; cert landscape may have changed.
