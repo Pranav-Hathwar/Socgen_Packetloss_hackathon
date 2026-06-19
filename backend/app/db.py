@@ -66,6 +66,8 @@ CREATE TABLE IF NOT EXISTS vendors (
     concentration_risk   TEXT DEFAULT 'LOW',
     last_assessment_date TEXT,
     under_investigation  INTEGER DEFAULT 0,
+    contact_name         TEXT,
+    contact_email        TEXT,
     -- engine outputs stored back
     risk_score           REAL,
     risk_level           TEXT,
@@ -77,6 +79,37 @@ CREATE TABLE IF NOT EXISTS vendors (
     recommendation_detail TEXT,
     alerts               TEXT,          -- JSON array
     scored_at            TEXT
+);
+
+CREATE TABLE IF NOT EXISTS score_history (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    vendor_id   TEXT NOT NULL,
+    risk_score  REAL,
+    risk_level  TEXT,
+    rag         TEXT,
+    scored_at   TEXT NOT NULL,
+    trigger     TEXT DEFAULT 'rescore'
+);
+
+CREATE TABLE IF NOT EXISTS remediations (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    vendor_id    TEXT NOT NULL,
+    issue        TEXT NOT NULL,
+    resolved_by  TEXT,
+    resolved_at  TEXT NOT NULL,
+    score_before REAL,
+    score_after  REAL,
+    note         TEXT
+);
+
+CREATE TABLE IF NOT EXISTS cert_documents (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    vendor_id   TEXT NOT NULL,
+    cert_type   TEXT NOT NULL,
+    filename    TEXT NOT NULL,
+    file_path   TEXT NOT NULL,
+    uploaded_at TEXT NOT NULL,
+    expiry_date TEXT
 );
 
 CREATE TABLE IF NOT EXISTS labels (
@@ -92,6 +125,15 @@ CREATE TABLE IF NOT EXISTS labels (
 def init_db() -> None:
     with get_conn() as conn:
         conn.executescript(DDL)
+        # Migrations for existing DBs
+        _migrate(conn)
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    existing = {row[1] for row in conn.execute("PRAGMA table_info(vendors)").fetchall()}
+    for col, defn in [("contact_name", "TEXT"), ("contact_email", "TEXT")]:
+        if col not in existing:
+            conn.execute(f"ALTER TABLE vendors ADD COLUMN {col} {defn}")
 
 
 def _parse_bool(val: str | bool | int) -> int:
@@ -191,8 +233,9 @@ def load_labels_csv(path: Path | None = None) -> int:
     return len(rows)
 
 
-def save_scores(vendor_id: str, scored: dict) -> None:
-    """Write engine outputs back to the vendors table."""
+def save_scores(vendor_id: str, scored: dict, trigger: str = "rescore") -> None:
+    """Write engine outputs back to the vendors table and append to score_history."""
+    now = datetime.utcnow().isoformat()
     with get_conn() as conn:
         conn.execute(
             """
@@ -216,8 +259,12 @@ def save_scores(vendor_id: str, scored: dict) -> None:
                 "recommendation_action": scored["recommendation"]["action"],
                 "recommendation_detail": scored["recommendation"]["detail"],
                 "alerts": json.dumps(scored["alerts"]),
-                "scored_at": datetime.utcnow().isoformat(),
+                "scored_at": now,
             },
+        )
+        conn.execute(
+            "INSERT INTO score_history (vendor_id, risk_score, risk_level, rag, scored_at, trigger) VALUES (?,?,?,?,?,?)",
+            (vendor_id, scored["risk_score"], scored["risk_level"], scored["rag"], now, trigger),
         )
 
 
@@ -260,3 +307,72 @@ def get_user_by_email(email: str) -> Optional[sqlite3.Row]:
 def list_users() -> list[sqlite3.Row]:
     with get_conn() as conn:
         return conn.execute("SELECT id, email, role, created_at FROM users").fetchall()
+
+
+def fetch_score_history(vendor_id: str) -> list[sqlite3.Row]:
+    with get_conn() as conn:
+        return conn.execute(
+            "SELECT * FROM score_history WHERE vendor_id=? ORDER BY scored_at ASC",
+            (vendor_id,),
+        ).fetchall()
+
+
+def add_remediation(vendor_id: str, issue: str, resolved_by: str,
+                    score_before: float, score_after: float, note: str = "") -> int:
+    with get_conn() as conn:
+        cur = conn.execute(
+            "INSERT INTO remediations (vendor_id, issue, resolved_by, resolved_at, score_before, score_after, note) VALUES (?,?,?,?,?,?,?)",
+            (vendor_id, issue, resolved_by, datetime.utcnow().isoformat(), score_before, score_after, note),
+        )
+        return cur.lastrowid
+
+
+def fetch_remediations(vendor_id: str) -> list[sqlite3.Row]:
+    with get_conn() as conn:
+        return conn.execute(
+            "SELECT * FROM remediations WHERE vendor_id=? ORDER BY resolved_at DESC",
+            (vendor_id,),
+        ).fetchall()
+
+
+def delete_vendor(vendor_id: str) -> bool:
+    with get_conn() as conn:
+        cur = conn.execute("DELETE FROM vendors WHERE vendor_id=?", (vendor_id,))
+        return cur.rowcount > 0
+
+
+def update_vendor_fields(vendor_id: str, fields: dict) -> bool:
+    if not fields:
+        return False
+    allowed = {
+        "contact_name", "contact_email", "category", "contract_end",
+        "data_sensitivity", "access_type", "soc2_type2", "soc2_expiry",
+        "iso27001", "gdpr_dpa", "financial_rating", "concentration_risk",
+        "under_investigation", "breach_notification_sla_hours",
+    }
+    safe = {k: v for k, v in fields.items() if k in allowed}
+    if not safe:
+        return False
+    sets = ", ".join(f"{k}=?" for k in safe)
+    vals = list(safe.values()) + [vendor_id]
+    with get_conn() as conn:
+        cur = conn.execute(f"UPDATE vendors SET {sets}, risk_score=NULL WHERE vendor_id=?", vals)
+        return cur.rowcount > 0
+
+
+def add_cert_document(vendor_id: str, cert_type: str, filename: str,
+                      file_path: str, expiry_date: str = "") -> int:
+    with get_conn() as conn:
+        cur = conn.execute(
+            "INSERT INTO cert_documents (vendor_id, cert_type, filename, file_path, uploaded_at, expiry_date) VALUES (?,?,?,?,?,?)",
+            (vendor_id, cert_type, filename, file_path, datetime.utcnow().isoformat(), expiry_date),
+        )
+        return cur.lastrowid
+
+
+def fetch_cert_documents(vendor_id: str) -> list[sqlite3.Row]:
+    with get_conn() as conn:
+        return conn.execute(
+            "SELECT * FROM cert_documents WHERE vendor_id=? ORDER BY uploaded_at DESC",
+            (vendor_id,),
+        ).fetchall()

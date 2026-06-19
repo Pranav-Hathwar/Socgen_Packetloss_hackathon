@@ -81,6 +81,8 @@ class VendorScore(BaseModel):
     vendor_id: str
     name: str
     category: str
+    contact_name: Optional[str] = None
+    contact_email: Optional[str] = None
 
     # Contract
     contract_start: date
@@ -147,3 +149,56 @@ class AskRequest(BaseModel):
 class AskResponse(BaseModel):
     answer: str
     sources: list[str]
+
+
+class VendorUpdateRequest(BaseModel):
+    contact_name: Optional[str] = None
+    contact_email: Optional[str] = None
+    category: Optional[str] = None
+    contract_end: Optional[str] = None
+    data_sensitivity: Optional[str] = None
+    access_type: Optional[str] = None
+    soc2_type2: Optional[bool] = None
+    soc2_expiry: Optional[str] = None
+    iso27001: Optional[bool] = None
+    gdpr_dpa: Optional[bool] = None
+    financial_rating: Optional[str] = None
+    concentration_risk: Optional[str] = None
+    under_investigation: Optional[bool] = None
+    breach_notification_sla_hours: Optional[int] = None
+
+
+class RemediationRequest(BaseModel):
+    issue: str
+    resolved_by: str
+    note: Optional[str] = ""
+
+
+class RemediationRecord(BaseModel):
+    id: int
+    vendor_id: str
+    issue: str
+    resolved_by: str
+    resolved_at: str
+    score_before: float
+    score_after: float
+    note: Optional[str] = ""
+
+
+class ScoreHistoryPoint(BaseModel):
+    scored_at: str
+    risk_score: float
+    risk_level: str
+    rag: str
+    trigger: str
+
+
+class AssessmentParseRequest(BaseModel):
+    text: str
+    vendor_id: Optional[str] = None
+
+
+class EmailNotifyRequest(BaseModel):
+    to_email: str
+    vendor_id: Optional[str] = None
+    notify_type: str = "summary"

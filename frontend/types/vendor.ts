@@ -102,13 +102,22 @@ export interface ReportSummary {
   rag_summary: { RED: number; AMBER: number; GREEN: number };
   risk_level_summary: { CRITICAL: number; HIGH: number; MEDIUM: number; LOW: number };
   average_risk_score: number;
-  compliance_coverage: {
+  compliance_coverage?: {
     soc2_type2: { count: number; total: number; percentage: number };
     iso27001: { count: number; total: number; percentage: number };
     gdpr_dpa: { count: number; total: number; percentage: number };
   };
+  category_breakdown?: {
+    category: string;
+    count: number;
+    avg_score: number;
+    red: number;
+    amber: number;
+    green: number;
+  }[];
+  score_trend?: { date: string; avg_score: number; red_count: number }[];
   top_risks: { vendor_id: string; name: string; risk_score: number }[];
-  red_flag_vendors: {
+  red_flag_vendors?: {
     vendor_id: string;
     name: string;
     category: string;
