@@ -3,6 +3,9 @@ import type {
   AskRequest,
   AskResponse,
   ReportSummary,
+  SandboxResponse,
+  SimulateRequest,
+  SimulateResponse,
   VendorScore,
   VendorSummary,
 } from "../types/vendor";
@@ -37,4 +40,9 @@ export const api = {
     get: () => get<ReportSummary>("/report"),
   },
   ask: (body: AskRequest) => post<AskResponse>("/ask", body),
+  simulate: (body: SimulateRequest) => post<SimulateResponse>("/simulate", body),
+  sandbox: {
+    injectBreach: () => post<SandboxResponse>("/sandbox/inject-breach", {}),
+    advanceTime: () => post<SandboxResponse>("/sandbox/advance-time", {}),
+  },
 };

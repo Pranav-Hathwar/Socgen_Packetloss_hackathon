@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routers import alerts, ask, ingest, report, vendors
+from .routers import alerts, ask, ingest, report, vendors, simulate, sandbox
 
 app = FastAPI(title="VendorLens API", version="0.1.0")
 
@@ -18,6 +18,8 @@ app.include_router(alerts.router)
 app.include_router(report.router)
 app.include_router(ingest.router)
 app.include_router(ask.router)
+app.include_router(simulate.router)
+app.include_router(sandbox.router)
 
 
 @app.get("/health")
