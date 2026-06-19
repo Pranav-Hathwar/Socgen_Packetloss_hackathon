@@ -1,5 +1,6 @@
-from fastapi import APIRouter, UploadFile, File
+from fastapi import APIRouter, File, UploadFile
 
+from ..ingest import ingest_csv_bytes
 from ..schema import IngestResponse
 
 router = APIRouter(prefix="/ingest", tags=["ingest"])
@@ -7,11 +8,11 @@ router = APIRouter(prefix="/ingest", tags=["ingest"])
 
 @router.post("", response_model=IngestResponse)
 async def ingest(file: UploadFile = File(...)):
-    """Stub: accept CSV upload, return mock processed count."""
     content = await file.read()
-    row_count = max(0, content.count(b"\n") - 1)  # rough estimate
+    result = ingest_csv_bytes(content, filename=file.filename or "upload.csv")
     return IngestResponse(
-        status="ok",
-        rows_processed=row_count,
-        message=f"Stub ingestion complete. Received {len(content)} bytes from '{file.filename}'.",
+        status=result["status"],
+        rows_processed=result["rows_processed"],
+        message=result["message"]
+        + (f" Conflicts: {result['conflicts']}" if result["conflicts"] else ""),
     )
