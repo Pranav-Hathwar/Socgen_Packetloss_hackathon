@@ -1,274 +1,378 @@
 """
-Audit Q&A  —  POST /ask
-========================
-1. Parse the natural-language question into a structured filter.
-2. Apply the filter over the live vendor register.
-3. Build a grounded context string.
-4. Call claude-opus-4-8 to produce a cited, auditor-grade answer.
+Deterministic Audit Q&A  —  POST /ask
+======================================
+No LLM. Pipeline:
+  1. Intent parse  — attribute + condition + threshold extracted by regex
+  2. Vendor name fuzzy match  — find vendor by name fragment if mentioned
+  3. Register filter  — apply structured conditions to all rows
+  4. Templated answer  — evidence-backed sentences, cites [VID] inline
 """
 from __future__ import annotations
 
+import difflib
 import json
-import os
 import re
-from datetime import date, timedelta
+from datetime import date
 from typing import Any
-
-import anthropic
 
 from .db import fetch_all_vendors
 from .engine import _safe_date
 
 TODAY = date(2024, 6, 19)
 
-# ── Step 1: heuristic question → filter ──────────────────────────────────
+# ── 1. Intent / attribute extraction ─────────────────────────────────────
 
-def _parse_question_to_filter(question: str) -> dict[str, Any]:
-    """
-    Extract lightweight structured filters from the question text.
-    These narrow the vendor set before we call the LLM.
-    """
+_ATTRIBUTE_PATTERNS = [
+    # compliance certs
+    (r"\bsoc\s*2\b",                "soc2"),
+    (r"\biso\s*27001\b",            "iso27001"),
+    (r"\bgdpr\b|\bdpa\b",           "gdpr_dpa"),
+    # risk
+    (r"\brisk\s*score\b",           "risk_score"),
+    (r"\brisk\s*level\b",           "risk_level"),
+    (r"\bcritical\b",               "risk_level_critical"),
+    (r"\bhigh\s+risk\b",            "risk_level_high"),
+    # breach
+    (r"\bbreach\b|\bbreached\b",    "breach"),
+    # access
+    (r"\bpii\b|\bpersonal\s+data\b|\bfinancial\s+access\b", "pii_access"),
+    (r"\borphan\b|\borphaned\b|\baccess.*expir\b|\bstale.*access\b", "orphaned_access"),
+    (r"\bread.write\b|\bwrite\s+access\b",   "access_rw"),
+    # contract
+    (r"\bcontract.*expir\b|\bexpir.*contract\b", "contract_expiry"),
+    (r"\brenew\b",                  "contract_renewal"),
+    # investigation
+    (r"\binvestigat",               "under_investigation"),
+    # financial
+    (r"\bfinancial\s+rating\b|\bcredit\s+rating\b|\brating\b", "financial_rating"),
+    # concentration
+    (r"\bconcentration\b",          "concentration_risk"),
+    # residency
+    (r"\bnon.eu\b|\bdata\s+residency\b|\boffshore\b", "residency"),
+    # sub-processors
+    (r"\bsub.processor\b",          "sub_processors"),
+    # assessment
+    (r"\boverrdue\b|\bstale.*assessment\b|\bass?essment.*overdue\b", "stale_assessment"),
+    # alerts / general
+    (r"\balert\b",                  "alerts"),
+    (r"\bcomplian\w+\b",            "compliance"),
+]
+
+_DAY_PATTERN   = re.compile(r"(\d+)\s*day", re.I)
+_MONTH_PATTERN = re.compile(r"(\d+)\s*month", re.I)
+_HOURS_PATTERN = re.compile(r"(\d+)\s*hour", re.I)
+
+
+def _parse_intent(question: str) -> dict[str, Any]:
     q = question.lower()
-    filters: dict[str, Any] = {}
+    intent: dict[str, Any] = {"raw": question, "attributes": [], "threshold_days": None}
 
-    # Specific vendor name / id mentioned?
-    # We'll handle this by passing all vendors and letting LLM focus,
-    # but flag potential vendor name mentions for context narrowing.
-    filters["_raw_question"] = question
+    for pattern, attr in _ATTRIBUTE_PATTERNS:
+        if re.search(pattern, q, re.I):
+            intent["attributes"].append(attr)
 
-    # Compliance checks
-    if any(w in q for w in ["compliant", "compliance", "certified", "certification"]):
-        filters["_topic"] = "compliance"
-    if "soc" in q and "2" in q:
-        filters["_cert"] = "soc2"
-    if "iso" in q and "27001" in q:
-        filters["_cert"] = "iso27001"
-    if "gdpr" in q or "dpa" in q:
-        filters["_cert"] = "gdpr"
+    # Time threshold
+    m = _DAY_PATTERN.search(q)
+    if m:
+        intent["threshold_days"] = int(m.group(1))
+    else:
+        m2 = _MONTH_PATTERN.search(q)
+        if m2:
+            intent["threshold_days"] = int(m2.group(1)) * 30
 
-    # Access / breach questions
-    if "breach" in q:
-        filters["_topic"] = "breach"
-    if "pii" in q or "personal data" in q:
-        filters["_sensitivity"] = "HIGH"
-    if "access" in q and ("expire" in q or "orphan" in q or "revok" in q):
-        filters["_topic"] = "orphaned_access"
+    # Question type
+    if re.search(r"\bwhich\b|\bwho\b|\blist\b|\bshow\b|\ball\b", q):
+        intent["qtype"] = "list"
+    elif re.search(r"\bis\b|\bare\b|\bdoes\b|\bdo\b|\bhas\b|\bhave\b", q):
+        intent["qtype"] = "check"
+    elif re.search(r"\bhow many\b|\bcount\b", q):
+        intent["qtype"] = "count"
+    else:
+        intent["qtype"] = "list"
 
-    # Expiry questions
-    if "expir" in q:
-        filters["_topic"] = "expiry"
-        m = re.search(r"(\d+)\s*day", q)
-        if m:
-            filters["_expiry_days"] = int(m.group(1))
-        else:
-            filters["_expiry_days"] = 90  # default
-
-    # Risk level
-    for level in ("critical", "high", "medium", "low"):
-        if level in q:
-            filters["_risk_level"] = level.upper()
-            break
-
-    # Financial
-    if "financial" in q or "rating" in q or "credit" in q:
-        filters["_topic"] = "financial"
-
-    return filters
+    return intent
 
 
-# ── Step 2: filter vendors ────────────────────────────────────────────────
+# ── 2. Fuzzy vendor name match ────────────────────────────────────────────
 
-def _filter_vendors(rows: list[dict], filters: dict, vendor_id: str | None) -> list[dict]:
-    """Narrow down vendor rows based on parsed filters."""
-    # If a specific vendor_id is provided, only include that vendor
+def _find_vendor_by_name(question: str, rows: list[dict]) -> list[dict]:
+    """
+    Return rows whose name closely matches a proper-noun fragment in the question.
+    Only extracts capitalised tokens; excludes generic stopwords and company suffixes
+    to avoid false positives on words like 'Inc', 'Corp', 'Ltd'.
+    """
+    proper_tokens = re.findall(r"\b[A-Z][A-Za-z0-9]+(?:\s+[A-Z][A-Za-z0-9]+)*", question)
+
+    STOPWORDS = {"which", "who", "list", "show", "all", "is", "are", "does",
+                 "have", "has", "do", "how", "many", "vendors", "vendor",
+                 "what", "when", "where", "the", "a", "an", "with", "and",
+                 "for", "that", "this", "in", "of", "to", "or", "not"}
+    SUFFIXES = {"inc", "ltd", "co", "corp", "llc", "plc", "gmbh", "sa",
+                "ag", "bv", "nv", "sas", "services", "solutions", "systems",
+                "technologies", "group", "global", "analytics"}
+
+    matched = []
+    for row in rows:
+        name = row["name"].lower()
+        name_tokens = set(name.split())
+        meaningful = name_tokens - STOPWORDS - SUFFIXES
+        for tok in proper_tokens:
+            tok_lower = tok.lower()
+            if tok_lower in STOPWORDS or tok_lower in SUFFIXES:
+                continue
+            # Exact substring: full name in query token or full query token in name
+            if tok_lower in name or (len(tok_lower) > 4 and tok_lower in name):
+                if row not in matched:
+                    matched.append(row)
+                break
+            # Token-level overlap using MEANINGFUL tokens only (not "Inc", "Ltd")
+            tok_words = set(tok_lower.split()) - STOPWORDS - SUFFIXES
+            overlap = len(meaningful & tok_words)
+            if overlap >= max(1, len(meaningful)):
+                if row not in matched:
+                    matched.append(row)
+                break
+            # Sequence similarity — strict threshold
+            ratio = difflib.SequenceMatcher(None, tok_lower, name).ratio()
+            if ratio > 0.78:
+                if row not in matched:
+                    matched.append(row)
+                break
+    return matched
+
+
+# ── 3. Register filter ────────────────────────────────────────────────────
+
+def _filter(rows: list[dict], intent: dict, vendor_id: str | None) -> list[dict]:
+    attrs = set(intent.get("attributes", []))
+    days = intent.get("threshold_days") or 90
+    result = rows
+
     if vendor_id:
-        rows = [r for r in rows if r["vendor_id"] == vendor_id]
-        return rows
+        result = [r for r in result if r["vendor_id"] == vendor_id]
+        return result
 
-    topic = filters.get("_topic", "")
-    risk_level = filters.get("_risk_level")
-    cert = filters.get("_cert")
-    expiry_days = filters.get("_expiry_days")
-    sensitivity = filters.get("_sensitivity")
+    # Try fuzzy name match first
+    name_matches = _find_vendor_by_name(intent["raw"], rows)
 
-    filtered = rows
+    # If a specific company seems to be named, restrict to it
+    q = intent["raw"].lower()
+    # Detect "is <VendorName> compliant" pattern — restrict to matched vendor
+    if intent.get("qtype") == "check" and name_matches and len(name_matches) <= 3:
+        result = name_matches
 
-    if risk_level:
-        filtered = [r for r in filtered if r.get("risk_level") == risk_level]
+    elif attrs:
+        conditions = []
 
+        if "soc2" in attrs:
+            # no SOC2 OR expiring within threshold
+            def soc2_cond(r):
+                if not int(r.get("soc2_type2", 0) or 0):
+                    return True
+                exp = _safe_date(r.get("soc2_expiry"))
+                return exp is not None and 0 <= (exp - TODAY).days <= days
+            conditions.append(soc2_cond)
+
+        if "iso27001" in attrs:
+            conditions.append(lambda r: not int(r.get("iso27001", 0) or 0))
+
+        if "gdpr_dpa" in attrs:
+            conditions.append(lambda r: not int(r.get("gdpr_dpa", 0) or 0))
+
+        if "breach" in attrs:
+            conditions.append(lambda r: bool(r.get("breach_history")))
+
+        if "pii_access" in attrs:
+            conditions.append(lambda r: str(r.get("data_sensitivity", "")).upper() == "HIGH")
+
+        if "orphaned_access" in attrs:
+            def orphan_cond(r):
+                ce = _safe_date(r.get("contract_end"))
+                return ce is not None and ce < TODAY
+            conditions.append(orphan_cond)
+
+        if "access_rw" in attrs:
+            conditions.append(lambda r: str(r.get("access_type", "")).lower() == "read_write")
+
+        if "contract_expiry" in attrs:
+            def ce_cond(r):
+                ce = _safe_date(r.get("contract_end"))
+                return ce is not None and 0 <= (ce - TODAY).days <= days
+            conditions.append(ce_cond)
+
+        if "under_investigation" in attrs:
+            conditions.append(lambda r: bool(int(r.get("under_investigation", 0) or 0)))
+
+        if "risk_level_critical" in attrs:
+            conditions.append(lambda r: r.get("risk_level") == "CRITICAL")
+
+        if "risk_level_high" in attrs:
+            conditions.append(lambda r: r.get("risk_level") in ("CRITICAL", "HIGH"))
+
+        if "residency" in attrs:
+            conditions.append(lambda r: str(r.get("data_residency", "EU")) == "non-EU")
+
+        if "stale_assessment" in attrs:
+            def stale_cond(r):
+                d = _safe_date(r.get("last_assessment_date"))
+                return d is not None and (TODAY - d).days > 365
+            conditions.append(stale_cond)
+
+        if "concentration_risk" in attrs:
+            conditions.append(
+                lambda r: str(r.get("concentration_risk", "")).upper() == "HIGH"
+            )
+
+        if conditions:
+            # AND all conditions
+            result = [r for r in rows if all(c(r) for c in conditions)]
+
+    # Sort by risk_score desc
+    result.sort(key=lambda r: r.get("risk_score") or 0, reverse=True)
+    return result[:25]
+
+
+# ── 4. Templated answer builder ───────────────────────────────────────────
+
+def _cert_status(r: dict, cert: str) -> str:
     if cert == "soc2":
-        filtered = [r for r in filtered if not int(r.get("soc2_type2", 1) or 1)]
-        # Also include those with expiring SOC2
-        expiring = []
-        for r in rows:
-            exp = _safe_date(r.get("soc2_expiry"))
-            if exp and 0 <= (exp - TODAY).days <= (expiry_days or 90):
-                expiring.append(r)
-        combined_ids = {r["vendor_id"] for r in filtered} | {r["vendor_id"] for r in expiring}
-        filtered = [r for r in rows if r["vendor_id"] in combined_ids]
-
+        has = bool(int(r.get("soc2_type2", 0) or 0))
+        exp = _safe_date(r.get("soc2_expiry"))
+        if not has:
+            return "No SOC 2 Type II"
+        if exp and exp < TODAY:
+            return f"SOC 2 EXPIRED ({exp.isoformat()})"
+        if exp:
+            days = (exp - TODAY).days
+            return f"SOC 2 valid (expires {exp.isoformat()}, {days}d)"
+        return "SOC 2 valid (no expiry recorded)"
     if cert == "iso27001":
-        filtered = [r for r in filtered if not int(r.get("iso27001", 1) or 1)]
-
-    if cert == "gdpr":
-        filtered = [r for r in filtered if not int(r.get("gdpr_dpa", 1) or 1)]
-
-    if sensitivity:
-        filtered = [r for r in filtered if str(r.get("data_sensitivity", "")).upper() == sensitivity]
-
-    if topic == "breach":
-        filtered = [r for r in filtered if r.get("breach_history")]
-
-    if topic == "orphaned_access":
-        orphaned = []
-        for r in rows:
-            contract_end = _safe_date(r.get("contract_end"))
-            if contract_end and contract_end < TODAY:
-                orphaned.append(r)
-        filtered = orphaned
-
-    if topic == "expiry" and expiry_days:
-        expiring = []
-        for r in rows:
-            exp = _safe_date(r.get("soc2_expiry"))
-            contract_end = _safe_date(r.get("contract_end"))
-            if (exp and 0 <= (exp - TODAY).days <= expiry_days) or \
-               (contract_end and 0 <= (contract_end - TODAY).days <= expiry_days):
-                expiring.append(r)
-        if expiring:
-            filtered = expiring
-
-    # If filters yielded nothing meaningful, return all (LLM will handle focus)
-    if not filtered:
-        filtered = rows
-
-    return filtered[:20]  # cap at 20 for context window
+        return "ISO 27001 certified" if int(r.get("iso27001", 0) or 0) else "No ISO 27001"
+    if cert == "gdpr_dpa":
+        return "GDPR DPA in place" if int(r.get("gdpr_dpa", 0) or 0) else "No GDPR DPA"
+    return ""
 
 
-# ── Step 3: build grounded context ───────────────────────────────────────
+def _format_row(r: dict, attrs: set) -> str:
+    vid = r["vendor_id"]
+    name = r["name"]
+    parts = [f"[{vid}] {name}"]
 
-def _build_context(vendors: list[dict]) -> tuple[str, list[str]]:
-    """Format vendor data as a compact context block. Returns (text, vendor_ids)."""
+    if "compliance" in attrs or "soc2" in attrs:
+        parts.append(_cert_status(r, "soc2"))
+    if "iso27001" in attrs or "compliance" in attrs:
+        parts.append(_cert_status(r, "iso27001"))
+    if "gdpr_dpa" in attrs or "compliance" in attrs:
+        parts.append(_cert_status(r, "gdpr_dpa"))
+
+    if "breach" in attrs or "pii_access" in attrs:
+        bh = r.get("breach_history") or ""
+        if bh:
+            parts.append(f"breaches: {bh[:120]}")
+        else:
+            parts.append("no breach history")
+
+    if "orphaned_access" in attrs:
+        ce = _safe_date(r.get("contract_end"))
+        if ce and ce < TODAY:
+            parts.append(f"CONTRACT ENDED {(TODAY - ce).days}d ago — access still active")
+
+    if "contract_expiry" in attrs or "contract_renewal" in attrs:
+        ce = _safe_date(r.get("contract_end"))
+        if ce:
+            days = (ce - TODAY).days
+            if days < 0:
+                parts.append(f"contract EXPIRED {abs(days)}d ago")
+            else:
+                parts.append(f"contract ends in {days}d ({ce.isoformat()})")
+
+    if "under_investigation" in attrs:
+        inv = bool(int(r.get("under_investigation", 0) or 0))
+        parts.append("UNDER INVESTIGATION" if inv else "not under investigation")
+
+    if "financial_rating" in attrs:
+        parts.append(f"financial rating: {r.get('financial_rating','?')}")
+
+    if "concentration_risk" in attrs:
+        parts.append(f"concentration: {r.get('concentration_risk','?')}")
+
+    if "residency" in attrs:
+        parts.append(f"residency: {r.get('data_residency','EU')}")
+
+    if "sub_processors" in attrs:
+        parts.append(f"sub-processors: {r.get('sub_processor_count', 0)}")
+
+    if not any(p in attrs for p in (
+        "compliance","soc2","iso27001","gdpr_dpa","breach","pii_access",
+        "orphaned_access","contract_expiry","under_investigation",
+        "financial_rating","concentration_risk","residency","sub_processors"
+    )):
+        parts.append(
+            f"risk={r.get('risk_level','?')} score={r.get('risk_score','?')} rag={r.get('rag','?')}"
+        )
+
+    return " | ".join(parts)
+
+
+def _build_answer(intent: dict, matched: list[dict], all_rows: list[dict]) -> str:
+    attrs = set(intent.get("attributes", []))
+    qtype = intent.get("qtype", "list")
+    q = intent["raw"]
+
+    if not matched:
+        return f"No vendors in the register match the query: '{q}'."
+
     lines = []
-    vendor_ids = []
-    for r in vendors:
-        vid = r["vendor_id"]
-        vendor_ids.append(vid)
+
+    if qtype == "count":
+        lines.append(f"{len(matched)} vendor(s) match '{q}':")
+
+    elif qtype == "check" and len(matched) == 1:
+        r = matched[0]
+        # Generate a full compliance narrative for single-vendor check
+        vid, name = r["vendor_id"], r["name"]
+        soc2 = bool(int(r.get("soc2_type2", 0) or 0))
+        iso  = bool(int(r.get("iso27001", 0) or 0))
+        gdpr = bool(int(r.get("gdpr_dpa", 0) or 0))
+        exp  = _safe_date(r.get("soc2_expiry"))
+        rl   = r.get("risk_level", "?")
+
+        verdict = "COMPLIANT" if (soc2 and iso and gdpr and (not exp or exp > TODAY)) else "NOT FULLY COMPLIANT"
+        lines.append(f"[{vid}] {name}: {verdict}")
+        lines.append(f"  SOC 2 Type II: {'Yes' if soc2 else 'No'}" +
+                     (f" — expires {exp.isoformat()} ({(exp-TODAY).days}d)" if soc2 and exp else ""))
+        lines.append(f"  ISO 27001:     {'Yes' if iso else 'No'}")
+        lines.append(f"  GDPR DPA:      {'Yes' if gdpr else 'No'}")
+        lines.append(f"  Overall risk:  {rl} (score {r.get('risk_score','?')})")
         alerts_raw = r.get("alerts") or "[]"
         try:
             alerts = json.loads(alerts_raw) if isinstance(alerts_raw, str) else alerts_raw
         except Exception:
             alerts = []
-        risk_factors_raw = r.get("risk_factors") or "[]"
-        try:
-            risk_factors = json.loads(risk_factors_raw) if isinstance(risk_factors_raw, str) else risk_factors_raw
-        except Exception:
-            risk_factors = []
+        if alerts:
+            lines.append(f"  Active alerts: {'; '.join(alerts)}")
+        return "\n".join(lines)
 
-        exp = _safe_date(r.get("soc2_expiry"))
-        exp_str = exp.isoformat() if exp else "N/A"
-        contract_end = _safe_date(r.get("contract_end"))
-        cend_str = contract_end.isoformat() if contract_end else "N/A"
+    for r in matched:
+        lines.append(_format_row(r, attrs))
 
-        lines.append(
-            f"[{vid}] {r['name']} | category={r.get('category','')} "
-            f"| sensitivity={r.get('data_sensitivity','')} "
-            f"| access={r.get('access_type','')} "
-            f"| soc2={r.get('soc2_type2',0)} soc2_expiry={exp_str} "
-            f"| iso27001={r.get('iso27001',0)} "
-            f"| gdpr_dpa={r.get('gdpr_dpa',0)} "
-            f"| contract_end={cend_str} "
-            f"| risk_score={r.get('risk_score','?')} risk_level={r.get('risk_level','?')} rag={r.get('rag','?')} "
-            f"| breach_history={r.get('breach_history','') or 'none'} "
-            f"| financial_rating={r.get('financial_rating','')} "
-            f"| residency={r.get('data_residency','EU')} "
-            f"| sub_processors={r.get('sub_processor_count',0)} "
-            f"| concentration_risk={r.get('concentration_risk','LOW')} "
-            f"| under_investigation={r.get('under_investigation',0)} "
-            f"| alerts={alerts} "
-            f"| risk_factors={risk_factors}"
-        )
-    return "\n".join(lines), vendor_ids
+    # Summary line
+    if len(matched) > 1:
+        lines.insert(0, f"{len(matched)} vendor(s) found:")
+
+    return "\n".join(lines)
 
 
-QA_SYSTEM = """\
-You are VendorLens AI, an expert third-party risk analyst for a European bank.
-You answer auditor questions about vendor risk using ONLY the vendor data provided.
-Rules:
-- Cite vendor_ids in square brackets e.g. [V013] for every factual claim.
-- Be direct and specific. No hedging.
-- Flag regulatory concerns (GDPR, DORA, EBA guidelines) when relevant.
-- If the data does not contain enough information to answer, say so explicitly.
-- Keep answers under 300 words unless the question requires detail.
-"""
-
-QA_USER = """\
-Question: {question}
-
-Vendor register context (filtered to relevant vendors):
-{context}
-
-Answer the question using ONLY the data above. Cite vendor IDs.
-"""
-
+# ── Public entry point ────────────────────────────────────────────────────
 
 def answer_question(
     question: str,
     vendor_id: str | None = None,
-    api_key: str | None = None,
+    api_key: str | None = None,   # kept for signature compat; ignored
 ) -> dict:
-    api_key = api_key or os.getenv("ANTHROPIC_API_KEY", "")
-
     all_rows = [dict(r) for r in fetch_all_vendors()]
-
-    filters = _parse_question_to_filter(question)
-    relevant = _filter_vendors(all_rows, filters, vendor_id)
-    context, cited_ids = _build_context(relevant)
-
-    if not api_key:
-        # Fallback: rule-based answer from filtered data
-        return _rule_based_answer(question, relevant, cited_ids)
-
-    client = anthropic.Anthropic(api_key=api_key)
-    message = client.messages.create(
-        model="claude-opus-4-8",
-        max_tokens=1024,
-        system=QA_SYSTEM,
-        messages=[
-            {
-                "role": "user",
-                "content": QA_USER.format(question=question, context=context),
-            }
-        ],
-    )
-    answer = message.content[0].text.strip()
-    return {"answer": answer, "sources": cited_ids}
-
-
-def _rule_based_answer(question: str, vendors: list[dict], cited_ids: list[str]) -> dict:
-    """Fallback when no API key — produce a structured text answer from data."""
-    q = question.lower()
-    lines = []
-
-    if "compliant" in q or "soc" in q:
-        for v in vendors:
-            soc = bool(int(v.get("soc2_type2", 0) or 0))
-            iso = bool(int(v.get("iso27001", 0) or 0))
-            gdpr = bool(int(v.get("gdpr_dpa", 0) or 0))
-            exp = _safe_date(v.get("soc2_expiry"))
-            exp_str = f" (expires {exp.isoformat()})" if exp else ""
-            lines.append(
-                f"[{v['vendor_id']}] {v['name']}: "
-                f"SOC2={'Yes'+exp_str if soc else 'No'}, "
-                f"ISO27001={'Yes' if iso else 'No'}, "
-                f"GDPR DPA={'Yes' if gdpr else 'No'}"
-            )
-    else:
-        for v in vendors:
-            lines.append(
-                f"[{v['vendor_id']}] {v['name']}: "
-                f"risk={v.get('risk_level','?')} score={v.get('risk_score','?')}"
-            )
-
-    answer = "\n".join(lines) if lines else "No vendors matched the query."
-    return {"answer": answer, "sources": cited_ids}
+    intent   = _parse_intent(question)
+    matched  = _filter(all_rows, intent, vendor_id)
+    answer   = _build_answer(intent, matched, all_rows)
+    sources  = [r["vendor_id"] for r in matched]
+    return {"answer": answer, "sources": sources}
