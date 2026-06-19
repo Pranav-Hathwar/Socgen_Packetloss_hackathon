@@ -4,6 +4,7 @@ from datetime import date, timedelta
 from fastapi import APIRouter
 
 from ..db import fetch_all_vendors
+from ..deps import AnyUser
 from ..schema import AlertItem, RAG
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
@@ -12,7 +13,7 @@ TODAY = date(2024, 6, 19)
 
 
 @router.get("", response_model=list[AlertItem])
-def get_alerts():
+def get_alerts(_user: AnyUser):
     rows = fetch_all_vendors()
     alerts: list[AlertItem] = []
 

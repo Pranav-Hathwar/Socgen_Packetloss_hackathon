@@ -6,6 +6,7 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 from ..db import fetch_all_vendors
+from ..deps import AnyUser
 
 router = APIRouter(prefix="/report", tags=["report"])
 
@@ -13,7 +14,7 @@ TODAY = date(2024, 6, 19)
 
 
 @router.get("")
-def get_report():
+def get_report(_user: AnyUser):
     rows = [dict(r) for r in fetch_all_vendors()]
 
     rag_counts = Counter(r.get("rag", "GREEN") for r in rows)

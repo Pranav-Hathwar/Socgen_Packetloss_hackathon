@@ -36,6 +36,14 @@ def get_conn() -> Generator[sqlite3.Connection, None, None]:
 
 
 DDL = """
+CREATE TABLE IF NOT EXISTS users (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    email           TEXT UNIQUE NOT NULL,
+    hashed_password TEXT NOT NULL,
+    role            TEXT NOT NULL CHECK(role IN ('ADMIN','ANALYST','AUDITOR')),
+    created_at      TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS vendors (
     vendor_id            TEXT PRIMARY KEY,
     name                 TEXT NOT NULL,
@@ -229,3 +237,26 @@ def fetch_labels() -> dict[str, dict]:
     with get_conn() as conn:
         rows = conn.execute("SELECT * FROM labels").fetchall()
     return {r["vendor_id"]: dict(r) for r in rows}
+
+
+# ── User CRUD ─────────────────────────────────────────────────────────────
+
+def create_user(email: str, hashed_password: str, role: str) -> int:
+    with get_conn() as conn:
+        cur = conn.execute(
+            "INSERT INTO users (email, hashed_password, role, created_at) VALUES (?,?,?,?)",
+            (email, hashed_password, role, datetime.utcnow().isoformat()),
+        )
+        return cur.lastrowid
+
+
+def get_user_by_email(email: str) -> Optional[sqlite3.Row]:
+    with get_conn() as conn:
+        return conn.execute(
+            "SELECT * FROM users WHERE email=?", (email,)
+        ).fetchone()
+
+
+def list_users() -> list[sqlite3.Row]:
+    with get_conn() as conn:
+        return conn.execute("SELECT id, email, role, created_at FROM users").fetchall()

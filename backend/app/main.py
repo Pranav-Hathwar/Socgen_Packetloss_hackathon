@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routers import alerts, ask, ingest, monitor, report, vendors
+from .routers import alerts, ask, auth_router, ingest, monitor, report, vendors
 from .startup import bootstrap
 
 
@@ -25,9 +25,10 @@ app.add_middleware(
     allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*", "Authorization"],
 )
 
+app.include_router(auth_router.router)
 app.include_router(vendors.router)
 app.include_router(alerts.router)
 app.include_router(report.router)
