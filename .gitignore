@@ -27,3 +27,5 @@ Thumbs.db
 # Secrets
 .env
 .env.local
+# Claude Code internal files
+.claude/
