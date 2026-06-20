@@ -133,6 +133,7 @@ class AlertItem(BaseModel):
     vendor_name: str
     alert: str
     rag: RAG
+    alert_type: str = "GENERAL"
 
 
 class IngestResponse(BaseModel):

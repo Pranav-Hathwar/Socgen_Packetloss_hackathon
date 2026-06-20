@@ -10,6 +10,9 @@ import {
   BellAlertIcon,
   ExclamationTriangleIcon,
   XMarkIcon,
+  ClockIcon,
+  ShieldCheckIcon,
+  DocumentMagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import { api } from "../lib/api";
 import { RagBadge } from "../components/RagBadge";
@@ -40,15 +43,26 @@ const SEV_CFG: Record<Severity, { dot: string; badge: string; border: string; ro
   Low:      { dot: "bg-emerald-400", badge: "bg-emerald-100 text-emerald-700", border: "border-l-emerald-400", row: "hover:bg-emerald-50/30" },
 };
 
-function AlertTypeIcon({ text }: { text: string }) {
-  const t = text.toLowerCase();
-  if (t.includes("breach") || t.includes("leak") || t.includes("ransomware") || t.includes("exfil"))
-    return <ShieldExclamationIcon className="w-4 h-4" />;
-  if (t.includes("expir") || t.includes("soc") || t.includes("iso") || t.includes("cert"))
-    return <DocumentTextIcon className="w-4 h-4" />;
-  if (t.includes("contract") || t.includes("access") || t.includes("isolate"))
-    return <ExclamationTriangleIcon className="w-4 h-4" />;
-  return <BellAlertIcon className="w-4 h-4" />;
+const ALERT_TYPE_META: Record<string, { label: string; badge: string }> = {
+  ASSESSMENT_OVERDUE: { label: "Assessment Overdue", badge: "bg-purple-100 text-purple-700" },
+  BREACH:            { label: "Security Breach",     badge: "bg-red-100 text-red-700" },
+  CERT_EXPIRY:       { label: "Cert Expiry",         badge: "bg-orange-100 text-orange-700" },
+  CONTRACT:          { label: "Contract",            badge: "bg-blue-100 text-blue-700" },
+  ACCESS:            { label: "Access Risk",         badge: "bg-yellow-100 text-yellow-700" },
+  COMPLIANCE:        { label: "Compliance",          badge: "bg-indigo-100 text-indigo-700" },
+  GENERAL:           { label: "Alert",               badge: "bg-slate-100 text-slate-600" },
+};
+
+function AlertTypeIcon({ alertType }: { alertType: string }) {
+  switch (alertType) {
+    case "ASSESSMENT_OVERDUE": return <ClockIcon className="w-4 h-4" />;
+    case "BREACH":             return <ShieldExclamationIcon className="w-4 h-4" />;
+    case "CERT_EXPIRY":        return <DocumentTextIcon className="w-4 h-4" />;
+    case "COMPLIANCE":         return <ShieldCheckIcon className="w-4 h-4" />;
+    case "CONTRACT":           return <DocumentMagnifyingGlassIcon className="w-4 h-4" />;
+    case "ACCESS":             return <ExclamationTriangleIcon className="w-4 h-4" />;
+    default:                   return <BellAlertIcon className="w-4 h-4" />;
+  }
 }
 
 function FilterPill({
@@ -286,7 +300,7 @@ export default function AlertsPage() {
                   {/* Severity indicator */}
                   <div className="mt-0.5 flex flex-col items-center gap-2 shrink-0 pt-0.5">
                     <span className={`w-2.5 h-2.5 rounded-full ${cfg.dot} ring-2 ring-white shadow-sm`} />
-                    <span className="text-slate-400"><AlertTypeIcon text={alert.alert} /></span>
+                    <span className="text-slate-400"><AlertTypeIcon alertType={alert.alert_type} /></span>
                   </div>
 
                   {/* Content */}
@@ -302,6 +316,11 @@ export default function AlertsPage() {
                       <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${cfg.badge}`}>
                         {sev}
                       </span>
+                      {alert.alert_type && alert.alert_type !== "GENERAL" && (
+                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${ALERT_TYPE_META[alert.alert_type]?.badge ?? "bg-slate-100 text-slate-600"}`}>
+                          {ALERT_TYPE_META[alert.alert_type]?.label ?? alert.alert_type}
+                        </span>
+                      )}
                       <span className="text-[10px] text-slate-400 font-mono">{alert.vendor_id}</span>
                     </div>
                     <p className="text-sm text-slate-600 leading-relaxed">{alert.alert}</p>

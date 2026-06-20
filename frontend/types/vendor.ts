@@ -92,6 +92,7 @@ export interface AlertItem {
   vendor_name: string;
   alert: string;
   rag: RAG;
+  alert_type: string;
 }
 
 export interface IngestResponse {
