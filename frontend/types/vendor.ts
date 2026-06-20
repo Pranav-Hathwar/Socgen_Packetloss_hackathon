@@ -43,6 +43,8 @@ export interface VendorScore {
   vendor_id: string;
   name: string;
   category: string;
+  contact_name?: string | null;
+  contact_email?: string | null;
   contract_start: string;
   contract_end: string;
   data_access: DataAccess;
