@@ -47,9 +47,9 @@ export function Layout({ children }: { children: ReactNode }) {
   if (loading || !user) return null;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
+    <div className="app-shell flex h-screen overflow-hidden bg-slate-50">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-slate-200 shrink-0">
+      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-slate-200 shrink-0 print-hide">
         <div className="p-6 border-b border-slate-100">
           <Link href="/" className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center shadow-lg shadow-indigo-200">
@@ -104,7 +104,7 @@ export function Layout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between print-hide">
         <Link href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center">
             <span className="text-white font-bold text-xs">VL</span>
@@ -158,8 +158,8 @@ export function Layout({ children }: { children: ReactNode }) {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto lg:pt-0 pt-14">
-        <div className="animate-fade-in">{children}</div>
+      <main className="app-main flex-1 overflow-y-auto lg:pt-0 pt-14">
+        <div className="app-content animate-fade-in">{children}</div>
       </main>
     </div>
   );

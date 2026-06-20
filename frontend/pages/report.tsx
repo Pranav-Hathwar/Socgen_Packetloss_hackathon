@@ -13,19 +13,216 @@ import {
   LineChart,
   Line,
 } from "recharts";
-import { PrinterIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { PrinterIcon, ArrowDownTrayIcon, DocumentArrowDownIcon } from "@heroicons/react/24/outline";
+import { jsPDF } from "jspdf";
 import { api } from "../lib/api";
 import { ErrorState } from "../components/ErrorState";
-import type { ReportSummary, VendorSummary } from "../types/vendor";
+import type { ReportSummary, VendorScore, VendorSummary } from "../types/vendor";
 
 const RAG_COLORS: Record<string, string> = { RED: "#ef4444", AMBER: "#f59e0b", GREEN: "#10b981" };
 const RISK_COLORS: Record<string, string> = { CRITICAL: "#ef4444", HIGH: "#f97316", MEDIUM: "#f59e0b", LOW: "#10b981" };
+const SCORE_BREAKDOWN_LABELS: Record<keyof VendorScore["score_breakdown"], string> = {
+  data_exposure: "Data Exposure",
+  compliance_gaps: "Compliance Gaps",
+  breach_history: "Breach History",
+  financial_health: "Financial Health",
+  concentration: "Concentration Risk",
+};
+
+function fmtDate(d?: string | null): string {
+  if (!d) return "—";
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? String(d) : dt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  const m = hex.replace("#", "");
+  return [parseInt(m.slice(0, 2), 16), parseInt(m.slice(2, 4), 16), parseInt(m.slice(4, 6), 16)];
+}
+
+/** Build and download a paginated PDF report for a single vendor using the jsPDF API. */
+function buildVendorReportPDF(v: VendorScore): jsPDF {
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 40;
+  const contentW = pageW - margin * 2;
+
+  let y = margin;
+  const lineHeight = 16;
+
+  function ensure(space: number) {
+    if (y + space > pageH - margin) {
+      doc.addPage();
+      y = margin;
+    }
+  }
+
+  function sectionTitle(title: string) {
+    ensure(lineHeight * 2);
+    y += 10;
+    doc.setFillColor(238, 242, 255);
+    doc.rect(margin, y - 10, contentW, lineHeight + 4, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(67, 56, 202);
+    doc.text(title.toUpperCase(), margin + 6, y + 2);
+    doc.setTextColor(30, 41, 59);
+    y += lineHeight + 8;
+  }
+
+  function kvRow(label: string, value: string) {
+    ensure(lineHeight + 2);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139);
+    doc.text(label, margin, y);
+    doc.setTextColor(30, 41, 59);
+    const wrapped = doc.splitTextToSize(value, contentW - 140);
+    doc.text(wrapped, margin + 140, y);
+    y += lineHeight * Math.max(1, wrapped.length) + 2;
+  }
+
+  // ── Header ────────────────────────────────────────────────────────────────
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(20);
+  doc.setTextColor(30, 41, 59);
+  doc.text(v.name, margin, y + 8);
+  y += 26;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(100, 116, 139);
+  doc.text(`VendorLens · Vendor Risk Assessment`, margin, y);
+  doc.text(`Generated: ${new Date().toLocaleString("en-GB")}`, pageW - margin, y, { align: "right" });
+  y += 6;
+  doc.setDrawColor(226, 232, 240);
+  doc.line(margin, y, pageW - margin, y);
+  y += 16;
+
+  // ── Risk summary band ─────────────────────────────────────────────────────
+  const metrics: Array<[string, string, string?]> = [
+    ["Risk Score", v.risk_score.toFixed(1)],
+    ["Risk Level", v.risk_level, RISK_COLORS[v.risk_level]],
+    ["RAG Status", v.rag, RAG_COLORS[v.rag]],
+    ["Financial", v.financial_rating],
+  ];
+  const colW = contentW / 4;
+  metrics.forEach(([label, value, color], i) => {
+    const x = margin + i * colW;
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(x + 3, y, colW - 6, 56, 6, 6, "F");
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    doc.text(label.toUpperCase(), x + 12, y + 16);
+    if (color) {
+      const [r, g, b] = hexToRgb(color);
+      doc.setFillColor(r, g, b);
+      doc.roundedRect(x + 12, y + 24, 36, 18, 9, 9, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.text(value, x + 30, y + 36, { align: "center" });
+    } else {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.setTextColor(30, 41, 59);
+      doc.text(value, x + 12, y + 42);
+    }
+  });
+  y += 70;
+
+  // ── Score breakdown ───────────────────────────────────────────────────────
+  sectionTitle("Score Breakdown");
+  (Object.keys(SCORE_BREAKDOWN_LABELS) as (keyof VendorScore["score_breakdown"])[]).forEach((k) => {
+    kvRow(SCORE_BREAKDOWN_LABELS[k], v.score_breakdown[k].toFixed(1));
+  });
+
+  // ── Compliance ────────────────────────────────────────────────────────────
+  sectionTitle("Compliance Status");
+  kvRow("SOC 2 Type II", `${v.compliance.soc2_type2 ? "Compliant" : "Missing"}${v.compliance.soc2_type2 && v.compliance.soc2_expiry ? ` (expires ${fmtDate(v.compliance.soc2_expiry)})` : ""}`);
+  kvRow("ISO 27001", v.compliance.iso27001 ? "Compliant" : "Missing");
+  kvRow("GDPR DPA", v.compliance.gdpr_dpa ? "Signed" : "Missing");
+  kvRow("Breach Notification SLA", `${v.compliance.breach_notification_sla_hours} hours`);
+
+  // ── Breach history ────────────────────────────────────────────────────────
+  sectionTitle("Breach History");
+  if (v.breach_history.length) {
+    v.breach_history.forEach((b) => {
+      kvRow(`${fmtDate(b.date)} · ${b.severity}`, b.description);
+    });
+  } else {
+    kvRow("—", "No breaches on record.");
+  }
+
+  // ── Data access ───────────────────────────────────────────────────────────
+  sectionTitle("Data Access & Residency");
+  kvRow("Systems Accessed", v.data_access.systems.length ? v.data_access.systems.join(", ") : "—");
+  kvRow("Data Sensitivity", v.data_access.data_sensitivity);
+  kvRow("Access Type", v.data_access.access_type);
+  kvRow("Data Residency", v.data_residency);
+  kvRow("Sub-processors", String(v.sub_processor_count));
+  kvRow("Concentration Risk", v.concentration_risk);
+  kvRow("Access Last Used", fmtDate(v.data_access.access_last_used_at));
+
+  // ── Contract ──────────────────────────────────────────────────────────────
+  sectionTitle("Contract");
+  kvRow("Contract Period", `${fmtDate(v.contract_start)} → ${fmtDate(v.contract_end)}`);
+  kvRow("Last Assessment", fmtDate(v.last_assessment_date));
+  kvRow("Contact", [v.contact_name, v.contact_email].filter(Boolean).join("  ") || "—");
+
+  // ── Risk factors ──────────────────────────────────────────────────────────
+  sectionTitle("Risk Factors");
+  if (v.risk_factors.length) {
+    v.risk_factors.forEach((f) => kvRow("•", f));
+  } else {
+    kvRow("—", "No risk factors flagged.");
+  }
+
+  // ── Anomaly flags ─────────────────────────────────────────────────────────
+  sectionTitle("Anomaly Flags");
+  if (v.anomaly_flags.length) {
+    v.anomaly_flags.forEach((f) => kvRow("•", f));
+  } else {
+    kvRow("—", "None.");
+  }
+
+  // ── Recommendation ────────────────────────────────────────────────────────
+  sectionTitle("Recommendation");
+  kvRow(v.recommendation.action, v.recommendation.detail);
+
+  // ── Active alerts ─────────────────────────────────────────────────────────
+  sectionTitle("Active Alerts");
+  if (v.alerts.length) {
+    v.alerts.forEach((a) => kvRow("•", a));
+  } else {
+    kvRow("—", "No active alerts.");
+  }
+
+  // ── Footer on every page ──────────────────────────────────────────────────
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setDrawColor(226, 232, 240);
+    doc.line(margin, pageH - 24, pageW - margin, pageH - 24);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(148, 163, 184);
+    doc.text("Confidential — VendorLens Risk Management", margin, pageH - 12);
+    doc.text(`Page ${i} of ${pageCount}`, pageW - margin, pageH - 12, { align: "right" });
+  }
+
+  return doc;
+}
 
 export default function ReportPage() {
   const [report, setReport] = useState<ReportSummary | null>(null);
   const [vendors, setVendors] = useState<VendorSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedVendorId, setSelectedVendorId] = useState("");
+  const [vendorReportLoading, setVendorReportLoading] = useState(false);
 
   function fetchData() {
     setLoading(true);
@@ -58,6 +255,22 @@ export default function ReportPage() {
     a.click();
     URL.revokeObjectURL(url);
   }, [vendors]);
+
+  /** Fetch full vendor detail and download a paginated PDF report. */
+  const downloadVendorReport = useCallback(async () => {
+    if (!selectedVendorId) return;
+    setVendorReportLoading(true);
+    try {
+      const detail = await api.vendors.get(selectedVendorId);
+      const doc = buildVendorReportPDF(detail);
+      const safeName = detail.name.replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "") || detail.vendor_id;
+      doc.save(`vendor_report_${safeName}_${new Date().toISOString().slice(0, 10)}.pdf`);
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setVendorReportLoading(false);
+    }
+  }, [selectedVendorId]);
 
   if (error) {
     return (
@@ -105,7 +318,30 @@ export default function ReportPage() {
             Generated: {new Date(report.generated_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
           </p>
         </div>
-        <div className="flex gap-2 no-print">
+        <div className="flex flex-wrap items-center gap-2 no-print">
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedVendorId}
+              onChange={(e) => setSelectedVendorId(e.target.value)}
+              className="px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200 max-w-[240px]"
+            >
+              <option value="">All vendors (portfolio)</option>
+              {vendors.map((v) => (
+                <option key={v.vendor_id} value={v.vendor_id}>
+                  {v.name} ({v.vendor_id})
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={downloadVendorReport}
+              disabled={!selectedVendorId || vendorReportLoading}
+              title={!selectedVendorId ? "Select a vendor first" : "Download a PDF report for this vendor"}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <DocumentArrowDownIcon className="w-4 h-4" />
+              {vendorReportLoading ? "Building…" : "Vendor PDF"}
+            </button>
+          </div>
           <button
             onClick={exportCSV}
             className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
