@@ -1,6 +1,9 @@
 """Run once at application startup: init DB, load CSVs, score all vendors."""
 from __future__ import annotations
 
+import os
+import warnings
+
 from .auth import hash_password
 from .db import (
     create_user,
@@ -30,7 +33,17 @@ def _seed_demo_users() -> int:
     return seeded
 
 
+def _check_security_config() -> None:
+    if not os.getenv("JWT_SECRET_KEY"):
+        warnings.warn(
+            "JWT_SECRET_KEY env var not set — using insecure default. "
+            "Set JWT_SECRET_KEY before deploying to production.",
+            stacklevel=2,
+        )
+
+
 def bootstrap() -> dict:
+    _check_security_config()
     init_db()
     users_seeded = _seed_demo_users()
     reg = load_registry_csv()

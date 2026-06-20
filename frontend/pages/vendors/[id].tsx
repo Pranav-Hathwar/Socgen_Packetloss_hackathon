@@ -173,7 +173,7 @@ export default function VendorDetail() {
       <div className="p-8 space-y-6 animate-pulse">
         <div className="h-6 w-24 bg-slate-200 rounded" />
         <div className="h-10 w-64 bg-slate-200 rounded" />
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => <div key={i} className="h-24 bg-slate-200 rounded-2xl" />)}
         </div>
       </div>
@@ -222,7 +222,7 @@ export default function VendorDetail() {
             </div>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => { setEditOpen(!editOpen); setEditMsg(null); }}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${

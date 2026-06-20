@@ -75,6 +75,10 @@ async function postForm<T>(path: string, formData: FormData): Promise<T> {
 }
 
 export const api = {
+  auth: {
+    register: (body: { email: string; password: string; role: string }) =>
+      post<{ id: number; email: string; role: string }>("/auth/register", body),
+  },
   vendors: {
     list: () => get<VendorSummary[]>("/vendors"),
     get: (id: string) => get<VendorScore>(`/vendors/${id}`),
@@ -95,6 +99,23 @@ export const api = {
   },
   report: {
     get: () => get<ReportSummary>("/report"),
+  },
+  scheduler: {
+    status: () => get<{ running: boolean; interval_seconds: number; next_run: string | null; last_run: string | null }>("/scheduler/status"),
+    start: () => post<{ status: string }>("/scheduler/start", {}),
+    stop: () => post<{ status: string }>("/scheduler/stop", {}),
+    runNow: () => post<{ status: string; vendors_rescored: number }>("/scheduler/run-now", {}),
+  },
+  notify: {
+    summary: (to_email: string) => post<{ status: string; message: string }>("/notify/summary", { to_email, notify_type: "summary" }),
+    expiry: (to_email: string) => post<{ status: string; message: string }>("/notify/expiry-alerts", { to_email, notify_type: "expiry" }),
+  },
+  ingest: {
+    upload: (file: File) => {
+      const form = new FormData();
+      form.append("file", file);
+      return postForm<{ status: string; rows_processed: number; message: string }>("/ingest", form);
+    },
   },
   ask: (body: AskRequest) => post<AskResponse>("/ask", body),
   simulate: (body: SimulateRequest) => post<SimulateResponse>("/simulate", body),

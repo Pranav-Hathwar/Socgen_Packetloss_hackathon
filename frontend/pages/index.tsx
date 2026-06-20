@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon, PlusIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 import {
   ShieldExclamationIcon,
   ExclamationTriangleIcon,
@@ -75,6 +75,13 @@ export default function Dashboard() {
   const [addForm, setAddForm] = useState<VendorCreateRequest>(BLANK_VENDOR);
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+
+  // CSV ingest
+  const [ingestOpen, setIngestOpen] = useState(false);
+  const [ingestFile, setIngestFile] = useState<File | null>(null);
+  const [ingestLoading, setIngestLoading] = useState(false);
+  const [ingestResult, setIngestResult] = useState<{ rows_processed: number; message: string } | null>(null);
+  const [ingestError, setIngestError] = useState<string | null>(null);
 
   function fetchVendors() {
     setLoading(true);
@@ -167,6 +174,23 @@ export default function Dashboard() {
 
   const hasFilters = search || catFilter || riskFilter;
 
+  async function handleIngest() {
+    if (!ingestFile) return;
+    setIngestLoading(true);
+    setIngestError(null);
+    setIngestResult(null);
+    try {
+      const res = await api.ingest.upload(ingestFile);
+      setIngestResult({ rows_processed: res.rows_processed, message: res.message });
+      setIngestFile(null);
+      fetchVendors();
+    } catch (e) {
+      setIngestError(String(e));
+    } finally {
+      setIngestLoading(false);
+    }
+  }
+
   async function handleAddVendor() {
     if (!addForm.name.trim()) return;
     setAddLoading(true);
@@ -199,14 +223,72 @@ export default function Dashboard() {
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Portfolio Dashboard</h1>
           <p className="text-sm text-slate-500 mt-1">Third-party vendor risk overview</p>
         </div>
-        <button
-          onClick={() => { setAddOpen(true); setAddError(null); }}
-          className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
-        >
-          <PlusIcon className="w-4 h-4" />
-          Add Vendor
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => { setIngestOpen(true); setIngestResult(null); setIngestError(null); }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm"
+          >
+            <ArrowUpTrayIcon className="w-4 h-4" />
+            Import CSV
+          </button>
+          <button
+            onClick={() => { setAddOpen(true); setAddError(null); }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
+          >
+            <PlusIcon className="w-4 h-4" />
+            Add Vendor
+          </button>
+        </div>
       </div>
+
+      {/* CSV Ingest Modal */}
+      {ingestOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-scale-in">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <h2 className="text-base font-bold text-slate-900">Import Vendor CSV</h2>
+              <button onClick={() => { setIngestOpen(false); setIngestResult(null); }} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
+                <XMarkIcon className="w-5 h-5 text-slate-500" />
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <p className="text-sm text-slate-500">
+                Upload a <code className="bg-slate-100 px-1 rounded text-xs">vendor_registry.csv</code> file. Existing vendors will be updated; new ones added.
+              </p>
+              <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
+                <ArrowUpTrayIcon className="w-7 h-7 text-slate-400 mb-2" />
+                <span className="text-sm text-slate-500">
+                  {ingestFile ? ingestFile.name : "Click to select CSV file"}
+                </span>
+                <input
+                  type="file"
+                  accept=".csv"
+                  className="hidden"
+                  onChange={(e) => { setIngestFile(e.target.files?.[0] ?? null); setIngestResult(null); setIngestError(null); }}
+                />
+              </label>
+              {ingestError && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{ingestError}</p>}
+              {ingestResult && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+                  <p className="text-sm font-semibold text-emerald-800">{ingestResult.rows_processed} rows processed</p>
+                  <p className="text-xs text-emerald-600 mt-0.5">{ingestResult.message}</p>
+                </div>
+              )}
+              <div className="flex justify-end gap-2 pt-1">
+                <button onClick={() => { setIngestOpen(false); setIngestResult(null); }} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Cancel</button>
+                <button
+                  onClick={handleIngest}
+                  disabled={!ingestFile || ingestLoading}
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                >
+                  <ArrowUpTrayIcon className="w-4 h-4" />
+                  {ingestLoading ? "Importing…" : "Import"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Vendor Modal */}
       {addOpen && (

@@ -9,14 +9,18 @@ import {
   Bars3Icon,
   XMarkIcon,
   ArrowRightOnRectangleIcon,
+  Cog6ToothIcon,
+  UserPlusIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../contexts/AuthContext";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", href: "/", icon: HomeIcon },
-  { label: "Alerts", href: "/alerts", icon: BellAlertIcon },
-  { label: "Report", href: "/report", icon: DocumentChartBarIcon },
-  { label: "Audit Chat", href: "/chat", icon: ChatBubbleLeftRightIcon },
+  { label: "Dashboard", href: "/", icon: HomeIcon, roles: null },
+  { label: "Alerts", href: "/alerts", icon: BellAlertIcon, roles: null },
+  { label: "Report", href: "/report", icon: DocumentChartBarIcon, roles: null },
+  { label: "Audit Chat", href: "/chat", icon: ChatBubbleLeftRightIcon, roles: null },
+  { label: "Admin Panel", href: "/admin", icon: Cog6ToothIcon, roles: ["ADMIN"] },
+  { label: "Create User", href: "/register", icon: UserPlusIcon, roles: ["ADMIN"] },
 ];
 
 const ROLE_COLOR: Record<string, string> = {
@@ -58,7 +62,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </Link>
         </div>
         <nav className="flex-1 px-4 py-6 space-y-1">
-          {NAV_ITEMS.map((item) => {
+          {NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(user.role)).map((item) => {
             const active = router.pathname === item.href;
             return (
               <Link
@@ -123,7 +127,7 @@ export function Layout({ children }: { children: ReactNode }) {
             onClick={(e) => e.stopPropagation()}
           >
             <nav className="p-4 space-y-1">
-              {NAV_ITEMS.map((item) => {
+              {NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(user.role)).map((item) => {
                 const active = router.pathname === item.href;
                 return (
                   <Link
