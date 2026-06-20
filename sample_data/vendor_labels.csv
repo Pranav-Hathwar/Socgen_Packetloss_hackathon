@@ -1,26 +1,26 @@
 vendor_id,is_anomaly,anomaly_type,severity,explanation
-V101,True,BREACHED_VENDOR_HIGH_ACCESS,CRITICAL,"Two CRITICAL breaches in 12 months; HIGH sensitivity read_write; no SOC2/ISO/DPA; CCC rating"
-V102,True,BREACHED_VENDOR_HIGH_ACCESS,CRITICAL,"Three CRITICAL breaches; HIGH sensitivity read_write; no SOC2/ISO; CCC rating"
-V103,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,"Under active security investigation; HIGH sensitivity read_write; prior HIGH breach"
-V104,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,"Under active security investigation; HIGH sensitivity; financial records exposed"
-V105,True,EXPIRED_CERTIFICATION,HIGH,"SOC2 Type II expired 2024-04-30; HIGH sensitivity read_write access continues"
-V106,True,RECENTLY_BREACHED_VENDOR,HIGH,"Non-EU data residency; no GDPR DPA; MEDIUM breach in last 12 months; HIGH sensitivity"
-V107,True,HIGH_RISK_SCORE,HIGH,"No SOC2; no ISO27001; HIGH sensitivity read_write; 168h breach notification SLA"
-V108,True,BREACHED_VENDOR_HIGH_ACCESS,CRITICAL,"HIGH severity breach; B financial rating; HIGH sensitivity read_write"
-V109,True,RECENTLY_BREACHED_VENDOR,HIGH,"Two HIGH severity breaches in last 12 months; read_write access"
-V110,True,HIGH_RISK_SCORE,MEDIUM,"HIGH concentration risk; no SOC2; no GDPR DPA; MEDIUM read_write access"
-V111,True,HIGH_RISK_SCORE,MEDIUM,"No GDPR DPA; HIGH sensitivity read access; HR data"
-V112,True,HIGH_RISK_SCORE,MEDIUM,"No ISO27001; HIGH sensitivity CRM data; read access"
-V113,True,HIGH_RISK_SCORE,MEDIUM,"Last risk assessment March 2023 — over 12 months stale"
-V114,True,HIGH_RISK_SCORE,LOW,"8 sub-processors; supply chain risk not fully assessed"
-V115,True,HIGH_RISK_SCORE,MEDIUM,"B financial rating; MEDIUM sensitivity read_write; viability concern"
-V116,True,EXPIRED_CERTIFICATION,MEDIUM,"SOC2 expires 2024-07-10 — within 30 days of assessment; MEDIUM sensitivity read_write"
-V117,True,HIGH_RISK_SCORE,MEDIUM,"No SOC2; no ISO27001; MEDIUM sensitivity read_write"
-V118,True,HIGH_RISK_SCORE,HIGH,"Non-EU data residency; no GDPR DPA; MEDIUM sensitivity"
-V119,True,HIGH_RISK_SCORE,LOW,"168h breach notification SLA — 3x over GDPR Article 33 72h requirement"
-V120,True,HIGH_RISK_SCORE,MEDIUM,"MEDIUM concentration risk; HIGH sensitivity read access"
-V121,True,HIGH_RISK_SCORE,MEDIUM,"Last risk assessment January 2023 — over 18 months stale"
-V122,True,HIGH_RISK_SCORE,MEDIUM,"9 sub-processors; non-EU data residency; supply chain exposure"
+V101,True,BREACHED_VENDOR_HIGH_ACCESS,CRITICAL,Two CRITICAL breaches in 12 months; HIGH sensitivity read_write; no SOC2/ISO/DPA; CCC rating
+V102,True,BREACHED_VENDOR_HIGH_ACCESS,CRITICAL,Three CRITICAL breaches; HIGH sensitivity read_write; no SOC2/ISO; CCC rating
+V103,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,Under active security investigation; HIGH sensitivity read_write; prior HIGH breach
+V104,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,Under active security investigation; HIGH sensitivity; financial records exposed
+V105,True,EXPIRED_CERTIFICATION,HIGH,SOC2 Type II expired 2024-04-30; HIGH sensitivity read_write access continues
+V106,True,RECENTLY_BREACHED_VENDOR,HIGH,Non-EU data residency; no GDPR DPA; MEDIUM breach in last 12 months; HIGH sensitivity
+V107,True,HIGH_RISK_SCORE,HIGH,No SOC2; no ISO27001; HIGH sensitivity read_write; 168h breach notification SLA
+V108,True,BREACHED_VENDOR_HIGH_ACCESS,CRITICAL,HIGH severity breach; B financial rating; HIGH sensitivity read_write
+V109,True,RECENTLY_BREACHED_VENDOR,HIGH,Two HIGH severity breaches in last 12 months; read_write access
+V110,True,HIGH_RISK_SCORE,MEDIUM,HIGH concentration risk; no SOC2; no GDPR DPA; MEDIUM read_write access
+V111,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; HIGH sensitivity read access; HR data
+V112,True,HIGH_RISK_SCORE,MEDIUM,No ISO27001; HIGH sensitivity CRM data; read access
+V113,True,HIGH_RISK_SCORE,MEDIUM,Last risk assessment March 2023 — over 12 months stale
+V114,True,HIGH_RISK_SCORE,LOW,8 sub-processors; supply chain risk not fully assessed
+V115,True,HIGH_RISK_SCORE,MEDIUM,B financial rating; MEDIUM sensitivity read_write; viability concern
+V116,True,EXPIRED_CERTIFICATION,MEDIUM,SOC2 expires 2024-07-10 — within 30 days of assessment; MEDIUM sensitivity read_write
+V117,True,HIGH_RISK_SCORE,MEDIUM,No SOC2; no ISO27001; MEDIUM sensitivity read_write
+V118,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; MEDIUM sensitivity
+V119,True,HIGH_RISK_SCORE,LOW,168h breach notification SLA — 3x over GDPR Article 33 72h requirement
+V120,True,HIGH_RISK_SCORE,MEDIUM,MEDIUM concentration risk; HIGH sensitivity read access
+V121,True,HIGH_RISK_SCORE,MEDIUM,Last risk assessment January 2023 — over 18 months stale
+V122,True,HIGH_RISK_SCORE,MEDIUM,9 sub-processors; non-EU data residency; supply chain exposure
 V123,False,,,Fully compliant payment processor; AA rating; LOW sensitivity; valid certs
 V124,False,,,Clean cloud provider; A rating; LOW sensitivity; valid SOC2 and ISO
 V125,False,,,Security vendor; fully certified; A rating; LOW sensitivity
@@ -29,3 +29,373 @@ V127,False,,,Backup provider; fully certified; A rating; LOW sensitivity
 V128,False,,,Consulting vendor; BBB rating; compliant; MEDIUM sensitivity read-only
 V129,False,,,SaaS vendor; BBB rating; LOW sensitivity; valid certs
 V130,False,,,ERP vendor; A rating; LOW sensitivity; fully compliant
+V131,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,Vendor under active security investigation; HIGH sensitivity data access must be suspended
+V132,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,Vendor under active security investigation; HIGH sensitivity data access must be suspended
+V133,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,Vendor under active security investigation; HIGH sensitivity data access must be suspended
+V134,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,Vendor under active security investigation; HIGH sensitivity data access must be suspended
+V135,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,Vendor under active security investigation; HIGH sensitivity data access must be suspended
+V136,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,Vendor under active security investigation; HIGH sensitivity data access must be suspended
+V137,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,Vendor under active security investigation; HIGH sensitivity data access must be suspended
+V138,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,Vendor under active security investigation; HIGH sensitivity data access must be suspended
+V139,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,Vendor under active security investigation; HIGH sensitivity data access must be suspended
+V140,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,Vendor under active security investigation; HIGH sensitivity data access must be suspended
+V141,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,Vendor under active security investigation; HIGH sensitivity data access must be suspended
+V142,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,Vendor under active security investigation; HIGH sensitivity data access must be suspended
+V143,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,Vendor under active security investigation; HIGH sensitivity data access must be suspended
+V144,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,Vendor under active security investigation; HIGH sensitivity data access must be suspended
+V145,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,Vendor under active security investigation; HIGH sensitivity data access must be suspended
+V146,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,Vendor under active security investigation; HIGH sensitivity data access must be suspended
+V147,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,Vendor under active security investigation; HIGH sensitivity data access must be suspended
+V148,True,VENDOR_UNDER_INVESTIGATION,CRITICAL,Vendor under active security investigation; HIGH sensitivity data access must be suspended
+V149,True,RECENTLY_BREACHED_VENDOR,HIGH,CRITICAL breach in last 12 months; HIGH sensitivity data with read_write access still active
+V150,True,RECENTLY_BREACHED_VENDOR,MEDIUM,Recent HIGH/CRITICAL breach; compliance review recommended
+V151,True,BREACHED_VENDOR_HIGH_ACCESS,CRITICAL,2 CRITICAL breaches; HIGH sensitivity read_write access continues
+V152,True,RECENTLY_BREACHED_VENDOR,HIGH,CRITICAL breach in last 12 months; HIGH sensitivity data with read_write access still active
+V153,True,BREACHED_VENDOR_HIGH_ACCESS,CRITICAL,3 CRITICAL breaches; HIGH sensitivity read_write access continues
+V154,True,RECENTLY_BREACHED_VENDOR,MEDIUM,Recent HIGH/CRITICAL breach; compliance review recommended
+V155,True,RECENTLY_BREACHED_VENDOR,HIGH,CRITICAL breach in last 12 months; HIGH sensitivity data with read_write access still active
+V156,True,RECENTLY_BREACHED_VENDOR,MEDIUM,Recent HIGH/CRITICAL breach; compliance review recommended
+V157,True,RECENTLY_BREACHED_VENDOR,HIGH,CRITICAL breach in last 12 months; HIGH sensitivity data with read_write access still active
+V158,True,RECENTLY_BREACHED_VENDOR,MEDIUM,Recent HIGH/CRITICAL breach; compliance review recommended
+V159,True,RECENTLY_BREACHED_VENDOR,HIGH,CRITICAL breach in last 12 months; HIGH sensitivity data with read_write access still active
+V160,True,RECENTLY_BREACHED_VENDOR,HIGH,CRITICAL breach in last 12 months; HIGH sensitivity data with read_write access still active
+V161,True,BREACHED_VENDOR_HIGH_ACCESS,CRITICAL,2 CRITICAL breaches; HIGH sensitivity read_write access continues
+V162,True,RECENTLY_BREACHED_VENDOR,HIGH,CRITICAL breach in last 12 months; HIGH sensitivity data with read_write access still active
+V163,True,RECENTLY_BREACHED_VENDOR,HIGH,CRITICAL breach in last 12 months; HIGH sensitivity data with read_write access still active
+V164,True,BREACHED_VENDOR_HIGH_ACCESS,CRITICAL,2 CRITICAL breaches; HIGH sensitivity read_write access continues
+V165,True,RECENTLY_BREACHED_VENDOR,HIGH,CRITICAL breach in last 12 months; HIGH sensitivity data with read_write access still active
+V166,True,EXPIRED_CERTIFICATION,HIGH,SOC2 Type II expired 2024-05-27; vendor retains HIGH sensitivity read_write access
+V167,True,EXPIRED_CERTIFICATION,MEDIUM,SOC2 Type II expired 2024-01-05; vendor retains MEDIUM sensitivity read_write access
+V168,True,EXPIRED_CERTIFICATION,MEDIUM,SOC2 Type II expired 2024-05-14; vendor retains MEDIUM sensitivity read_write access
+V169,True,EXPIRED_CERTIFICATION,HIGH,SOC2 Type II expired 2024-05-12; vendor retains HIGH sensitivity read_write access
+V170,True,EXPIRED_CERTIFICATION,HIGH,SOC2 Type II expired 2024-04-18; vendor retains HIGH sensitivity read_write access
+V171,True,EXPIRED_CERTIFICATION,HIGH,SOC2 Type II expired 2024-06-07; vendor retains HIGH sensitivity read_write access
+V172,True,EXPIRED_CERTIFICATION,HIGH,SOC2 Type II expired 2024-04-09; vendor retains HIGH sensitivity read_write access
+V173,True,EXPIRED_CERTIFICATION,HIGH,SOC2 Type II expired 2023-12-27; vendor retains HIGH sensitivity read_write access
+V174,True,EXPIRED_CERTIFICATION,HIGH,SOC2 Type II expired 2023-12-29; vendor retains HIGH sensitivity read_write access
+V175,True,EXPIRED_CERTIFICATION,MEDIUM,SOC2 Type II expired 2024-06-08; vendor retains MEDIUM sensitivity read_write access
+V176,True,EXPIRED_CERTIFICATION,HIGH,SOC2 Type II expired 2024-04-01; vendor retains HIGH sensitivity read_write access
+V177,True,EXPIRED_CERTIFICATION,HIGH,SOC2 Type II expired 2024-01-01; vendor retains HIGH sensitivity read_write access
+V178,True,EXPIRED_CERTIFICATION,MEDIUM,SOC2 Type II expired 2024-02-14; vendor retains MEDIUM sensitivity read_write access
+V179,True,EXPIRED_CERTIFICATION,MEDIUM,SOC2 Type II expired 2024-05-30; vendor retains MEDIUM sensitivity read_write access
+V180,True,EXPIRED_CERTIFICATION,HIGH,SOC2 Type II expired 2024-03-31; vendor retains HIGH sensitivity read_write access
+V181,True,EXPIRED_CERTIFICATION,HIGH,SOC2 Type II expired 2024-03-02; vendor retains HIGH sensitivity read_write access
+V182,True,EXPIRED_CERTIFICATION,HIGH,SOC2 Type II expired 2024-03-16; vendor retains HIGH sensitivity read_write access
+V183,True,EXPIRED_CERTIFICATION,MEDIUM,SOC2 Type II expired 2024-03-17; vendor retains MEDIUM sensitivity read_write access
+V184,True,EXPIRED_CERTIFICATION,HIGH,SOC2 Type II expired 2024-01-11; vendor retains HIGH sensitivity read_write access
+V185,True,EXPIRED_CERTIFICATION,MEDIUM,SOC2 Type II expired 2024-01-05; vendor retains MEDIUM sensitivity read_write access
+V186,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V187,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V188,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V189,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V190,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V191,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V192,True,RECENTLY_BREACHED_VENDOR,MEDIUM,Recent HIGH/CRITICAL breach; compliance review recommended
+V193,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V194,True,RECENTLY_BREACHED_VENDOR,MEDIUM,Recent HIGH/CRITICAL breach; compliance review recommended
+V195,True,RECENTLY_BREACHED_VENDOR,MEDIUM,Recent HIGH/CRITICAL breach; compliance review recommended
+V196,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V197,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V198,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V199,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V200,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V201,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V202,True,RECENTLY_BREACHED_VENDOR,MEDIUM,Recent HIGH/CRITICAL breach; compliance review recommended
+V203,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V204,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V205,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V206,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V207,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V208,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V209,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V210,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V211,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V212,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V213,True,HIGH_RISK_SCORE,MEDIUM,SOC2 Type II expires 2024-09-13 -- within 90 days; renewal required
+V214,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V215,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V216,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V217,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V218,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V219,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V220,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V221,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V222,True,HIGH_RISK_SCORE,MEDIUM,SOC2 Type II expires 2024-08-20 -- within 90 days; renewal required
+V223,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V224,True,RECENTLY_BREACHED_VENDOR,MEDIUM,Recent HIGH/CRITICAL breach; compliance review recommended
+V225,True,RECENTLY_BREACHED_VENDOR,HIGH,CRITICAL breach in last 12 months; HIGH sensitivity data with read_write access still active
+V226,True,RECENTLY_BREACHED_VENDOR,HIGH,CRITICAL breach in last 12 months; HIGH sensitivity data with read_write access still active
+V227,True,RECENTLY_BREACHED_VENDOR,MEDIUM,Recent HIGH/CRITICAL breach; compliance review recommended
+V228,True,RECENTLY_BREACHED_VENDOR,HIGH,CRITICAL breach in last 12 months; HIGH sensitivity data with read_write access still active
+V229,True,RECENTLY_BREACHED_VENDOR,MEDIUM,Recent HIGH/CRITICAL breach; compliance review recommended
+V230,True,RECENTLY_BREACHED_VENDOR,HIGH,CRITICAL breach in last 12 months; HIGH sensitivity data with read_write access still active
+V231,True,RECENTLY_BREACHED_VENDOR,MEDIUM,Recent HIGH/CRITICAL breach; compliance review recommended
+V232,True,RECENTLY_BREACHED_VENDOR,MEDIUM,Recent HIGH/CRITICAL breach; compliance review recommended
+V233,True,RECENTLY_BREACHED_VENDOR,MEDIUM,Recent HIGH/CRITICAL breach; compliance review recommended
+V234,True,RECENTLY_BREACHED_VENDOR,MEDIUM,Recent HIGH/CRITICAL breach; compliance review recommended
+V235,True,RECENTLY_BREACHED_VENDOR,HIGH,CRITICAL breach in last 12 months; HIGH sensitivity data with read_write access still active
+V236,True,RECENTLY_BREACHED_VENDOR,HIGH,CRITICAL breach in last 12 months; HIGH sensitivity data with read_write access still active
+V237,True,RECENTLY_BREACHED_VENDOR,MEDIUM,Recent HIGH/CRITICAL breach; compliance review recommended
+V238,True,RECENTLY_BREACHED_VENDOR,MEDIUM,Recent HIGH/CRITICAL breach; compliance review recommended
+V239,True,RECENTLY_BREACHED_VENDOR,MEDIUM,Recent HIGH/CRITICAL breach; compliance review recommended
+V240,True,RECENTLY_BREACHED_VENDOR,HIGH,CRITICAL breach in last 12 months; HIGH sensitivity data with read_write access still active
+V241,True,RECENTLY_BREACHED_VENDOR,MEDIUM,Recent HIGH/CRITICAL breach; compliance review recommended
+V242,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V243,True,HIGH_RISK_SCORE,MEDIUM,168h breach notification SLA exceeds GDPR Article 33 72h requirement
+V244,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V245,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V246,True,HIGH_RISK_SCORE,MEDIUM,Last risk assessment 2022-12-14 -- over 12 months stale; re-assessment required
+V247,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V248,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V249,True,HIGH_RISK_SCORE,MEDIUM,Last risk assessment 2022-11-18 -- over 12 months stale; re-assessment required
+V250,True,HIGH_RISK_SCORE,MEDIUM,Last risk assessment 2022-09-27 -- over 12 months stale; re-assessment required
+V251,True,HIGH_RISK_SCORE,MEDIUM,Last risk assessment 2022-10-26 -- over 12 months stale; re-assessment required
+V252,True,HIGH_RISK_SCORE,MEDIUM,168h breach notification SLA exceeds GDPR Article 33 72h requirement
+V253,True,HIGH_RISK_SCORE,MEDIUM,Last risk assessment 2022-08-16 -- over 12 months stale; re-assessment required
+V254,True,HIGH_RISK_SCORE,MEDIUM,168h breach notification SLA exceeds GDPR Article 33 72h requirement
+V255,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V256,True,HIGH_RISK_SCORE,MEDIUM,168h breach notification SLA exceeds GDPR Article 33 72h requirement
+V257,True,HIGH_RISK_SCORE,MEDIUM,168h breach notification SLA exceeds GDPR Article 33 72h requirement
+V258,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V259,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V260,True,HIGH_RISK_SCORE,MEDIUM,Last risk assessment 2022-10-26 -- over 12 months stale; re-assessment required
+V261,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V262,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V263,True,HIGH_RISK_SCORE,MEDIUM,Last risk assessment 2023-04-14 -- over 12 months stale; re-assessment required
+V264,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V265,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V266,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V267,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V268,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V269,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V270,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V271,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V272,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V273,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V274,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V275,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V276,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V277,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V278,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V279,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V280,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V281,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V282,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V283,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V284,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V285,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V286,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V287,True,HIGH_RISK_SCORE,MEDIUM,HIGH concentration risk; single-vendor dependency on critical systems
+V288,True,HIGH_RISK_SCORE,MEDIUM,HIGH concentration risk; single-vendor dependency on critical systems
+V289,True,HIGH_RISK_SCORE,MEDIUM,HIGH concentration risk; single-vendor dependency on critical systems
+V290,True,HIGH_RISK_SCORE,MEDIUM,HIGH concentration risk; single-vendor dependency on critical systems
+V291,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V292,True,HIGH_RISK_SCORE,MEDIUM,HIGH concentration risk; single-vendor dependency on critical systems
+V293,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V294,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V295,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V296,True,HIGH_RISK_SCORE,MEDIUM,HIGH concentration risk; single-vendor dependency on critical systems
+V297,True,HIGH_RISK_SCORE,MEDIUM,HIGH concentration risk; single-vendor dependency on critical systems
+V298,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V299,True,HIGH_RISK_SCORE,MEDIUM,HIGH concentration risk; single-vendor dependency on critical systems
+V300,True,HIGH_RISK_SCORE,MEDIUM,HIGH concentration risk; single-vendor dependency on critical systems
+V301,True,HIGH_RISK_SCORE,MEDIUM,HIGH concentration risk; single-vendor dependency on critical systems
+V302,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V303,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V304,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V305,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V306,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V307,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V308,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V309,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V310,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V311,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V312,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V313,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V314,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V315,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V316,True,HIGH_RISK_SCORE,MEDIUM,No GDPR DPA; vendor processes personal data under contract but agreement missing
+V317,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V318,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V319,True,HIGH_RISK_SCORE,MEDIUM,B financial rating indicates viability concern; monitor for credit events
+V320,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V321,True,HIGH_RISK_SCORE,MEDIUM,B financial rating indicates viability concern; monitor for credit events
+V322,True,HIGH_RISK_SCORE,MEDIUM,B financial rating indicates viability concern; monitor for credit events
+V323,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V324,True,HIGH_RISK_SCORE,MEDIUM,B financial rating indicates viability concern; monitor for credit events
+V325,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V326,True,HIGH_RISK_SCORE,MEDIUM,B financial rating indicates viability concern; monitor for credit events
+V327,True,HIGH_RISK_SCORE,MEDIUM,B financial rating indicates viability concern; monitor for credit events
+V328,True,HIGH_RISK_SCORE,MEDIUM,B financial rating indicates viability concern; monitor for credit events
+V329,True,HIGH_RISK_SCORE,HIGH,Non-EU data residency; no GDPR DPA; processes personal data
+V330,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V331,True,HIGH_RISK_SCORE,MEDIUM,B financial rating indicates viability concern; monitor for credit events
+V332,True,HIGH_RISK_SCORE,MEDIUM,B financial rating indicates viability concern; monitor for credit events
+V333,True,HIGH_RISK_SCORE,MEDIUM,B financial rating indicates viability concern; monitor for credit events
+V334,True,HIGH_RISK_SCORE,MEDIUM,SOC2 Type II expires 2024-08-02 -- within 90 days; renewal required
+V335,True,HIGH_RISK_SCORE,MEDIUM,SOC2 Type II expires 2024-08-29 -- within 90 days; renewal required
+V336,True,HIGH_RISK_SCORE,MEDIUM,SOC2 Type II expires 2024-08-20 -- within 90 days; renewal required
+V337,True,HIGH_RISK_SCORE,MEDIUM,SOC2 Type II expires 2024-09-02 -- within 90 days; renewal required
+V338,True,HIGH_RISK_SCORE,MEDIUM,SOC2 Type II expires 2024-08-04 -- within 90 days; renewal required
+V339,True,HIGH_RISK_SCORE,MEDIUM,SOC2 Type II expires 2024-08-27 -- within 90 days; renewal required
+V340,True,HIGH_RISK_SCORE,MEDIUM,SOC2 Type II expires 2024-06-23 -- within 90 days; renewal required
+V341,True,HIGH_RISK_SCORE,MEDIUM,SOC2 Type II expires 2024-08-01 -- within 90 days; renewal required
+V342,True,HIGH_RISK_SCORE,MEDIUM,SOC2 Type II expires 2024-07-03 -- within 90 days; renewal required
+V343,True,HIGH_RISK_SCORE,MEDIUM,SOC2 Type II expires 2024-09-11 -- within 90 days; renewal required
+V344,True,HIGH_RISK_SCORE,MEDIUM,SOC2 Type II expires 2024-08-07 -- within 90 days; renewal required
+V345,True,HIGH_RISK_SCORE,MEDIUM,SOC2 Type II expires 2024-08-05 -- within 90 days; renewal required
+V346,True,HIGH_RISK_SCORE,MEDIUM,SOC2 Type II expires 2024-08-02 -- within 90 days; renewal required
+V347,True,HIGH_RISK_SCORE,MEDIUM,SOC2 Type II expires 2024-07-28 -- within 90 days; renewal required
+V348,True,HIGH_RISK_SCORE,MEDIUM,SOC2 Type II expires 2024-06-22 -- within 90 days; renewal required
+V349,True,HIGH_RISK_SCORE,MEDIUM,168h breach notification SLA exceeds GDPR Article 33 72h requirement
+V350,True,HIGH_RISK_SCORE,MEDIUM,168h breach notification SLA exceeds GDPR Article 33 72h requirement
+V351,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V352,True,HIGH_RISK_SCORE,MEDIUM,168h breach notification SLA exceeds GDPR Article 33 72h requirement
+V353,True,HIGH_RISK_SCORE,HIGH,No SOC2 Type II; no ISO27001; HIGH sensitivity data with read_write access
+V354,True,HIGH_RISK_SCORE,MEDIUM,168h breach notification SLA exceeds GDPR Article 33 72h requirement
+V355,True,HIGH_RISK_SCORE,MEDIUM,168h breach notification SLA exceeds GDPR Article 33 72h requirement
+V356,True,HIGH_RISK_SCORE,MEDIUM,168h breach notification SLA exceeds GDPR Article 33 72h requirement
+V357,True,HIGH_RISK_SCORE,MEDIUM,168h breach notification SLA exceeds GDPR Article 33 72h requirement
+V358,True,HIGH_RISK_SCORE,MEDIUM,168h breach notification SLA exceeds GDPR Article 33 72h requirement
+V359,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V360,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V361,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V362,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V363,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V364,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V365,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V366,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V367,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V368,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V369,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V370,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V371,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V372,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V373,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V374,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V375,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V376,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V377,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V378,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V379,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V380,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V381,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V382,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V383,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V384,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V385,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V386,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V387,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V388,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V389,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V390,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V391,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V392,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V393,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V394,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V395,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V396,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V397,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V398,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V399,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V400,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V401,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V402,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V403,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V404,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V405,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V406,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V407,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V408,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V409,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V410,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V411,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V412,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V413,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V414,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V415,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V416,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V417,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V418,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V419,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V420,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V421,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V422,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V423,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V424,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V425,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V426,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V427,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V428,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V429,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V430,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V431,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V432,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V433,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V434,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V435,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V436,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V437,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V438,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V439,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V440,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V441,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V442,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V443,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V444,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V445,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V446,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V447,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V448,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V449,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V450,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V451,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V452,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V453,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V454,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V455,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V456,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V457,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V458,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V459,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V460,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V461,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V462,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V463,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V464,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V465,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V466,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V467,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V468,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V469,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V470,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V471,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V472,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V473,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V474,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V475,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V476,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V477,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V478,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V479,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V480,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V481,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V482,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V483,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V484,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V485,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V486,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V487,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V488,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V489,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V490,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V491,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V492,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V493,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V494,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V495,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V496,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V497,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V498,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V499,False,,,Compliant vendor; valid certifications; acceptable financial standing
+V500,False,,,Compliant vendor; valid certifications; acceptable financial standing
