@@ -58,18 +58,28 @@ def row_to_vendor_score(raw: dict[str, Any]) -> VendorScore:
         scored = score_vendor(raw)
         enriched = scored["_enriched"]
     else:
+        def _safe_load_dict(val):
+            if isinstance(val, dict): return val
+            try: return json.loads(val or "{}")
+            except Exception: return {}
+            
+        def _safe_load_list(val):
+            if isinstance(val, list): return val
+            try: return json.loads(val or "[]")
+            except Exception: return []
+
         scored = {
-            "risk_score": raw["risk_score"],
-            "risk_level": raw["risk_level"],
-            "rag": raw["rag"],
-            "score_breakdown": json.loads(raw["score_breakdown"] or "{}"),
-            "risk_factors": json.loads(raw["risk_factors"] or "[]"),
-            "anomaly_flags": json.loads(raw["anomaly_flags"] or "[]"),
+            "risk_score": raw.get("risk_score") or 0.0,
+            "risk_level": raw.get("risk_level") or "LOW",
+            "rag": raw.get("rag") or "GREEN",
+            "score_breakdown": _safe_load_dict(raw.get("score_breakdown")),
+            "risk_factors": _safe_load_list(raw.get("risk_factors")),
+            "anomaly_flags": _safe_load_list(raw.get("anomaly_flags")),
             "recommendation": {
-                "action": raw["recommendation_action"] or "MONITOR",
-                "detail": raw["recommendation_detail"] or "",
+                "action": raw.get("recommendation_action") or "MONITOR",
+                "detail": raw.get("recommendation_detail") or "",
             },
-            "alerts": json.loads(raw["alerts"] or "[]"),
+            "alerts": _safe_load_list(raw.get("alerts")),
         }
         enriched = enrich(raw)
 
