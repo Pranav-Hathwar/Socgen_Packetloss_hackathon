@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "../contexts/AuthContext";
+import { useRefresh } from "./_app";
+import { AdminSandbox } from "../components/AdminSandbox";
 import { api } from "../lib/api";
 import {
   PlayIcon,
@@ -26,6 +28,7 @@ function StatusDot({ running }: { running: boolean }) {
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
+  const { triggerRefresh } = useRefresh();
   const router = useRouter();
 
   const [status, setStatus] = useState<SchedulerStatus | null>(null);
@@ -234,6 +237,9 @@ export default function AdminPage() {
           {notifyLoading ? "Sending…" : "Send Email"}
         </button>
       </div>
+
+      {/* Demo event simulator — only visible here */}
+      <AdminSandbox onDataChange={triggerRefresh} />
     </div>
   );
 }

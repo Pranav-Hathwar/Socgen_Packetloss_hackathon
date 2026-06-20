@@ -2,7 +2,6 @@ import "../styles/globals.css";
 import type { AppProps } from "next/app";
 import { Toaster } from "react-hot-toast";
 import { Layout } from "../components/Layout";
-import { AdminSandbox } from "../components/AdminSandbox";
 import { AuthProvider } from "../contexts/AuthContext";
 import { createContext, useContext, useState, useCallback } from "react";
 
@@ -23,7 +22,6 @@ export default function App({ Component, pageProps }: AppProps) {
         <Layout>
           <Component {...pageProps} />
         </Layout>
-        <AdminSandbox onDataChange={triggerRefresh} />
         <Toaster
           position="top-right"
           toastOptions={{
