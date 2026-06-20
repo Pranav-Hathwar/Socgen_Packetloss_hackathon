@@ -1,9 +1,12 @@
 """Run once at application startup: init DB, load CSVs, score all vendors."""
 from __future__ import annotations
 
+from .auth import hash_password
 from .db import (
+    create_user,
     fetch_all_vendors,
     get_conn,
+    get_user_by_email,
     init_db,
     load_labels_csv,
     load_registry_csv,
@@ -11,9 +14,25 @@ from .db import (
 )
 from .engine import score_vendor
 
+_DEMO_USERS = [
+    ("admin@vendorlens.com",   "Admin@Demo1",   "ADMIN"),
+    ("analyst@vendorlens.com", "Analyst@Demo1", "ANALYST"),
+    ("auditor@vendorlens.com", "Auditor@Demo1", "AUDITOR"),
+]
+
+
+def _seed_demo_users() -> int:
+    seeded = 0
+    for email, password, role in _DEMO_USERS:
+        if not get_user_by_email(email):
+            create_user(email, hash_password(password), role)
+            seeded += 1
+    return seeded
+
 
 def bootstrap() -> dict:
     init_db()
+    users_seeded = _seed_demo_users()
     reg = load_registry_csv()
     lbl = load_labels_csv()
 
@@ -56,4 +75,5 @@ def bootstrap() -> dict:
         "labels_loaded": lbl,
         "vendors_scored": scored,
         "history_seeded": history_seeded,
+        "users_seeded": users_seeded,
     }
