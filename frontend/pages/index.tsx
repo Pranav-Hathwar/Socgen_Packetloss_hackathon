@@ -76,9 +76,12 @@ export default function Dashboard() {
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
-  // CSV ingest
+  // Multi-format ingest
   const [ingestOpen, setIngestOpen] = useState(false);
+  const [ingestTab, setIngestTab] = useState<"file" | "email" | "json">("file");
   const [ingestFile, setIngestFile] = useState<File | null>(null);
+  const [ingestEmail, setIngestEmail] = useState("");
+  const [ingestJson, setIngestJson] = useState("");
   const [ingestLoading, setIngestLoading] = useState(false);
   const [ingestResult, setIngestResult] = useState<{ rows_processed: number; message: string } | null>(null);
   const [ingestError, setIngestError] = useState<string | null>(null);
@@ -175,12 +178,24 @@ export default function Dashboard() {
   const hasFilters = search || catFilter || riskFilter;
 
   async function handleIngest() {
-    if (!ingestFile) return;
     setIngestLoading(true);
     setIngestError(null);
     setIngestResult(null);
     try {
-      const res = await api.ingest.upload(ingestFile);
+      let res;
+      if (ingestTab === "email") {
+        if (!ingestEmail.trim()) throw new Error("Paste email text first");
+        res = await api.ingest.email(ingestEmail);
+      } else if (ingestTab === "json") {
+        if (!ingestJson.trim()) throw new Error("Paste JSON first");
+        let parsed;
+        try { parsed = JSON.parse(ingestJson); } catch { throw new Error("Invalid JSON"); }
+        const vendors = Array.isArray(parsed) ? parsed : [parsed];
+        res = await api.ingest.json(vendors);
+      } else {
+        if (!ingestFile) throw new Error("Select a file first");
+        res = await api.ingest.upload(ingestFile);
+      }
       setIngestResult({ rows_processed: res.rows_processed, message: res.message });
       setIngestFile(null);
       fetchVendors();
@@ -229,7 +244,7 @@ export default function Dashboard() {
             className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm"
           >
             <ArrowUpTrayIcon className="w-4 h-4" />
-            Import CSV
+            Import Data
           </button>
           <button
             onClick={() => { setAddOpen(true); setAddError(null); }}
@@ -241,44 +256,85 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* CSV Ingest Modal */}
+      {/* Multi-format Ingest Modal */}
       {ingestOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-scale-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-scale-in">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-              <h2 className="text-base font-bold text-slate-900">Import Vendor CSV</h2>
-              <button onClick={() => { setIngestOpen(false); setIngestResult(null); }} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
+              <h2 className="text-base font-bold text-slate-900">Import Vendor Data</h2>
+              <button onClick={() => { setIngestOpen(false); setIngestResult(null); setIngestError(null); }} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
                 <XMarkIcon className="w-5 h-5 text-slate-500" />
               </button>
             </div>
+            {/* Format tabs */}
+            <div className="flex border-b border-slate-100 px-6">
+              {(["file", "email", "json"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => { setIngestTab(tab); setIngestResult(null); setIngestError(null); }}
+                  className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    ingestTab === tab ? "border-indigo-600 text-indigo-600" : "border-transparent text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  {tab === "file" ? "File (CSV/JSON/Excel)" : tab === "email" ? "Email Paste" : "JSON Paste"}
+                </button>
+              ))}
+            </div>
             <div className="px-6 py-5 space-y-4">
-              <p className="text-sm text-slate-500">
-                Upload a <code className="bg-slate-100 px-1 rounded text-xs">vendor_registry.csv</code> file. Existing vendors will be updated; new ones added.
-              </p>
-              <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
-                <ArrowUpTrayIcon className="w-7 h-7 text-slate-400 mb-2" />
-                <span className="text-sm text-slate-500">
-                  {ingestFile ? ingestFile.name : "Click to select CSV file"}
-                </span>
-                <input
-                  type="file"
-                  accept=".csv"
-                  className="hidden"
-                  onChange={(e) => { setIngestFile(e.target.files?.[0] ?? null); setIngestResult(null); setIngestError(null); }}
-                />
-              </label>
+              {ingestTab === "file" && (
+                <>
+                  <p className="text-sm text-slate-500">Upload CSV, JSON, Excel (.xlsx), or YAML. Existing vendors will be updated; new ones added.</p>
+                  <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
+                    <ArrowUpTrayIcon className="w-7 h-7 text-slate-400 mb-2" />
+                    <span className="text-sm text-slate-500">
+                      {ingestFile ? ingestFile.name : "Click to select file"}
+                    </span>
+                    <span className="text-xs text-slate-400 mt-0.5">.csv · .json · .xlsx · .yaml</span>
+                    <input
+                      type="file"
+                      accept=".csv,.json,.xlsx,.yaml,.yml"
+                      className="hidden"
+                      onChange={(e) => { setIngestFile(e.target.files?.[0] ?? null); setIngestResult(null); setIngestError(null); }}
+                    />
+                  </label>
+                </>
+              )}
+              {ingestTab === "email" && (
+                <>
+                  <p className="text-sm text-slate-500">Paste an email body containing vendor info as <code className="bg-slate-100 px-1 rounded text-xs">Field: Value</code> pairs. Multiple vendors separated by blank lines.</p>
+                  <textarea
+                    rows={8}
+                    placeholder={"Vendor Name: Acme Corp\nCategory: Cloud\nData Sensitivity: HIGH\nSOC2 Type II: true\nContract End: 2025-12-31\n\nVendor Name: Beta Ltd\n..."}
+                    value={ingestEmail}
+                    onChange={(e) => { setIngestEmail(e.target.value); setIngestResult(null); setIngestError(null); }}
+                    className="w-full text-xs font-mono border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
+                  />
+                </>
+              )}
+              {ingestTab === "json" && (
+                <>
+                  <p className="text-sm text-slate-500">Paste a JSON array of vendor objects. Fields map to vendor registry columns.</p>
+                  <textarea
+                    rows={8}
+                    placeholder={'[\n  {\n    "vendor_id": "V001",\n    "name": "Acme Corp",\n    "category": "Cloud",\n    "soc2_type2": true\n  }\n]'}
+                    value={ingestJson}
+                    onChange={(e) => { setIngestJson(e.target.value); setIngestResult(null); setIngestError(null); }}
+                    className="w-full text-xs font-mono border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
+                  />
+                </>
+              )}
               {ingestError && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{ingestError}</p>}
               {ingestResult && (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
-                  <p className="text-sm font-semibold text-emerald-800">{ingestResult.rows_processed} rows processed</p>
+                  <p className="text-sm font-semibold text-emerald-800">{ingestResult.rows_processed} vendor(s) processed</p>
                   <p className="text-xs text-emerald-600 mt-0.5">{ingestResult.message}</p>
                 </div>
               )}
               <div className="flex justify-end gap-2 pt-1">
-                <button onClick={() => { setIngestOpen(false); setIngestResult(null); }} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Cancel</button>
+                <button onClick={() => { setIngestOpen(false); setIngestResult(null); setIngestError(null); }} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Cancel</button>
                 <button
                   onClick={handleIngest}
-                  disabled={!ingestFile || ingestLoading}
+                  disabled={ingestLoading}
                   className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
                 >
                   <ArrowUpTrayIcon className="w-4 h-4" />

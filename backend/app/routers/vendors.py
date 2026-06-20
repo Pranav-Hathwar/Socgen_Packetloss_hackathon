@@ -12,6 +12,7 @@ from ..db import (
 from ..deps import AnyUser, require_role
 from ..engine import score_vendor
 from ..hydrate import row_to_summary, row_to_vendor_score
+from ..suggestions import generate_suggestions
 from ..schema import (
     VendorScore, VendorSummary, VendorCreateRequest, VendorUpdateRequest,
     RemediationRequest, RemediationRecord, ScoreHistoryPoint,
@@ -96,6 +97,16 @@ def update_vendor(vendor_id: str, body: VendorUpdateRequest, _user=Depends(requi
 def delete_vendor_endpoint(vendor_id: str, _user=Depends(require_role("ADMIN"))):
     if not delete_vendor(vendor_id):
         raise HTTPException(status_code=404, detail=f"Vendor {vendor_id} not found")
+
+
+@router.get("/{vendor_id}/suggestions")
+def get_suggestions(vendor_id: str, _user: AnyUser):
+    row = fetch_vendor(vendor_id)
+    if not row:
+        raise HTTPException(status_code=404, detail=f"Vendor {vendor_id} not found")
+    raw = dict(row)
+    scored = score_vendor(raw)
+    return {"vendor_id": vendor_id, "suggestions": generate_suggestions(raw, scored)}
 
 
 @router.get("/{vendor_id}/history", response_model=list[ScoreHistoryPoint])

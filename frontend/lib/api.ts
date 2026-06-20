@@ -9,6 +9,7 @@ import type {
   SimulateResponse,
   VendorCreateRequest,
   VendorScore,
+  VendorSuggestion,
   VendorSummary,
   ScoreHistoryPoint,
   RemediationRecord,
@@ -93,6 +94,7 @@ export const api = {
     remediations: (id: string) => get<RemediationRecord[]>(`/vendors/${id}/remediations`),
     remediate: (id: string, body: RemediationRequest) => post<RemediationRecord>(`/vendors/${id}/remediate`, body),
     update: (id: string, body: Record<string, unknown>) => patch<{ status: string; new_risk_score: number; new_risk_level: string }>(`/vendors/${id}`, body),
+    suggestions: (id: string) => get<{ vendor_id: string; suggestions: VendorSuggestion[] }>(`/vendors/${id}/suggestions`),
   },
   alerts: {
     list: () => get<AlertItem[]>("/alerts"),
@@ -116,6 +118,10 @@ export const api = {
       form.append("file", file);
       return postForm<{ status: string; rows_processed: number; message: string }>("/ingest", form);
     },
+    email: (text: string) =>
+      post<{ status: string; rows_processed: number; message: string }>("/ingest/email", { text }),
+    json: (vendors: object[]) =>
+      post<{ status: string; rows_processed: number; message: string }>("/ingest/json", { vendors }),
   },
   ask: (body: AskRequest) => post<AskResponse>("/ask", body),
   simulate: (body: SimulateRequest) => post<SimulateResponse>("/simulate", body),

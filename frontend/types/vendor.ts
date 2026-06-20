@@ -75,6 +75,18 @@ export interface VendorSummary {
   alerts: string[];
 }
 
+export interface VendorSuggestion {
+  id: string;
+  priority: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+  category: string;
+  action: string;
+  detail: string;
+  score_impact: number;
+  effort: "LOW" | "MEDIUM" | "HIGH";
+  timeline: string;
+  framework: string;
+}
+
 export interface AlertItem {
   vendor_id: string;
   vendor_name: string;
