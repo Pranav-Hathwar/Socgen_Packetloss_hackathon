@@ -45,6 +45,8 @@ def _str_list(val: Any) -> list[str]:
 def _json_list(val: Any) -> list[str]:
     if not val:
         return []
+    if isinstance(val, list):
+        return [str(x) for x in val]
     try:
         return json.loads(val)
     except Exception:

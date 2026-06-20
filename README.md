@@ -17,7 +17,7 @@ python -m venv .venv
 pip install -r requirements.txt
 
 cp .env.example .env
-# Edit .env — add your ANTHROPIC_API_KEY
+# Edit .env — add your GEMINI_API_KEY
 
 # Run
 uvicorn app.main:app --reload --port 8000
@@ -52,7 +52,7 @@ App available at **http://localhost:3000**
 | GET | `/alerts` | All active alerts |
 | GET | `/report` | Portfolio-level risk report |
 | POST | `/ingest` | Upload vendor CSV files |
-| POST | `/ask` | AI audit chat (Anthropic) |
+| POST | `/ask` | AI audit chat (Gemini) |
 
 ## Pages
 
@@ -66,7 +66,7 @@ App available at **http://localhost:3000**
 
 ```
 vendorlens/
-├── backend/          Python 3.11 · FastAPI · Pydantic · Anthropic SDK
+├── backend/          Python 3.11 · FastAPI · Pydantic · Gemini SDK
 │   └── app/
 │       ├── main.py
 │       ├── schema.py         ← canonical Pydantic models
@@ -89,5 +89,5 @@ Types are mirrored in **`backend/app/schema.py`** (Pydantic) and **`frontend/typ
 
 | Variable | Where | Description |
 |----------|-------|-------------|
-| `ANTHROPIC_API_KEY` | `backend/.env` | Anthropic API key for `/ask` |
+| `GEMINI_API_KEY` | `backend/.env` | Gemini API key for `/ask` |
 | `NEXT_PUBLIC_API_URL` | `frontend/.env.local` | Backend base URL |

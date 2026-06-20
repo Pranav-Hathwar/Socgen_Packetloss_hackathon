@@ -168,14 +168,16 @@ def load_registry_csv(path: Path | None = None) -> int:
                     soc2_type2, soc2_expiry, iso27001, gdpr_dpa,
                     breach_notification_sla_hours, breach_history,
                     financial_rating, data_residency, sub_processor_count,
-                    concentration_risk, last_assessment_date, under_investigation
+                    concentration_risk, last_assessment_date, under_investigation,
+                    contact_name, contact_email
                 ) VALUES (
                     :vendor_id, :name, :category, :contract_start, :contract_end,
                     :systems, :data_sensitivity, :access_type, :access_last_used_at,
                     :soc2_type2, :soc2_expiry, :iso27001, :gdpr_dpa,
                     :breach_notification_sla_hours, :breach_history,
                     :financial_rating, :data_residency, :sub_processor_count,
-                    :concentration_risk, :last_assessment_date, :under_investigation
+                    :concentration_risk, :last_assessment_date, :under_investigation,
+                    :contact_name, :contact_email
                 )
                 """,
                 {
@@ -187,6 +189,8 @@ def load_registry_csv(path: Path | None = None) -> int:
                     "data_residency": r.get("data_residency", "EU") or "EU",
                     "sub_processor_count": int(r.get("sub_processor_count", 0) or 0),
                     "concentration_risk": r.get("concentration_risk", "LOW") or "LOW",
+                    "contact_name": r.get("contact_name") or None,
+                    "contact_email": r.get("contact_email") or None,
                 },
             )
             count += conn.execute("SELECT changes()").fetchone()[0]
@@ -360,6 +364,14 @@ def fetch_cert_documents(vendor_id: str) -> list[sqlite3.Row]:
             "SELECT * FROM cert_documents WHERE vendor_id=? ORDER BY uploaded_at DESC",
             (vendor_id,),
         ).fetchall()
+
+
+def fetch_cert_document(cert_id: int, vendor_id: str) -> Optional[sqlite3.Row]:
+    with get_conn() as conn:
+        return conn.execute(
+            "SELECT * FROM cert_documents WHERE id=? AND vendor_id=?",
+            (cert_id, vendor_id),
+        ).fetchone()
 
 
 def create_vendor(data: dict) -> str:

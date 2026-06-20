@@ -30,16 +30,23 @@ import { useRefresh } from "./_app";
 const BLANK_VENDOR: VendorCreateRequest = {
   name: "",
   category: "Cloud",
+  contract_start: "",
   contract_end: "",
   data_sensitivity: "LOW",
   access_type: "read",
   systems: "",
   soc2_type2: false,
+  soc2_expiry: "",
   iso27001: false,
   gdpr_dpa: false,
+  breach_notification_sla_hours: 72,
   financial_rating: "BBB",
   data_residency: "EU",
   concentration_risk: "LOW",
+  sub_processor_count: 0,
+  under_investigation: false,
+  breach_history: "",
+  last_assessment_date: "",
   contact_name: "",
   contact_email: "",
 };
@@ -383,8 +390,17 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Contract end + Financial rating */}
+              {/* Contract Dates */}
               <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Contract Start</label>
+                  <input
+                    type="date"
+                    value={addForm.contract_start ?? ""}
+                    onChange={(e) => setAddForm((f) => ({ ...f, contract_start: e.target.value }))}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  />
+                </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1">Contract End Date</label>
                   <input
@@ -394,6 +410,10 @@ export default function Dashboard() {
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
                   />
                 </div>
+              </div>
+
+              {/* Financial rating + Concentration Risk */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1">Financial Rating</label>
                   <select
@@ -404,6 +424,18 @@ export default function Dashboard() {
                     {["AAA","AA","A","BBB","BB","B","CCC","CC","C"].map((r) => (
                       <option key={r} value={r}>{r}</option>
                     ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Concentration Risk</label>
+                  <select
+                    value={addForm.concentration_risk}
+                    onChange={(e) => setAddForm((f) => ({ ...f, concentration_risk: e.target.value as "LOW"|"MEDIUM"|"HIGH" }))}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  >
+                    <option value="LOW">LOW</option>
+                    <option value="MEDIUM">MEDIUM</option>
+                    <option value="HIGH">HIGH</option>
                   </select>
                 </div>
               </div>
@@ -482,6 +514,78 @@ export default function Dashboard() {
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
                   />
                 </div>
+              </div>
+
+              {/* Advanced Security Fields */}
+              <div className="pt-2 border-t border-slate-100">
+                <h3 className="text-sm font-semibold text-slate-800 mb-3">Advanced Security Details</h3>
+                
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">SOC 2 Expiry Date</label>
+                    <input
+                      type="date"
+                      value={addForm.soc2_expiry ?? ""}
+                      onChange={(e) => setAddForm((f) => ({ ...f, soc2_expiry: e.target.value }))}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Last Assessment Date</label>
+                    <input
+                      type="date"
+                      value={addForm.last_assessment_date ?? ""}
+                      onChange={(e) => setAddForm((f) => ({ ...f, last_assessment_date: e.target.value }))}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Breach SLA (Hours)</label>
+                    <input
+                      type="number"
+                      value={addForm.breach_notification_sla_hours}
+                      onChange={(e) => setAddForm((f) => ({ ...f, breach_notification_sla_hours: parseInt(e.target.value) || 0 }))}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Sub-processors</label>
+                    <input
+                      type="number"
+                      value={addForm.sub_processor_count}
+                      onChange={(e) => setAddForm((f) => ({ ...f, sub_processor_count: parseInt(e.target.value) || 0 }))}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                    />
+                  </div>
+                </div>
+
+                <div className="mb-3">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Breach History</label>
+                  <textarea
+                    rows={2}
+                    placeholder="YYYY-MM-DD|SEVERITY|Description..."
+                    value={addForm.breach_history ?? ""}
+                    onChange={(e) => setAddForm((f) => ({ ...f, breach_history: e.target.value }))}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 resize-y"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">Format: date|severity|description separated by pipes</p>
+                </div>
+
+                <label className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-lg cursor-pointer hover:bg-red-100 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={addForm.under_investigation}
+                    onChange={(e) => setAddForm((f) => ({ ...f, under_investigation: e.target.checked }))}
+                    className="rounded text-red-600 focus:ring-red-500 w-4 h-4"
+                  />
+                  <span className="text-sm font-semibold text-red-800 flex items-center gap-1">
+                    <ExclamationTriangleIcon className="w-4 h-4" />
+                    Vendor Currently Under Investigation
+                  </span>
+                </label>
               </div>
 
               {/* Compliance toggles */}

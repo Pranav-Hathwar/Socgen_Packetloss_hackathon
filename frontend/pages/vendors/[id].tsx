@@ -24,6 +24,7 @@ import {
   ArrowTrendingUpIcon,
   PencilSquareIcon,
   ArrowUpTrayIcon,
+  ArrowDownTrayIcon,
   DocumentCheckIcon,
   LightBulbIcon,
   XMarkIcon as XIcon,
@@ -61,7 +62,7 @@ export default function VendorDetail() {
   const [editLoading, setEditLoading] = useState(false);
   const [editMsg, setEditMsg] = useState<string | null>(null);
 
-  // Claude narrative
+  // AI narrative
   const [narrative, setNarrative] = useState<string | null>(null);
   const [narrativeLoading, setNarrativeLoading] = useState(false);
 
@@ -100,10 +101,13 @@ export default function VendorDetail() {
       setEditForm({
         contact_name: v.contact_name ?? "",
         contact_email: v.contact_email ?? "",
+        category: v.category,
         contract_end: v.contract_end ?? "",
         soc2_type2: v.compliance.soc2_type2,
+        soc2_expiry: v.compliance.soc2_expiry ?? "",
         iso27001: v.compliance.iso27001,
         gdpr_dpa: v.compliance.gdpr_dpa,
+        breach_notification_sla_hours: v.compliance.breach_notification_sla_hours,
         financial_rating: v.financial_rating,
         data_sensitivity: v.data_access.data_sensitivity,
         access_type: v.data_access.access_type,
@@ -303,103 +307,191 @@ export default function VendorDetail() {
 
       {/* Edit Panel */}
       {editOpen && (
-        <div className="card p-6 border-l-4 border-slate-400 animate-slide-up">
-          <h2 className="text-sm font-bold text-slate-800 mb-4">Edit Vendor Details</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Contact Name</label>
-              <input
-                type="text"
-                value={String(editForm.contact_name ?? "")}
-                onChange={(e) => setEditForm((f) => ({ ...f, contact_name: e.target.value }))}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                placeholder="Jane Smith"
-              />
+        <div className="card border-l-4 border-slate-400 animate-slide-up mb-6 overflow-hidden">
+          {/* ── Current details (read-only snapshot) ── */}
+          <div className="px-6 py-5 bg-slate-50 border-b border-slate-200">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Current Vendor Details</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-4 text-sm">
+              <Detail label="Vendor ID"        desc="Unique system identifier for this vendor" value={vendor.vendor_id} />
+              <Detail label="Name"             desc="Legal registered name of the vendor organisation" value={vendor.name} />
+              <Detail label="Contact Name"     desc="Primary liaison at the vendor organisation" value={vendor.contact_name || "—"} />
+              <Detail label="Contact Email"    desc="Email address of the vendor liaison" value={vendor.contact_email || "—"} />
+              <Detail label="Category"         desc="Type of service this vendor provides" value={vendor.category} />
+              <Detail label="Risk Score"       desc="Calculated 0–100 score across 5 risk factors" value={`${vendor.risk_score.toFixed(1)} (${vendor.risk_level})`} />
+              <Detail label="Financial Rating" desc="Credit rating indicating vendor financial health" value={vendor.financial_rating} />
+              <Detail label="Data Sensitivity" desc="Classification of data shared with this vendor" value={vendor.data_access.data_sensitivity} />
+              <Detail label="Access Type"      desc="Level of system access granted to this vendor" value={vendor.data_access.access_type.replace("_", " ")} />
+              <Detail label="Data Residency"   desc="Geographic region where vendor stores your data" value={vendor.data_residency} />
+              <Detail label="Concentration Risk" desc="Risk from over-reliance on this single vendor" value={vendor.concentration_risk} />
+              <Detail label="Sub-processors"   desc="Number of third parties the vendor sub-contracts to" value={String(vendor.sub_processor_count)} />
+              <Detail label="Contract Start"   desc="Date the vendor contract became effective" value={vendor.contract_start} />
+              <Detail label="Contract End"     desc="Date the current vendor contract expires" value={vendor.contract_end} />
+              <Detail label="Last Assessment"  desc="Date of the most recent vendor risk assessment" value={vendor.last_assessment_date} />
+              <Detail label="Breach SLA"       desc="Max hours vendor must notify you after a breach" value={`${vendor.compliance.breach_notification_sla_hours}h`} />
+              <Detail label="SOC 2 Type II"    desc="Independent audit of vendor security controls" value={vendor.compliance.soc2_type2 ? "✓ Certified" : "✗ Missing"} highlight={vendor.compliance.soc2_type2} />
+              <Detail label="ISO 27001"        desc="International information security management standard" value={vendor.compliance.iso27001 ? "✓ Certified" : "✗ Missing"} highlight={vendor.compliance.iso27001} />
+              <Detail label="GDPR DPA"         desc="Data Processing Agreement for EU data protection" value={vendor.compliance.gdpr_dpa ? "✓ Signed" : "✗ Missing"} highlight={vendor.compliance.gdpr_dpa} />
+              <Detail label="SOC 2 Expiry"     desc="Date the current SOC 2 certification expires" value={vendor.compliance.soc2_expiry || "—"} />
+              <Detail label="Systems"          desc="Internal systems this vendor has access to" value={vendor.data_access.systems.length > 0 ? vendor.data_access.systems.join(", ") : "—"} />
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Contact Email</label>
-              <input
-                type="email"
-                value={String(editForm.contact_email ?? "")}
-                onChange={(e) => setEditForm((f) => ({ ...f, contact_email: e.target.value }))}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                placeholder="jane@vendor.com"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Contract End Date</label>
-              <input
-                type="date"
-                value={String(editForm.contract_end ?? "")}
-                onChange={(e) => setEditForm((f) => ({ ...f, contract_end: e.target.value }))}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Data Sensitivity</label>
-              <select
-                value={String(editForm.data_sensitivity ?? "LOW")}
-                onChange={(e) => setEditForm((f) => ({ ...f, data_sensitivity: e.target.value }))}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
-              >
-                <option value="LOW">LOW</option>
-                <option value="MEDIUM">MEDIUM</option>
-                <option value="HIGH">HIGH</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Access Type</label>
-              <select
-                value={String(editForm.access_type ?? "read")}
-                onChange={(e) => setEditForm((f) => ({ ...f, access_type: e.target.value }))}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
-              >
-                <option value="read">Read only</option>
-                <option value="read_write">Read / Write</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Financial Rating</label>
-              <select
-                value={String(editForm.financial_rating ?? "BBB")}
-                onChange={(e) => setEditForm((f) => ({ ...f, financial_rating: e.target.value }))}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
-              >
-                {["AAA","AA","A","BBB","BB","B","CCC","CC","C"].map((r) => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
-            </div>
+            {vendor.breach_history.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-slate-200">
+                <p className="text-xs font-semibold text-slate-500 mb-2">Breach History <span className="text-slate-400 font-normal">— recorded security incidents for this vendor</span></p>
+                <div className="flex flex-wrap gap-2">
+                  {vendor.breach_history.map((b, i) => (
+                    <span key={i} className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
+                      {b.date} · {b.severity} · {b.description}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-          <div className="mt-4 flex flex-wrap gap-4 items-center">
-            <div className="flex gap-4">
-              {(["soc2_type2","iso27001","gdpr_dpa"] as const).map((key) => (
-                <label key={key} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={!!editForm[key]}
+
+          {/* ── Edit form ── */}
+          <div className="px-6 py-5">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Update Fields</p>
+
+            {/* Contact */}
+            <p className="text-xs font-medium text-slate-500 mb-3">Contact</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-0.5">Contact Name</label>
+                <p className="text-[10px] text-slate-400 mb-1">Primary liaison at the vendor organisation</p>
+                <input type="text" value={String(editForm.contact_name ?? "")}
+                  onChange={(e) => setEditForm((f) => ({ ...f, contact_name: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  placeholder="Jane Smith" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-0.5">Contact Email</label>
+                <p className="text-[10px] text-slate-400 mb-1">Email address of the vendor liaison</p>
+                <input type="email" value={String(editForm.contact_email ?? "")}
+                  onChange={(e) => setEditForm((f) => ({ ...f, contact_email: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  placeholder="jane@vendor.com" />
+              </div>
+            </div>
+
+            {/* Vendor Profile */}
+            <p className="text-xs font-medium text-slate-500 mb-3">Vendor Profile</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-0.5">Category</label>
+                <p className="text-[10px] text-slate-400 mb-1">Type of service this vendor provides</p>
+                <select value={String(editForm.category ?? "Other")}
+                  onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  {["Cloud","SaaS","ERP","HR","Payment","Security","Backup","Managed Service","Consulting","Other"].map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-0.5">Contract End Date</label>
+                <p className="text-[10px] text-slate-400 mb-1">Date the current vendor contract expires</p>
+                <input type="date" value={String(editForm.contract_end ?? "")}
+                  onChange={(e) => setEditForm((f) => ({ ...f, contract_end: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-0.5">Financial Rating</label>
+                <p className="text-[10px] text-slate-400 mb-1">Credit rating indicating vendor financial health</p>
+                <select value={String(editForm.financial_rating ?? "BBB")}
+                  onChange={(e) => setEditForm((f) => ({ ...f, financial_rating: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  {["AAA","AA","A","BBB","BB","B","CCC","CC","C"].map((r) => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-0.5">Data Sensitivity</label>
+                <p className="text-[10px] text-slate-400 mb-1">Classification of data shared with this vendor</p>
+                <select value={String(editForm.data_sensitivity ?? "LOW")}
+                  onChange={(e) => setEditForm((f) => ({ ...f, data_sensitivity: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  <option value="LOW">LOW</option>
+                  <option value="MEDIUM">MEDIUM</option>
+                  <option value="HIGH">HIGH</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-0.5">Access Type</label>
+                <p className="text-[10px] text-slate-400 mb-1">Level of system access granted to this vendor</p>
+                <select value={String(editForm.access_type ?? "read")}
+                  onChange={(e) => setEditForm((f) => ({ ...f, access_type: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  <option value="read">Read only</option>
+                  <option value="read_write">Read / Write</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-0.5">Concentration Risk</label>
+                <p className="text-[10px] text-slate-400 mb-1">Risk from over-reliance on this single vendor</p>
+                <select value={String(editForm.concentration_risk ?? "LOW")}
+                  onChange={(e) => setEditForm((f) => ({ ...f, concentration_risk: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  <option value="LOW">LOW</option>
+                  <option value="MEDIUM">MEDIUM</option>
+                  <option value="HIGH">HIGH</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Compliance */}
+            <p className="text-xs font-medium text-slate-500 mb-3">Compliance</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-0.5">SOC 2 Expiry Date</label>
+                <p className="text-[10px] text-slate-400 mb-1">Date the current SOC 2 certification expires</p>
+                <input type="date" value={String(editForm.soc2_expiry ?? "")}
+                  onChange={(e) => setEditForm((f) => ({ ...f, soc2_expiry: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-0.5">Breach Notification SLA (hours)</label>
+                <p className="text-[10px] text-slate-400 mb-1">Max hours vendor must notify you after a security breach</p>
+                <input type="number" value={Number(editForm.breach_notification_sla_hours ?? 72)}
+                  onChange={(e) => setEditForm((f) => ({ ...f, breach_notification_sla_hours: parseInt(e.target.value) || 72 }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  min={1} />
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3 mb-5">
+              {([
+                { key: "soc2_type2", label: "SOC 2 Type II", desc: "Independent audit of vendor security controls" },
+                { key: "iso27001",   label: "ISO 27001",     desc: "International information security standard" },
+                { key: "gdpr_dpa",   label: "GDPR DPA",      desc: "Data Processing Agreement for EU compliance" },
+              ] as const).map(({ key, label, desc }) => (
+                <label key={key} className="flex items-start gap-2 px-3 py-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-indigo-50 hover:border-indigo-200 transition-colors min-w-[180px]">
+                  <input type="checkbox" checked={!!editForm[key]}
                     onChange={(e) => setEditForm((f) => ({ ...f, [key]: e.target.checked }))}
-                    className="rounded text-indigo-600"
-                  />
-                  <span className="text-xs font-medium text-slate-700">
-                    {key === "soc2_type2" ? "SOC 2 Type II" : key === "iso27001" ? "ISO 27001" : "GDPR DPA"}
-                  </span>
+                    className="rounded text-indigo-600 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-medium text-slate-700">{label}</p>
+                    <p className="text-[10px] text-slate-400">{desc}</p>
+                  </div>
                 </label>
               ))}
             </div>
-            <div className="ml-auto flex items-center gap-3">
+
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
               {editMsg && (
                 <span className={`text-xs font-medium ${editMsg.startsWith("Error") ? "text-red-600" : "text-emerald-600"}`}>
                   {editMsg}
                 </span>
               )}
-              <button
-                onClick={submitEdit}
-                disabled={editLoading}
-                className="px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-semibold hover:bg-slate-900 disabled:opacity-40 transition-colors"
-              >
-                {editLoading ? "Saving…" : "Save Changes"}
-              </button>
+              <div className="ml-auto flex gap-2">
+                <button onClick={() => { setEditOpen(false); setEditMsg(null); }}
+                  className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+                  Cancel
+                </button>
+                <button onClick={submitEdit} disabled={editLoading}
+                  className="px-5 py-2 bg-slate-800 text-white rounded-xl text-sm font-semibold hover:bg-slate-900 disabled:opacity-40 transition-colors">
+                  {editLoading ? "Saving…" : "Save Changes"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -460,7 +552,7 @@ export default function VendorDetail() {
             <StatCard label="Contract End" value={vendor.contract_end} />
           </div>
 
-          {/* Claude narrative */}
+          {/* AI narrative */}
           {(narrativeLoading || narrative) && (
             <div className={`flex items-start gap-3 px-4 py-3 rounded-xl border animate-fade-in ${
               narrativeLoading ? "bg-slate-50 border-slate-200" : "bg-indigo-50 border-indigo-200"
@@ -829,11 +921,19 @@ export default function VendorDetail() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-800 truncate">{c.filename}</p>
                       <p className="text-xs text-slate-500">
-                        {c.cert_type.replace("_", " ").toUpperCase()}
+                        {c.cert_type.replace(/_/g, " ").toUpperCase()}
                         {c.expiry_date ? ` · Expires ${c.expiry_date}` : ""}
                         {" · "}Uploaded {c.uploaded_at.slice(0, 10)}
                       </p>
                     </div>
+                    <button
+                      onClick={() => api.vendors.downloadCert(c.vendor_id, c.id, c.filename)}
+                      title="Download certificate"
+                      className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-indigo-200 bg-white text-xs font-semibold text-indigo-600 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all"
+                    >
+                      <ArrowDownTrayIcon className="w-3.5 h-3.5" />
+                      Download
+                    </button>
                   </div>
                 ))}
               </div>
@@ -924,6 +1024,18 @@ export default function VendorDetail() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function Detail({ label, desc, value, highlight }: { label: string; desc: string; value: string; highlight?: boolean }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold text-slate-700">{label}</p>
+      <p className="text-[10px] text-slate-400 mb-0.5">{desc}</p>
+      <p className={`text-sm font-bold truncate ${
+        highlight === true ? "text-emerald-600" : highlight === false ? "text-red-500" : "text-slate-800"
+      }`}>{value || "—"}</p>
     </div>
   );
 }

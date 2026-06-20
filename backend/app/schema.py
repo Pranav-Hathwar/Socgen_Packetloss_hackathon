@@ -154,16 +154,23 @@ class AskResponse(BaseModel):
 class VendorCreateRequest(BaseModel):
     name: str
     category: str = "Other"
+    contract_start: Optional[str] = None
     contract_end: Optional[str] = None
     data_sensitivity: str = "LOW"
     access_type: str = "read"
     systems: Optional[str] = None
     soc2_type2: bool = False
+    soc2_expiry: Optional[str] = None
     iso27001: bool = False
     gdpr_dpa: bool = False
+    breach_notification_sla_hours: int = 72
     financial_rating: str = "BBB"
     data_residency: str = "EU"
     concentration_risk: str = "LOW"
+    sub_processor_count: int = 0
+    under_investigation: bool = False
+    breach_history: Optional[str] = ""
+    last_assessment_date: Optional[str] = None
     contact_name: Optional[str] = None
     contact_email: Optional[str] = None
 

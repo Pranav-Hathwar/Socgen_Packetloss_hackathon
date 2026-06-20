@@ -2,14 +2,15 @@ import os
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, File, UploadFile, Depends
+from fastapi.responses import FileResponse
 
 from ..db import (
     fetch_all_vendors, fetch_vendor, save_scores,
     delete_vendor, update_vendor_fields, create_vendor,
     fetch_score_history, add_remediation, fetch_remediations,
-    add_cert_document, fetch_cert_documents,
+    add_cert_document, fetch_cert_documents, fetch_cert_document,
 )
-from ..claude_client import anonymize_vendor, build_vendor_context, generate_narrative
+from ..ai_client import anonymize_vendor, build_vendor_context, generate_narrative
 from ..deps import AnyUser, require_role
 from ..engine import score_vendor
 from ..hydrate import row_to_summary, row_to_vendor_score
@@ -30,14 +31,14 @@ def create_vendor_endpoint(body: VendorCreateRequest, _user=Depends(require_role
     raw = dict(fetch_vendor(vendor_id))
     scored = score_vendor(raw)
     save_scores(vendor_id, scored, trigger="initial")
-    raw.update(scored)
+    raw = dict(fetch_vendor(vendor_id))
     return row_to_vendor_score(raw)
 
 
 @router.get("", response_model=list[VendorSummary])
 def list_vendors(
     _user: AnyUser,
-    limit: int = 200,
+    limit: int = 500,
     offset: int = 0,
     search: str = "",
     risk_level: str = "",
@@ -76,7 +77,7 @@ def get_vendor(vendor_id: str, _user: AnyUser):
     if raw.get("risk_score") is None:
         scored = score_vendor(raw)
         save_scores(vendor_id, scored, trigger="initial")
-        raw.update(scored)
+        raw = dict(fetch_vendor(vendor_id))
     return row_to_vendor_score(raw)
 
 
@@ -113,7 +114,7 @@ def get_narrative(vendor_id: str, _user: AnyUser):
     return {
         "vendor_id": vendor_id,
         "narrative": narrative,
-        "source": "claude-haiku" if narrative else "unavailable",
+        "source": "gemini-flash" if narrative else "unavailable",
     }
 
 
@@ -200,3 +201,20 @@ async def upload_cert(
 def list_certs(vendor_id: str, _user: AnyUser):
     rows = fetch_cert_documents(vendor_id)
     return [dict(r) for r in rows]
+
+
+@router.get("/{vendor_id}/certs/{cert_id}/download")
+def download_cert(vendor_id: str, cert_id: int, _user: AnyUser):
+    doc = fetch_cert_document(cert_id, vendor_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Certificate not found")
+    file_path = Path(doc["file_path"])
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found on disk")
+    suffix = file_path.suffix.lower()
+    media_type = "application/pdf" if suffix == ".pdf" else f"image/{suffix.lstrip('.')}"
+    return FileResponse(
+        path=str(file_path),
+        media_type=media_type,
+        filename=doc["filename"],
+    )
