@@ -61,6 +61,10 @@ export default function VendorDetail() {
   const [editLoading, setEditLoading] = useState(false);
   const [editMsg, setEditMsg] = useState<string | null>(null);
 
+  // Claude narrative
+  const [narrative, setNarrative] = useState<string | null>(null);
+  const [narrativeLoading, setNarrativeLoading] = useState(false);
+
   // AI Suggestions
   const [suggestions, setSuggestions] = useState<VendorSuggestion[]>([]);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
@@ -87,6 +91,12 @@ export default function VendorDetail() {
       setHistory(h);
       setRemediations(r);
       setCerts(c);
+      // Load narrative in background — non-blocking
+      setNarrativeLoading(true);
+      api.vendors.narrative(id)
+        .then((res) => setNarrative(res.narrative))
+        .catch(() => setNarrative(null))
+        .finally(() => setNarrativeLoading(false));
       setEditForm({
         contact_name: v.contact_name ?? "",
         contact_email: v.contact_email ?? "",
@@ -449,6 +459,24 @@ export default function VendorDetail() {
             <StatCard label="Financial Rating" value={vendor.financial_rating} />
             <StatCard label="Contract End" value={vendor.contract_end} />
           </div>
+
+          {/* Claude narrative */}
+          {(narrativeLoading || narrative) && (
+            <div className={`flex items-start gap-3 px-4 py-3 rounded-xl border animate-fade-in ${
+              narrativeLoading ? "bg-slate-50 border-slate-200" : "bg-indigo-50 border-indigo-200"
+            }`}>
+              <span className="text-base mt-0.5">{narrativeLoading ? "⏳" : "🤖"}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-indigo-700 mb-0.5">AI Risk Analysis</p>
+                {narrativeLoading ? (
+                  <div className="h-4 bg-slate-200 rounded animate-pulse w-3/4" />
+                ) : (
+                  <p className="text-sm text-slate-700 leading-relaxed">{narrative}</p>
+                )}
+              </div>
+              <span className="text-xs text-slate-400 shrink-0 mt-0.5">claude haiku</span>
+            </div>
+          )}
 
           {/* Contact info (shown when set) */}
           {(vendor.contact_name || vendor.contact_email) && (

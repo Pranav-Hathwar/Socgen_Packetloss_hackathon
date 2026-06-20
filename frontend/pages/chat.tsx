@@ -14,6 +14,7 @@ interface Message {
   role: "user" | "assistant";
   text: string;
   timestamp: Date;
+  source?: string;
 }
 
 const SUGGESTED_QUESTIONS = [
@@ -79,7 +80,7 @@ export default function AuditChat() {
       const res = await api.ask({ question: q, vendor_id: vendorId });
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", text: res.answer, timestamp: new Date() },
+        { role: "assistant", text: res.answer, timestamp: new Date(), source: res.sources?.[0] },
       ]);
     } catch (err) {
       setMessages((prev) => [
@@ -159,6 +160,15 @@ export default function AuditChat() {
                   <span className="text-[10px] text-slate-400">
                     {m.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </span>
+                  {m.source && (
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                      m.source === "claude-haiku"
+                        ? "bg-violet-100 text-violet-600"
+                        : "bg-slate-100 text-slate-500"
+                    }`}>
+                      {m.source === "claude-haiku" ? "claude haiku" : "deterministic"}
+                    </span>
+                  )}
                   {m.role === "assistant" && i > 0 && (
                     <button
                       onClick={() => copyMessage(m.text, i)}

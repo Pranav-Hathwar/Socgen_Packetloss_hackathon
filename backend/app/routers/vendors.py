@@ -9,6 +9,7 @@ from ..db import (
     fetch_score_history, add_remediation, fetch_remediations,
     add_cert_document, fetch_cert_documents,
 )
+from ..claude_client import anonymize_vendor, build_vendor_context, generate_narrative
 from ..deps import AnyUser, require_role
 from ..engine import score_vendor
 from ..hydrate import row_to_summary, row_to_vendor_score
@@ -97,6 +98,23 @@ def update_vendor(vendor_id: str, body: VendorUpdateRequest, _user=Depends(requi
 def delete_vendor_endpoint(vendor_id: str, _user=Depends(require_role("ADMIN"))):
     if not delete_vendor(vendor_id):
         raise HTTPException(status_code=404, detail=f"Vendor {vendor_id} not found")
+
+
+@router.get("/{vendor_id}/narrative")
+def get_narrative(vendor_id: str, _user: AnyUser):
+    row = fetch_vendor(vendor_id)
+    if not row:
+        raise HTTPException(status_code=404, detail=f"Vendor {vendor_id} not found")
+    raw = dict(row)
+    scored = score_vendor(raw)
+    raw.update(scored)
+    anon = anonymize_vendor(raw)
+    narrative = generate_narrative(anon)
+    return {
+        "vendor_id": vendor_id,
+        "narrative": narrative,
+        "source": "claude-haiku" if narrative else "unavailable",
+    }
 
 
 @router.get("/{vendor_id}/suggestions")
