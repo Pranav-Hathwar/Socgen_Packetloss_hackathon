@@ -1,7 +1,11 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 from .routers import advanced, alerts, ask, auth_router, ingest, monitor, report, sandbox, simulate, vendors
 from .startup import bootstrap

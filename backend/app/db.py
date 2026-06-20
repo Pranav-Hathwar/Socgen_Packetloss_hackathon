@@ -145,7 +145,11 @@ def _parse_bool(val: str | bool | int) -> int:
 
 
 def load_registry_csv(path: Path | None = None) -> int:
-    """Load vendor_registry.csv into vendors table. Returns rows upserted."""
+    """
+    Seed vendors table from CSV. Uses INSERT OR IGNORE so existing rows
+    (including user-ingested data) are never overwritten on restart.
+    Returns count of newly inserted rows.
+    """
     p = path or (SAMPLE_DATA / "vendor_registry.csv")
     if not p.exists():
         return 0
@@ -158,7 +162,7 @@ def load_registry_csv(path: Path | None = None) -> int:
         for r in rows:
             conn.execute(
                 """
-                INSERT INTO vendors (
+                INSERT OR IGNORE INTO vendors (
                     vendor_id, name, category, contract_start, contract_end,
                     systems, data_sensitivity, access_type, access_last_used_at,
                     soc2_type2, soc2_expiry, iso27001, gdpr_dpa,
@@ -173,26 +177,6 @@ def load_registry_csv(path: Path | None = None) -> int:
                     :financial_rating, :data_residency, :sub_processor_count,
                     :concentration_risk, :last_assessment_date, :under_investigation
                 )
-                ON CONFLICT(vendor_id) DO UPDATE SET
-                    name=excluded.name, category=excluded.category,
-                    contract_start=excluded.contract_start,
-                    contract_end=excluded.contract_end,
-                    systems=excluded.systems,
-                    data_sensitivity=excluded.data_sensitivity,
-                    access_type=excluded.access_type,
-                    access_last_used_at=excluded.access_last_used_at,
-                    soc2_type2=excluded.soc2_type2,
-                    soc2_expiry=excluded.soc2_expiry,
-                    iso27001=excluded.iso27001,
-                    gdpr_dpa=excluded.gdpr_dpa,
-                    breach_notification_sla_hours=excluded.breach_notification_sla_hours,
-                    breach_history=excluded.breach_history,
-                    financial_rating=excluded.financial_rating,
-                    data_residency=excluded.data_residency,
-                    sub_processor_count=excluded.sub_processor_count,
-                    concentration_risk=excluded.concentration_risk,
-                    last_assessment_date=excluded.last_assessment_date,
-                    under_investigation=excluded.under_investigation
                 """,
                 {
                     **r,
@@ -205,7 +189,7 @@ def load_registry_csv(path: Path | None = None) -> int:
                     "concentration_risk": r.get("concentration_risk", "LOW") or "LOW",
                 },
             )
-            count += 1
+            count += conn.execute("SELECT changes()").fetchone()[0]
     return count
 
 
