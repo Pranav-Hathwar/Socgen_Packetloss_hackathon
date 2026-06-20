@@ -32,6 +32,7 @@ export default function AdminPage() {
   const [statusLoading, setStatusLoading] = useState(true);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
   const [levelChanges, setLevelChanges] = useState<{name: string, old_level: string, new_level: string, old_score?: number, new_score?: number, reason?: string}[] | null>(null);
+  const [emailPreview, setEmailPreview] = useState<string | null>(null);
 
   const [notifyEmail, setNotifyEmail] = useState("");
   const [notifyType, setNotifyType] = useState<"summary" | "expiry">("summary");
@@ -75,10 +76,20 @@ export default function AdminPage() {
     if (!notifyEmail) return;
     setNotifyLoading(true);
     setNotifyMsg(null);
+    setEmailPreview(null);
     try {
       const fn = notifyType === "summary" ? api.notify.summary : api.notify.expiry;
       const res = await fn(notifyEmail);
-      setNotifyMsg(res.message || "Sent");
+      if (res.status === "simulated") {
+        setNotifyMsg(`⚠️ Email simulated (no SMTP configured). Preview shown below.`);
+        setEmailPreview(res.preview || "No preview available");
+      } else if (res.status === "sent") {
+        setNotifyMsg(`✅ Email sent to ${notifyEmail}`);
+      } else if (res.status === "skipped") {
+        setNotifyMsg(`ℹ️ Skipped: ${res.reason || "No alerts found"}`);
+      } else {
+        setNotifyMsg(res.message || "Done");
+      }
     } catch (e) {
       setNotifyMsg(`Error: ${String(e)}`);
     } finally {
@@ -220,9 +231,22 @@ export default function AdminPage() {
         </div>
 
         {notifyMsg && (
-          <p className={`text-sm px-3 py-2 rounded-lg ${notifyMsg.startsWith("Error") ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}>
-            {notifyMsg}
-          </p>
+          <div className="space-y-2">
+            <p className={`text-sm px-3 py-2 rounded-lg ${
+              notifyMsg.startsWith("Error") ? "bg-red-50 text-red-700"
+              : notifyMsg.startsWith("⚠️") ? "bg-amber-50 text-amber-800 border border-amber-200"
+              : notifyMsg.startsWith("ℹ️") ? "bg-blue-50 text-blue-700 border border-blue-200"
+              : "bg-emerald-50 text-emerald-700"
+            }`}>
+              {notifyMsg}
+            </p>
+            {emailPreview && (
+              <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">Email Preview</p>
+                <pre className="text-xs text-slate-700 whitespace-pre-wrap font-mono leading-relaxed bg-white p-3 rounded border border-slate-100 max-h-64 overflow-y-auto">{emailPreview}</pre>
+              </div>
+            )}
+          </div>
         )}
 
         <button
