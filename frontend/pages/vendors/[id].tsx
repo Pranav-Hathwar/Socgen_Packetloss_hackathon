@@ -306,166 +306,178 @@ export default function VendorDetail() {
 
       {/* Edit Panel */}
       {editOpen && (
-        <div className="card p-6 border-l-4 border-slate-400 animate-slide-up mb-6">
-          <h2 className="text-sm font-bold text-slate-800 mb-5">Edit Vendor Details</h2>
-
-          {/* Contact */}
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Contact</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Contact Name</label>
-              <input
-                type="text"
-                value={String(editForm.contact_name ?? "")}
-                onChange={(e) => setEditForm((f) => ({ ...f, contact_name: e.target.value }))}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                placeholder="Jane Smith"
-              />
+        <div className="card border-l-4 border-slate-400 animate-slide-up mb-6 overflow-hidden">
+          {/* ── Current details (read-only snapshot) ── */}
+          <div className="px-6 py-5 bg-slate-50 border-b border-slate-200">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Current Vendor Details</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-3 text-sm">
+              <Detail label="Vendor ID"     value={vendor.vendor_id} />
+              <Detail label="Name"          value={vendor.name} />
+              <Detail label="Category"      value={vendor.category} />
+              <Detail label="Risk Score"    value={`${vendor.risk_score.toFixed(1)} (${vendor.risk_level})`} />
+              <Detail label="Financial"     value={vendor.financial_rating} />
+              <Detail label="Data Sensitivity" value={vendor.data_access.data_sensitivity} />
+              <Detail label="Access Type"   value={vendor.data_access.access_type.replace("_", " ")} />
+              <Detail label="Data Residency" value={vendor.data_residency} />
+              <Detail label="Concentration" value={vendor.concentration_risk} />
+              <Detail label="Sub-processors" value={String(vendor.sub_processor_count)} />
+              <Detail label="Contract Start" value={vendor.contract_start} />
+              <Detail label="Contract End"  value={vendor.contract_end} />
+              <Detail label="Last Assessment" value={vendor.last_assessment_date} />
+              <Detail label="Breach SLA"    value={`${vendor.compliance.breach_notification_sla_hours}h`} />
+              <Detail label="SOC 2 Type II" value={vendor.compliance.soc2_type2 ? "✓ Certified" : "✗ Missing"} highlight={vendor.compliance.soc2_type2} />
+              <Detail label="ISO 27001"     value={vendor.compliance.iso27001 ? "✓ Certified" : "✗ Missing"} highlight={vendor.compliance.iso27001} />
+              <Detail label="GDPR DPA"      value={vendor.compliance.gdpr_dpa ? "✓ Signed" : "✗ Missing"} highlight={vendor.compliance.gdpr_dpa} />
+              {vendor.compliance.soc2_expiry && <Detail label="SOC 2 Expiry" value={vendor.compliance.soc2_expiry} />}
+              {vendor.contact_name && <Detail label="Contact Name" value={vendor.contact_name} />}
+              {vendor.contact_email && <Detail label="Contact Email" value={vendor.contact_email} />}
+              {vendor.data_access.systems.length > 0 && (
+                <Detail label="Systems" value={vendor.data_access.systems.join(", ")} />
+              )}
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Contact Email</label>
-              <input
-                type="email"
-                value={String(editForm.contact_email ?? "")}
-                onChange={(e) => setEditForm((f) => ({ ...f, contact_email: e.target.value }))}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                placeholder="jane@vendor.com"
-              />
-            </div>
-          </div>
-
-          {/* Vendor Profile */}
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Vendor Profile</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-5">
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Category</label>
-              <select
-                value={String(editForm.category ?? "Other")}
-                onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value }))}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
-              >
-                {["Cloud","SaaS","ERP","HR","Payment","Security","Backup","Managed Service","Consulting","Other"].map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Contract End Date</label>
-              <input
-                type="date"
-                value={String(editForm.contract_end ?? "")}
-                onChange={(e) => setEditForm((f) => ({ ...f, contract_end: e.target.value }))}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Financial Rating</label>
-              <select
-                value={String(editForm.financial_rating ?? "BBB")}
-                onChange={(e) => setEditForm((f) => ({ ...f, financial_rating: e.target.value }))}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
-              >
-                {["AAA","AA","A","BBB","BB","B","CCC","CC","C"].map((r) => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Data Sensitivity</label>
-              <select
-                value={String(editForm.data_sensitivity ?? "LOW")}
-                onChange={(e) => setEditForm((f) => ({ ...f, data_sensitivity: e.target.value }))}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
-              >
-                <option value="LOW">LOW</option>
-                <option value="MEDIUM">MEDIUM</option>
-                <option value="HIGH">HIGH</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Access Type</label>
-              <select
-                value={String(editForm.access_type ?? "read")}
-                onChange={(e) => setEditForm((f) => ({ ...f, access_type: e.target.value }))}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
-              >
-                <option value="read">Read only</option>
-                <option value="read_write">Read / Write</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Concentration Risk</label>
-              <select
-                value={String(editForm.concentration_risk ?? "LOW")}
-                onChange={(e) => setEditForm((f) => ({ ...f, concentration_risk: e.target.value }))}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
-              >
-                <option value="LOW">LOW</option>
-                <option value="MEDIUM">MEDIUM</option>
-                <option value="HIGH">HIGH</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Compliance */}
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Compliance</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">SOC 2 Expiry Date</label>
-              <input
-                type="date"
-                value={String(editForm.soc2_expiry ?? "")}
-                onChange={(e) => setEditForm((f) => ({ ...f, soc2_expiry: e.target.value }))}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Breach Notification SLA (hours)</label>
-              <input
-                type="number"
-                value={Number(editForm.breach_notification_sla_hours ?? 72)}
-                onChange={(e) => setEditForm((f) => ({ ...f, breach_notification_sla_hours: parseInt(e.target.value) || 72 }))}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                min={1}
-              />
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-4 mb-5">
-            {(["soc2_type2","iso27001","gdpr_dpa"] as const).map((key) => (
-              <label key={key} className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-indigo-50 hover:border-indigo-200 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={!!editForm[key]}
-                  onChange={(e) => setEditForm((f) => ({ ...f, [key]: e.target.checked }))}
-                  className="rounded text-indigo-600"
-                />
-                <span className="text-xs font-medium text-slate-700">
-                  {key === "soc2_type2" ? "SOC 2 Type II" : key === "iso27001" ? "ISO 27001" : "GDPR DPA"}
-                </span>
-              </label>
-            ))}
-          </div>
-
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-            {editMsg && (
-              <span className={`text-xs font-medium ${editMsg.startsWith("Error") ? "text-red-600" : "text-emerald-600"}`}>
-                {editMsg}
-              </span>
+            {vendor.breach_history.length > 0 && (
+              <div className="mt-3">
+                <p className="text-xs font-semibold text-slate-500 mb-1">Breach History</p>
+                <div className="flex flex-wrap gap-2">
+                  {vendor.breach_history.map((b, i) => (
+                    <span key={i} className="text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full">
+                      {b.date} · {b.severity} · {b.description}
+                    </span>
+                  ))}
+                </div>
+              </div>
             )}
-            <div className="ml-auto flex gap-2">
-              <button
-                onClick={() => { setEditOpen(false); setEditMsg(null); }}
-                className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={submitEdit}
-                disabled={editLoading}
-                className="px-5 py-2 bg-slate-800 text-white rounded-xl text-sm font-semibold hover:bg-slate-900 disabled:opacity-40 transition-colors"
-              >
-                {editLoading ? "Saving…" : "Save Changes"}
-              </button>
+          </div>
+
+          {/* ── Edit form ── */}
+          <div className="px-6 py-5">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Update Fields</p>
+
+            {/* Contact */}
+            <p className="text-xs font-medium text-slate-500 mb-2">Contact</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1">Contact Name</label>
+                <input type="text" value={String(editForm.contact_name ?? "")}
+                  onChange={(e) => setEditForm((f) => ({ ...f, contact_name: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  placeholder="Jane Smith" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1">Contact Email</label>
+                <input type="email" value={String(editForm.contact_email ?? "")}
+                  onChange={(e) => setEditForm((f) => ({ ...f, contact_email: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  placeholder="jane@vendor.com" />
+              </div>
+            </div>
+
+            {/* Vendor Profile */}
+            <p className="text-xs font-medium text-slate-500 mb-2">Vendor Profile</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1">Category</label>
+                <select value={String(editForm.category ?? "Other")}
+                  onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  {["Cloud","SaaS","ERP","HR","Payment","Security","Backup","Managed Service","Consulting","Other"].map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1">Contract End Date</label>
+                <input type="date" value={String(editForm.contract_end ?? "")}
+                  onChange={(e) => setEditForm((f) => ({ ...f, contract_end: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1">Financial Rating</label>
+                <select value={String(editForm.financial_rating ?? "BBB")}
+                  onChange={(e) => setEditForm((f) => ({ ...f, financial_rating: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  {["AAA","AA","A","BBB","BB","B","CCC","CC","C"].map((r) => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1">Data Sensitivity</label>
+                <select value={String(editForm.data_sensitivity ?? "LOW")}
+                  onChange={(e) => setEditForm((f) => ({ ...f, data_sensitivity: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  <option value="LOW">LOW</option>
+                  <option value="MEDIUM">MEDIUM</option>
+                  <option value="HIGH">HIGH</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1">Access Type</label>
+                <select value={String(editForm.access_type ?? "read")}
+                  onChange={(e) => setEditForm((f) => ({ ...f, access_type: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  <option value="read">Read only</option>
+                  <option value="read_write">Read / Write</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1">Concentration Risk</label>
+                <select value={String(editForm.concentration_risk ?? "LOW")}
+                  onChange={(e) => setEditForm((f) => ({ ...f, concentration_risk: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  <option value="LOW">LOW</option>
+                  <option value="MEDIUM">MEDIUM</option>
+                  <option value="HIGH">HIGH</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Compliance */}
+            <p className="text-xs font-medium text-slate-500 mb-2">Compliance</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1">SOC 2 Expiry Date</label>
+                <input type="date" value={String(editForm.soc2_expiry ?? "")}
+                  onChange={(e) => setEditForm((f) => ({ ...f, soc2_expiry: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1">Breach Notification SLA (hours)</label>
+                <input type="number" value={Number(editForm.breach_notification_sla_hours ?? 72)}
+                  onChange={(e) => setEditForm((f) => ({ ...f, breach_notification_sla_hours: parseInt(e.target.value) || 72 }))}
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  min={1} />
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3 mb-5">
+              {(["soc2_type2","iso27001","gdpr_dpa"] as const).map((key) => (
+                <label key={key} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-indigo-50 hover:border-indigo-200 transition-colors">
+                  <input type="checkbox" checked={!!editForm[key]}
+                    onChange={(e) => setEditForm((f) => ({ ...f, [key]: e.target.checked }))}
+                    className="rounded text-indigo-600" />
+                  <span className="text-xs font-medium text-slate-700">
+                    {key === "soc2_type2" ? "SOC 2 Type II" : key === "iso27001" ? "ISO 27001" : "GDPR DPA"}
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+              {editMsg && (
+                <span className={`text-xs font-medium ${editMsg.startsWith("Error") ? "text-red-600" : "text-emerald-600"}`}>
+                  {editMsg}
+                </span>
+              )}
+              <div className="ml-auto flex gap-2">
+                <button onClick={() => { setEditOpen(false); setEditMsg(null); }}
+                  className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+                  Cancel
+                </button>
+                <button onClick={submitEdit} disabled={editLoading}
+                  className="px-5 py-2 bg-slate-800 text-white rounded-xl text-sm font-semibold hover:bg-slate-900 disabled:opacity-40 transition-colors">
+                  {editLoading ? "Saving…" : "Save Changes"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -990,6 +1002,17 @@ export default function VendorDetail() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function Detail({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div>
+      <p className="text-xs text-slate-400 mb-0.5">{label}</p>
+      <p className={`text-sm font-semibold truncate ${
+        highlight === true ? "text-emerald-600" : highlight === false ? "text-red-500" : "text-slate-800"
+      }`}>{value || "—"}</p>
     </div>
   );
 }
