@@ -7,7 +7,6 @@ backend/app/routers/__pycache__/
 *.pyc
 *.pyo
 backend/.env
-backend/*.db
 
 # Node
 frontend/node_modules/
@@ -23,6 +22,9 @@ frontend_server.log
 # OS
 .DS_Store
 Thumbs.db
+
+# Uploads (cert files stored on server, not in repo)
+backend/uploads/
 
 # Secrets
 .env
