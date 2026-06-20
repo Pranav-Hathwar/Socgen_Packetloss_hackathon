@@ -1,13 +1,14 @@
 """
-Claude Haiku integration for VendorLens.
+Gemini 1.5 Flash integration for VendorLens.
+Free tier: 15 req/min, 1 500 req/day — sufficient for demo and hackathon use.
 
 Security model:
-  - Vendor name, ID, contact details are STRIPPED before anything is sent.
+  - Vendor name, ID, contact details STRIPPED before anything is sent.
   - Only numeric scores, boolean flags, and enum values leave the server.
-  - System prompt hard-locks Claude to TPRM topics only.
-  - In-memory SHA-256 cache prevents duplicate API calls.
-  - max_tokens=300 hard cap on every response.
-  - Returns None if ANTHROPIC_API_KEY is unset — callers fall back to
+  - System prompt hard-locks Gemini to TPRM topics only.
+  - In-memory SHA-256 LRU cache prevents duplicate API calls.
+  - max_output_tokens=300 hard cap on every response.
+  - Returns None if GEMINI_API_KEY unset — callers fall back to
     deterministic Q&A automatically. No exceptions propagate to callers.
 """
 from __future__ import annotations
@@ -27,19 +28,19 @@ _SYSTEM_PROMPT = (
     "Do not speculate beyond the data. Keep answers concise (2-4 sentences max). "
     "If asked anything unrelated to vendor risk management, reply exactly: "
     "'I can only assist with vendor risk management topics.' "
-    "Never disclose that you are Claude or an AI system."
+    "Never disclose that you are an AI system."
 )
 
 # ── Fields stripped before any data leaves the server ────────────────────────
 _STRIP_FIELDS = frozenset({
-    "name",           # vendor identity
-    "vendor_id",      # vendor identity
-    "contact_name",   # PII
-    "contact_email",  # PII
-    "systems",        # may contain internal system names
+    "name",
+    "vendor_id",
+    "contact_name",
+    "contact_email",
+    "systems",
 })
 
-# ── Risk-relevant fields sent to Claude (ordered, minimal) ───────────────────
+# ── Risk-relevant fields sent to Gemini (ordered, minimal) ───────────────────
 _CONTEXT_FIELDS = [
     "risk_score", "risk_level", "rag", "category",
     "data_sensitivity", "access_type",
@@ -55,13 +56,13 @@ _CONTEXT_FIELDS = [
 _CACHE: OrderedDict[str, str] = OrderedDict()
 _CACHE_MAX = 500
 
-# ── TPRM keyword guard — response must contain at least one ──────────────────
+# ── TPRM keyword guard ────────────────────────────────────────────────────────
 _TPRM_KEYWORDS = frozenset({
     "risk", "vendor", "compliance", "breach", "soc", "iso", "gdpr", "dpa",
     "financial", "contract", "remediat", "assess", "audit", "certif",
     "sensitiv", "access", "data", "score", "rating", "processor",
     "concentration", "investigat", "expir", "residency", "dora", "nis2",
-    "only assist",  # catches the off-topic deflection itself
+    "only assist",
 })
 
 
@@ -76,16 +77,14 @@ def anonymize_vendor(raw: dict) -> dict:
 
 def build_vendor_context(anon: dict) -> str:
     """
-    Compact pipe-separated key=value string.
-    Only includes fields with meaningful values to minimise token count.
-    Typical output: ~120-150 tokens.
+    Compact pipe-separated key=value string (~120-150 tokens).
+    Only includes fields with meaningful values.
     """
     parts = []
     for field in _CONTEXT_FIELDS:
         val = anon.get(field)
         if val is None or val == "" or val == "None":
             continue
-        # Shorten breach_history list to just a count + most recent year
         if field == "breach_history":
             try:
                 import json as _json
@@ -95,7 +94,9 @@ def build_vendor_context(anon: dict) -> str:
                         (str(e.get("date", ""))[:4] for e in events if e.get("date")),
                         reverse=True,
                     )
-                    parts.append(f"breach_count={len(events)},last_breach={years[0] if years else 'unknown'}")
+                    parts.append(
+                        f"breach_count={len(events)},last_breach={years[0] if years else 'unknown'}"
+                    )
                     continue
             except Exception:
                 pass
@@ -108,26 +109,30 @@ def _is_tprm_response(text: str) -> bool:
     return any(kw in lower for kw in _TPRM_KEYWORDS)
 
 
-def _get_client():
-    """Lazy-load Anthropic client only when needed."""
-    api_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
+def _get_model():
+    """Lazy-load Gemini model only when needed."""
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
     if not api_key:
         return None
     try:
-        import anthropic
-        return anthropic.Anthropic(api_key=api_key)
-    except ImportError:
+        import google.generativeai as genai  # type: ignore
+        genai.configure(api_key=api_key)
+        return genai.GenerativeModel(
+            model_name="gemini-1.5-flash",
+            system_instruction=_SYSTEM_PROMPT,
+        )
+    except Exception:
         return None
 
 
 def ask_claude(question: str, vendor_context: str) -> Optional[str]:
     """
-    Single Claude Haiku call with anonymized vendor context.
+    Single Gemini 1.5 Flash call with anonymized vendor context.
     Returns None on any failure so callers fall back to deterministic Q&A.
     Never raises.
     """
-    client = _get_client()
-    if client is None:
+    model = _get_model()
+    if model is None:
         return None
 
     try:
@@ -135,15 +140,15 @@ def ask_claude(question: str, vendor_context: str) -> Optional[str]:
             f"Vendor profile (anonymized):\n{vendor_context}\n\n"
             f"Question: {question}"
         )
-        response = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=300,
-            system=_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_msg}],
+        response = model.generate_content(
+            user_msg,
+            generation_config={
+                "max_output_tokens": 300,
+                "temperature": 0.2,   # low temp = consistent, factual answers
+            },
         )
-        text = response.content[0].text.strip()
+        text = response.text.strip()
 
-        # Validate response stays on-topic
         if not _is_tprm_response(text):
             return "I can only assist with vendor risk management topics."
 
@@ -153,11 +158,11 @@ def ask_claude(question: str, vendor_context: str) -> Optional[str]:
 
 
 def cached_ask(question: str, vendor_context: str) -> Optional[str]:
-    """Cache wrapper — identical question+context returns cached answer instantly."""
+    """Cache wrapper — identical question+context = zero API call."""
     key = _cache_key(question, vendor_context)
 
     if key in _CACHE:
-        _CACHE.move_to_end(key)          # mark as recently used
+        _CACHE.move_to_end(key)
         return _CACHE[key]
 
     answer = ask_claude(question, vendor_context)
@@ -166,16 +171,15 @@ def cached_ask(question: str, vendor_context: str) -> Optional[str]:
         _CACHE[key] = answer
         _CACHE.move_to_end(key)
         if len(_CACHE) > _CACHE_MAX:
-            _CACHE.popitem(last=False)   # evict oldest
+            _CACHE.popitem(last=False)
 
     return answer
 
 
 def generate_narrative(anon: dict) -> Optional[str]:
     """
-    2-3 sentence plain-English risk narrative for the vendor detail page.
-    Uses a fixed question so responses are maximally cacheable across users
-    viewing the same vendor.
+    2-3 sentence plain-English risk narrative.
+    Fixed question = maximally cacheable across all users viewing same vendor.
     """
     context = build_vendor_context(anon)
     question = (
