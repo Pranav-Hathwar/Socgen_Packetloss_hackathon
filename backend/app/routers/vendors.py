@@ -11,6 +11,7 @@ from ..db import (
 )
 from ..ai_client import anonymize_vendor, build_vendor_context, generate_narrative
 from ..deps import AnyUser, require_role
+from ..rag import upsert_vendor, remove_vendor
 from ..engine import score_vendor
 from ..hydrate import row_to_summary, row_to_vendor_score
 from ..suggestions import generate_suggestions
@@ -31,6 +32,10 @@ def create_vendor_endpoint(body: VendorCreateRequest, _user=Depends(require_role
     scored = score_vendor(raw)
     save_scores(vendor_id, scored, trigger="initial")
     raw.update(scored)
+    try:
+        upsert_vendor(raw)
+    except Exception:
+        pass  # RAG index update is best-effort; never block vendor creation
     return row_to_vendor_score(raw)
 
 
@@ -91,6 +96,11 @@ def update_vendor(vendor_id: str, body: VendorUpdateRequest, _user=Depends(requi
     updated = dict(fetch_vendor(vendor_id))
     scored = score_vendor(updated)
     save_scores(vendor_id, scored, trigger="manual_edit")
+    updated.update(scored)
+    try:
+        upsert_vendor(updated)
+    except Exception:
+        pass  # best-effort RAG refresh
     return {"status": "updated", "new_risk_score": scored["risk_score"], "new_risk_level": scored["risk_level"]}
 
 
@@ -98,6 +108,10 @@ def update_vendor(vendor_id: str, body: VendorUpdateRequest, _user=Depends(requi
 def delete_vendor_endpoint(vendor_id: str, _user=Depends(require_role("ADMIN"))):
     if not delete_vendor(vendor_id):
         raise HTTPException(status_code=404, detail=f"Vendor {vendor_id} not found")
+    try:
+        remove_vendor(vendor_id)
+    except Exception:
+        pass  # best-effort RAG cleanup
 
 
 @router.get("/{vendor_id}/narrative")

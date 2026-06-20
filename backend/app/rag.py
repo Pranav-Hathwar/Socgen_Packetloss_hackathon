@@ -160,6 +160,69 @@ def build_index(force: bool = False) -> dict:
     return {"status": "built", "count": len(_meta)}
 
 
+def _persist() -> None:
+    """Write current in-memory index to disk."""
+    import numpy as np
+    if _embeddings is None:
+        return
+    _STORE_DIR.mkdir(exist_ok=True)
+    np.save(_EMB_FILE, _embeddings)
+    _META_FILE.write_text(json.dumps(_meta), encoding="utf-8")
+
+
+def upsert_vendor(vendor: dict) -> bool:
+    """
+    Add or update a single vendor in the index (incremental, ~20ms).
+    Re-embeds just this one vendor. Returns False if model/index unavailable.
+    """
+    global _embeddings, _meta
+    import numpy as np
+
+    if _embeddings is None or not _meta:
+        # Index not built yet — build full so this vendor is included.
+        return build_index(force=True).get("status") in ("built", "loaded_cache")
+
+    model = _get_model()
+    if model is None:
+        return False
+
+    raw = dict(vendor)
+    if raw.get("risk_score") is None:
+        raw.update(score_vendor(raw))
+    vid = raw["vendor_id"]
+    doc = _vendor_doc(raw)
+    emb = model.encode([doc], normalize_embeddings=True)
+    emb = np.asarray(emb, dtype="float32")  # (1, D)
+
+    # Find existing index for this vendor_id
+    idx = next((i for i, m in enumerate(_meta) if m["vendor_id"] == vid), None)
+    new_meta = {"vendor_id": vid, "name": raw.get("name", ""), "doc": doc}
+    if idx is None:
+        _embeddings = np.vstack([_embeddings, emb])
+        _meta.append(new_meta)
+    else:
+        _embeddings[idx] = emb[0]
+        _meta[idx] = new_meta
+    _persist()
+    return True
+
+
+def remove_vendor(vendor_id: str) -> bool:
+    """Drop a vendor from the index. Returns False if not present / unavailable."""
+    global _embeddings, _meta
+    import numpy as np
+
+    if _embeddings is None or not _meta:
+        return False
+    idx = next((i for i, m in enumerate(_meta) if m["vendor_id"] == vendor_id), None)
+    if idx is None:
+        return False
+    _embeddings = np.delete(_embeddings, idx, axis=0)
+    _meta.pop(idx)
+    _persist()
+    return True
+
+
 def retrieve(query: str, k: int = 8) -> list[dict]:
     """Return top-K vendor meta dicts by cosine similarity. [] on any failure."""
     global _embeddings, _meta
@@ -184,20 +247,73 @@ def retrieve(query: str, k: int = 8) -> list[dict]:
         return []
 
 
-def rag_answer(question: str, k: int = 8) -> Optional[str]:
-    """
-    Full RAG: retrieve top-K vendors, build context, ask Groq.
-    Returns None if retrieval empty or LLM unavailable -> caller falls back.
-    """
-    hits = retrieve(question, k=k)
-    if not hits:
-        return None
+def _doc_for_row(r: dict) -> str:
+    """Build context doc from a raw vendor row (reuses cached meta doc if present)."""
+    vid = r["vendor_id"]
+    cached = next((m for m in _meta if m["vendor_id"] == vid), None)
+    if cached:
+        return cached["doc"]
+    raw = dict(r)
+    if raw.get("risk_score") is None:
+        raw.update(score_vendor(raw))
+    return _vendor_doc(raw)
 
-    context_lines = [f"[{h['vendor_id']}] {h['doc']}" for h in hits]
-    context = "\n".join(context_lines)
 
+def hybrid_context(question: str, k: int = 8) -> tuple[str, list[str]]:
+    """
+    Combine deterministic structured filter (EXACT, complete) with semantic
+    retrieval (fuzzy). Structured rows guarantee no 'show all X' question
+    silently drops matches past the top-K cutoff.
+
+    Returns (context_string, ordered_source_vendor_ids).
+    """
+    from .qa import _parse_intent, _filter
+
+    rows = [dict(r) for r in fetch_all_vendors()]
+    by_id = {r["vendor_id"]: r for r in rows}
+
+    ordered_ids: list[str] = []
+    exact_count = None
+
+    # 1. Structured filter — authoritative for attribute/threshold questions.
+    #    When it matches, use it EXCLUSIVELY (no semantic dilution): the filter
+    #    is complete and exact, so every returned vendor truly matches.
+    intent = _parse_intent(question)
+    matched: list[dict] = []
+    if intent.get("attributes"):
+        matched = _filter(rows, intent, None, limit=10000)  # uncapped for true count
+
+    if matched:
+        exact_count = len(matched)
+        ordered_ids = [r["vendor_id"] for r in matched]  # already sorted by risk desc
+    else:
+        # 2. No structured match — fall back to pure semantic retrieval.
+        ordered_ids = [h["vendor_id"] for h in retrieve(question, k=k)]
+
+    # Cap context size (Groq input budget) — highest-risk matches kept first.
+    shown_ids = ordered_ids[:40]
+    lines = [f"[{vid}] {_doc_for_row(by_id[vid])}" for vid in shown_ids if vid in by_id]
+
+    header = ""
+    if exact_count is not None:
+        header = (
+            f"EXACT_MATCH_COUNT: {exact_count} vendors match this query in total. "
+            f"The {len(lines)} vendor profiles below are the highest-risk matches "
+            f"(sorted by risk score). State the total count of {exact_count} in your answer.\n\n"
+        )
+    return header + "\n".join(lines), shown_ids
+
+
+def rag_answer(question: str, k: int = 8) -> tuple[Optional[str], list[str]]:
+    """
+    Hybrid RAG: structured filter + semantic retrieval -> Groq synthesis.
+    Returns (answer, source_ids). answer is None if no context or LLM down.
+    """
+    context, ids = hybrid_context(question, k=k)
+    if not context:
+        return None, []
     from .ai_client import ask_ai
-    return ask_ai(question, context)
+    return ask_ai(question, context), ids
 
 
 def reindex() -> dict:

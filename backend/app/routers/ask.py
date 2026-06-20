@@ -5,7 +5,7 @@ from ..db import fetch_vendor
 from ..deps import AnyUser
 from ..engine import score_vendor
 from ..qa import answer_question
-from ..rag import rag_answer, retrieve
+from ..rag import rag_answer
 from ..schema import AskRequest, AskResponse
 
 router = APIRouter(prefix="/ask", tags=["ask"])
@@ -28,12 +28,10 @@ def ask(body: AskRequest, _user: AnyUser):
         result = answer_question(question=body.question, vendor_id=body.vendor_id, api_key=None)
         return AskResponse(answer=result["answer"], sources=result["sources"])
 
-    # ── Cross-portfolio question: RAG over all vendors ──
-    hits = retrieve(body.question, k=8)
-    if hits:
-        ai_answer = rag_answer(body.question, k=8)
-        if ai_answer is not None:
-            return AskResponse(answer=ai_answer, sources=[h["vendor_id"] for h in hits])
+    # ── Cross-portfolio question: hybrid RAG over all vendors ──
+    ai_answer, source_ids = rag_answer(body.question, k=8)
+    if ai_answer is not None:
+        return AskResponse(answer=ai_answer, sources=source_ids or ["groq-llama3"])
 
     # Deterministic fallback — always works, zero external calls
     result = answer_question(question=body.question, vendor_id=None, api_key=None)
