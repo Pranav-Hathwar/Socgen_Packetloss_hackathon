@@ -10,7 +10,7 @@ from ..assessment import parse_security_assessment
 from ..contract import extract_from_pdf, extract_from_text
 from ..notifications import send_monthly_summary, send_expiry_alerts, send_breach_notification
 from ..scheduler import start_scheduler, stop_scheduler, scheduler_status, run_once
-from ..deps import AnyUser, require_role
+from ..deps import AnyUser, require_role, get_current_user
 
 router = APIRouter(tags=["advanced"])
 
@@ -47,9 +47,9 @@ def parse_contract_text(body: ContractTextRequest, _user: AnyUser):
 
 @router.post("/contract/parse-pdf")
 async def parse_contract_pdf(
-    vendor_id: Optional[str] = None,
     file: UploadFile = File(...),
-    _user: AnyUser = Depends(AnyUser),
+    vendor_id: Optional[str] = None,
+    _user=Depends(get_current_user),
 ):
     """Upload a PDF contract and extract key fields via pdfplumber + regex."""
     if not file.filename or not file.filename.lower().endswith(".pdf"):
