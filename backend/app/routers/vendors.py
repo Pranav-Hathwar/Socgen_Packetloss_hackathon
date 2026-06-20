@@ -30,7 +30,7 @@ def create_vendor_endpoint(body: VendorCreateRequest, _user=Depends(require_role
     raw = dict(fetch_vendor(vendor_id))
     scored = score_vendor(raw)
     save_scores(vendor_id, scored, trigger="initial")
-    raw.update(scored)
+    raw = dict(fetch_vendor(vendor_id))
     return row_to_vendor_score(raw)
 
 
@@ -76,7 +76,7 @@ def get_vendor(vendor_id: str, _user: AnyUser):
     if raw.get("risk_score") is None:
         scored = score_vendor(raw)
         save_scores(vendor_id, scored, trigger="initial")
-        raw.update(scored)
+        raw = dict(fetch_vendor(vendor_id))
     return row_to_vendor_score(raw)
 
 
