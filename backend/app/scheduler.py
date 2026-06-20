@@ -72,10 +72,19 @@ def stop_scheduler() -> dict:
 
 
 def scheduler_status() -> dict:
+    next_run = None
+    if _scheduler_running and _last_run != "never":
+        try:
+            from datetime import datetime, timedelta
+            last_dt = datetime.fromisoformat(_last_run)
+            next_run = (last_dt + timedelta(seconds=_interval_seconds)).isoformat()
+        except Exception:
+            pass
     return {
         "running": _scheduler_running,
         "interval_seconds": _interval_seconds,
-        "last_run": _last_run,
+        "last_run": _last_run if _last_run != "never" else None,
+        "next_run": next_run,
     }
 
 

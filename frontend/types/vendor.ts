@@ -92,6 +92,27 @@ export interface AlertItem {
   vendor_name: string;
   alert: string;
   rag: RAG;
+  alert_type: string;
+}
+
+export interface ContractField {
+  value: string | number | boolean | string[] | null;
+  evidence: string | null;
+  unit?: string;
+  prior_approval_required?: boolean | null;
+}
+
+export interface ContractAnalysis {
+  vendor_id: string | null;
+  breach_notification_sla_hours: ContractField;
+  data_ownership_clause: ContractField;
+  sub_processors: ContractField;
+  offboarding_terms: ContractField;
+  data_residency: ContractField;
+  audit_rights: ContractField;
+  governing_law: ContractField;
+  key_risks: { risk: string; evidence: string }[];
+  extraction_method: string;
 }
 
 export interface IngestResponse {

@@ -32,7 +32,7 @@ import {
 import { api } from "../../lib/api";
 import { RagBadge } from "../../components/RagBadge";
 import { ErrorState } from "../../components/ErrorState";
-import type { VendorScore, SimulateResponse, ScoreHistoryPoint, RemediationRecord, CertDocument, VendorSuggestion } from "../../types/vendor";
+import type { VendorScore, SimulateResponse, ScoreHistoryPoint, RemediationRecord, CertDocument, VendorSuggestion, ContractAnalysis } from "../../types/vendor";
 
 export default function VendorDetail() {
   const router = useRouter();
@@ -77,6 +77,12 @@ export default function VendorDetail() {
   const [certType, setCertType] = useState("soc2_type2");
   const [certExpiry, setCertExpiry] = useState("");
   const [certLoading, setCertLoading] = useState(false);
+
+  // Contract analysis
+  const [contractFile, setContractFile] = useState<File | null>(null);
+  const [contractResult, setContractResult] = useState<ContractAnalysis | null>(null);
+  const [contractLoading, setContractLoading] = useState(false);
+  const [contractError, setContractError] = useState<string | null>(null);
 
   function fetchVendor() {
     if (typeof id !== "string") return;
@@ -165,6 +171,21 @@ export default function VendorDetail() {
       console.error(e);
     } finally {
       setCertLoading(false);
+    }
+  }
+
+  async function parseContract() {
+    if (!vendor || !contractFile) return;
+    setContractLoading(true);
+    setContractError(null);
+    setContractResult(null);
+    try {
+      const result = await api.contract.parsePdf(contractFile, vendor.vendor_id);
+      setContractResult(result);
+    } catch (e) {
+      setContractError(String(e));
+    } finally {
+      setContractLoading(false);
     }
   }
 
@@ -566,7 +587,7 @@ export default function VendorDetail() {
                   <p className="text-sm text-slate-700 leading-relaxed">{narrative}</p>
                 )}
               </div>
-              <span className="text-xs text-slate-400 shrink-0 mt-0.5">gemini flash</span>
+              <span className="text-xs text-slate-400 shrink-0 mt-0.5">groq llama3</span>
             </div>
           )}
 
@@ -936,6 +957,75 @@ export default function VendorDetail() {
                     </button>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+          {/* Contract Analysis */}
+          <div className="card p-6 animate-slide-up" style={{ animationDelay: "0.55s" }}>
+            <h3 className="text-sm font-semibold text-slate-700 mb-4">Contract Analysis</h3>
+            <p className="text-xs text-slate-400 mb-4">Upload a PDF contract to extract key clauses — breach SLA, data residency, sub-processors, audit rights, and risk flags.</p>
+
+            {/* Upload row */}
+            <div className="flex items-center gap-3 mb-4">
+              <label className="flex-1 flex items-center gap-2 px-4 py-2.5 border border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-colors text-sm text-slate-500">
+                <ArrowUpTrayIcon className="w-4 h-4 shrink-0" />
+                <span className="truncate">{contractFile ? contractFile.name : "Choose PDF contract…"}</span>
+                <input type="file" accept=".pdf" className="hidden" onChange={(e) => { setContractFile(e.target.files?.[0] ?? null); setContractResult(null); setContractError(null); }} />
+              </label>
+              <button
+                onClick={parseContract}
+                disabled={!contractFile || contractLoading}
+                className="shrink-0 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                {contractLoading ? "Analysing…" : "Analyse"}
+              </button>
+            </div>
+
+            {contractError && (
+              <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg mb-3">{contractError}</p>
+            )}
+
+            {contractResult && (
+              <div className="space-y-4">
+                {/* Key fields grid */}
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: "Breach SLA", value: contractResult.breach_notification_sla_hours.value != null ? `${contractResult.breach_notification_sla_hours.value}h` : "Not found" },
+                    { label: "Data Residency", value: String(contractResult.data_residency.value ?? "Not found") },
+                    { label: "Data Ownership", value: String(contractResult.data_ownership_clause.value ?? "Not found") },
+                    { label: "Governing Law", value: String(contractResult.governing_law.value ?? "Not found") },
+                    { label: "Audit Rights", value: contractResult.audit_rights.value === true ? "Granted" : contractResult.audit_rights.value === false ? "Denied" : "Not specified" },
+                    { label: "Sub-processors", value: Array.isArray(contractResult.sub_processors.value) ? contractResult.sub_processors.value.join(", ") : String(contractResult.sub_processors.value ?? "Not found") },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="bg-slate-50 rounded-xl p-3">
+                      <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide mb-1">{label}</p>
+                      <p className="text-sm font-bold text-slate-800 truncate" title={value}>{value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Key risks */}
+                {contractResult.key_risks.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-slate-600 mb-2">Risk Flags ({contractResult.key_risks.length})</p>
+                    <div className="space-y-2">
+                      {contractResult.key_risks.map((r, i) => (
+                        <div key={i} className="flex gap-2 px-3 py-2 bg-amber-50 border border-amber-100 rounded-lg">
+                          <span className="text-amber-500 shrink-0 mt-0.5">⚠</span>
+                          <p className="text-xs text-slate-700">{r.risk}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Offboarding */}
+                {contractResult.offboarding_terms.value && (
+                  <div className="px-3 py-2 bg-slate-50 rounded-lg">
+                    <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Offboarding / Data Deletion</p>
+                    <p className="text-xs text-slate-600">{String(contractResult.offboarding_terms.value).slice(0, 200)}</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -31,6 +31,7 @@ export default function AdminPage() {
   const [status, setStatus] = useState<SchedulerStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
+  const [intervalSeconds, setIntervalSeconds] = useState(3600);
 
   const [notifyEmail, setNotifyEmail] = useState("");
   const [notifyType, setNotifyType] = useState<"summary" | "expiry">("summary");
@@ -104,7 +105,7 @@ export default function AdminPage() {
         </div>
 
         {status && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-slate-50 rounded-xl p-3">
               <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Status</p>
               <div className="flex items-center gap-2 mt-1">
@@ -116,12 +117,38 @@ export default function AdminPage() {
               <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Interval</p>
               <p className="text-sm font-bold text-slate-800 mt-1">{Math.round(status.interval_seconds / 60)} min</p>
             </div>
-            <div className="bg-slate-50 rounded-xl p-3 col-span-2 sm:col-span-1">
+            <div className="bg-slate-50 rounded-xl p-3">
               <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Last Run</p>
-              <p className="text-sm font-bold text-slate-800 mt-1 truncate">{status.last_run ?? "Never"}</p>
+              <p className="text-sm font-bold text-slate-800 mt-1 truncate">
+                {status.last_run ? new Date(status.last_run).toLocaleTimeString() : "Never"}
+              </p>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-3">
+              <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Next Run</p>
+              <p className="text-sm font-bold text-slate-800 mt-1 truncate">
+                {status.next_run ? new Date(status.next_run).toLocaleTimeString() : "—"}
+              </p>
             </div>
           </div>
         )}
+
+        {/* Interval picker */}
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-slate-700 shrink-0">Interval</label>
+          <select
+            value={intervalSeconds}
+            onChange={(e) => setIntervalSeconds(Number(e.target.value))}
+            disabled={status?.running}
+            className="px-3 py-2 border border-slate-200 rounded-xl text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <option value={300}>5 minutes</option>
+            <option value={900}>15 minutes</option>
+            <option value={1800}>30 minutes</option>
+            <option value={3600}>1 hour</option>
+            <option value={21600}>6 hours</option>
+            <option value={86400}>24 hours</option>
+          </select>
+        </div>
 
         {actionMsg && (
           <p className={`text-sm px-3 py-2 rounded-lg ${actionMsg.startsWith("Error") ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}>
@@ -131,7 +158,7 @@ export default function AdminPage() {
 
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={() => runAction(api.scheduler.start, "Scheduler started")}
+            onClick={() => runAction(() => api.scheduler.start(intervalSeconds), "Scheduler started")}
             disabled={status?.running}
             className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
