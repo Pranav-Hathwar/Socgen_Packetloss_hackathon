@@ -46,6 +46,22 @@ const VENDOR_SUGGESTIONS: Suggestion[] = [
   { q: "Is this vendor safe to renew?", icon: CheckIcon },
 ];
 
+// Generic deepeners — surfaced as follow-ups once the curated set runs low.
+const PORTFOLIO_FOLLOWUPS: Suggestion[] = [
+  { q: "Which of these should we prioritise first?", icon: ChartBarIcon },
+  { q: "Recommend remediation steps for the highest-risk vendors", icon: DocumentMagnifyingGlassIcon },
+  { q: "Break the portfolio risk down by category", icon: BuildingOffice2Icon },
+  { q: "Which vendors have expired or expiring certifications?", icon: ExclamationTriangleIcon },
+  { q: "What is our overall GDPR compliance coverage?", icon: GlobeEuropeAfricaIcon },
+];
+
+const VENDOR_FOLLOWUPS: Suggestion[] = [
+  { q: "What's a realistic remediation timeline for this vendor?", icon: ChartBarIcon },
+  { q: "What happens if we take no action?", icon: ExclamationTriangleIcon },
+  { q: "Does this vendor have any breach history?", icon: ShieldExclamationIcon },
+  { q: "What contract terms should we renegotiate?", icon: DocumentMagnifyingGlassIcon },
+];
+
 // Match vendor IDs of any shape that contain a digit: V103, VAC2803, V02B9DA.
 const VENDOR_ID_RE = /(\bV(?=[0-9A-Z]*\d)[0-9A-Z]{2,}\b)/g;
 
@@ -86,7 +102,23 @@ export default function AuditChat() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const suggestions = vendorId ? VENDOR_SUGGESTIONS : PORTFOLIO_SUGGESTIONS;
+  const baseSuggestions = vendorId ? VENDOR_SUGGESTIONS : PORTFOLIO_SUGGESTIONS;
+  const followUpPool = vendorId ? VENDOR_FOLLOWUPS : PORTFOLIO_FOLLOWUPS;
+
+  // Questions already asked this session — never recommend them again.
+  const asked = new Set(
+    messages.filter((m) => m.role === "user").map((m) => m.text.trim().toLowerCase())
+  );
+
+  // Build the recommendation list: curated questions first, topped up with
+  // generic deepeners, always excluding anything already asked. Capped at 4.
+  const recommendations = [...baseSuggestions, ...followUpPool]
+    .filter((s) => !asked.has(s.q.trim().toLowerCase()))
+    .slice(0, 4);
+
+  const lastMsg = messages[messages.length - 1];
+  const showRecommendations =
+    !loading && lastMsg?.role === "assistant" && recommendations.length > 0;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -129,7 +161,7 @@ export default function AuditChat() {
     setTimeout(() => setCopiedIdx(null), 2000);
   }
 
-  const showSuggestions = messages.length <= 1;
+  const isFirstTurn = messages.length <= 1;
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-b from-slate-50 to-white">
@@ -233,17 +265,21 @@ export default function AuditChat() {
         </div>
       </div>
 
-      {/* Suggested Questions */}
-      {showSuggestions && (
-        <div className="px-6 pb-3">
+      {/* Suggested / follow-up questions — refreshed after every answer */}
+      {showRecommendations && (
+        <div className="px-6 pb-3 animate-fade-in">
           <div className="max-w-3xl mx-auto">
             <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 px-1">
-              {vendorId ? "Ask about this vendor" : "Try asking"}
+              {isFirstTurn
+                ? vendorId
+                  ? "Ask about this vendor"
+                  : "Try asking"
+                : "Follow-up questions"}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {suggestions.map(({ q, icon: Icon }, i) => (
+              {recommendations.map(({ q, icon: Icon }, i) => (
                 <button
-                  key={i}
+                  key={`${q}-${i}`}
                   onClick={() => send(q)}
                   className="group flex items-start gap-2.5 text-left px-3.5 py-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 hover:bg-indigo-50 hover:border-indigo-300 hover:shadow-sm transition-all"
                 >
