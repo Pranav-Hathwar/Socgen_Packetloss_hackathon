@@ -10,7 +10,7 @@ from ..db import (
     fetch_score_history, add_remediation, fetch_remediations,
     add_cert_document, fetch_cert_documents, fetch_cert_document,
 )
-from ..claude_client import anonymize_vendor, build_vendor_context, generate_narrative
+from ..ai_client import anonymize_vendor, build_vendor_context, generate_narrative
 from ..deps import AnyUser, require_role
 from ..engine import score_vendor
 from ..hydrate import row_to_summary, row_to_vendor_score
@@ -38,7 +38,7 @@ def create_vendor_endpoint(body: VendorCreateRequest, _user=Depends(require_role
 @router.get("", response_model=list[VendorSummary])
 def list_vendors(
     _user: AnyUser,
-    limit: int = 200,
+    limit: int = 500,
     offset: int = 0,
     search: str = "",
     risk_level: str = "",
@@ -114,7 +114,7 @@ def get_narrative(vendor_id: str, _user: AnyUser):
     return {
         "vendor_id": vendor_id,
         "narrative": narrative,
-        "source": "claude-haiku" if narrative else "unavailable",
+        "source": "gemini-flash" if narrative else "unavailable",
     }
 
 

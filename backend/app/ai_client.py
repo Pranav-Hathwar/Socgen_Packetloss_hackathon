@@ -1,11 +1,11 @@
 """
-Gemini 1.5 Flash integration for VendorLens.
+Gemini 2.0 Flash integration for VendorLens.
 Free tier: 15 req/min, 1 500 req/day — sufficient for demo and hackathon use.
 
 Security model:
   - Vendor name, ID, contact details STRIPPED before anything is sent.
   - Only numeric scores, boolean flags, and enum values leave the server.
-  - System prompt hard-locks Gemini to TPRM topics only.
+  - System prompt hard-locks the model to TPRM topics only.
   - In-memory SHA-256 LRU cache prevents duplicate API calls.
   - max_output_tokens=300 hard cap on every response.
   - Returns None if GEMINI_API_KEY unset — callers fall back to
@@ -40,7 +40,7 @@ _STRIP_FIELDS = frozenset({
     "systems",
 })
 
-# ── Risk-relevant fields sent to Gemini (ordered, minimal) ───────────────────
+# ── Risk-relevant fields sent to the model (ordered, minimal) ────────────────
 _CONTEXT_FIELDS = [
     "risk_score", "risk_level", "rag", "category",
     "data_sensitivity", "access_type",
@@ -121,7 +121,7 @@ def _get_client():
         return None
 
 
-def ask_claude(question: str, vendor_context: str) -> Optional[str]:
+def ask_ai(question: str, vendor_context: str) -> Optional[str]:
     """
     Single Gemini 2.0 Flash call with anonymized vendor context.
     Returns None on any failure so callers fall back to deterministic Q&A.
@@ -164,7 +164,7 @@ def cached_ask(question: str, vendor_context: str) -> Optional[str]:
         _CACHE.move_to_end(key)
         return _CACHE[key]
 
-    answer = ask_claude(question, vendor_context)
+    answer = ask_ai(question, vendor_context)
 
     if answer is not None:
         _CACHE[key] = answer

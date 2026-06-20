@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from ..claude_client import anonymize_vendor, build_vendor_context, cached_ask
+from ..ai_client import anonymize_vendor, build_vendor_context, cached_ask
 from ..db import fetch_vendor
 from ..deps import AnyUser
 from ..engine import score_vendor
@@ -23,10 +23,10 @@ def ask(body: AskRequest, _user: AnyUser):
             anon = anonymize_vendor(raw)
             vendor_context = build_vendor_context(anon)
 
-    # Try Claude (returns None if API key not set or call fails)
-    claude_answer = cached_ask(body.question, vendor_context)
-    if claude_answer is not None:
-        return AskResponse(answer=claude_answer, sources=["gemini-flash"])
+    # Try AI (returns None if API key not set or call fails)
+    ai_answer = cached_ask(body.question, vendor_context)
+    if ai_answer is not None:
+        return AskResponse(answer=ai_answer, sources=["gemini-flash"])
 
     # Deterministic fallback — always works, zero external calls
     result = answer_question(question=body.question, vendor_id=body.vendor_id, api_key=None)

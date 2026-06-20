@@ -7,7 +7,7 @@ Completely separate from the FastAPI app — shares only the engine module.
 Run:
     python backend/mcp_server.py
 
-Or wire into Claude Desktop / any MCP-compatible client:
+Or wire into any MCP-compatible client:
     {
       "mcpServers": {
         "vendorlens": {

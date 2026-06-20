@@ -382,7 +382,7 @@ These features appear in the hackathon PDF specification but were not built — 
 
 | Feature | Status | Reason |
 |---------|--------|--------|
-| LLM-generated risk narratives ("Vendor has SOC 2 but uses older encryption") | ❌ NOT BUILT | Constraint: no Anthropic/OpenAI API calls permitted. Replaced with deterministic QA system. |
+| LLM-generated risk narratives ("Vendor has SOC 2 but uses older encryption") | ✅ BUILT | Gemini 2.0 Flash with deterministic Q&A fallback when API key not set. |
 | Live public breach database lookup (HaveIBeenPwned, threat intel feeds) | ❌ NOT BUILT | No external API calls. Breach data comes from sample CSV only. |
 | Real-time vendor SOC 2 status API integration | ❌ NOT BUILT | No live third-party API integration. |
 | Web scraping for financial health / regulatory news | ❌ NOT BUILT | No scraping implemented. |

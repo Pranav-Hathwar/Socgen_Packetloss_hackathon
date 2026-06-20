@@ -62,7 +62,7 @@ export default function VendorDetail() {
   const [editLoading, setEditLoading] = useState(false);
   const [editMsg, setEditMsg] = useState<string | null>(null);
 
-  // Claude narrative
+  // AI narrative
   const [narrative, setNarrative] = useState<string | null>(null);
   const [narrativeLoading, setNarrativeLoading] = useState(false);
 
@@ -552,7 +552,7 @@ export default function VendorDetail() {
             <StatCard label="Contract End" value={vendor.contract_end} />
           </div>
 
-          {/* Claude narrative */}
+          {/* AI narrative */}
           {(narrativeLoading || narrative) && (
             <div className={`flex items-start gap-3 px-4 py-3 rounded-xl border animate-fade-in ${
               narrativeLoading ? "bg-slate-50 border-slate-200" : "bg-indigo-50 border-indigo-200"
