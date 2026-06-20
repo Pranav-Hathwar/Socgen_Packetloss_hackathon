@@ -1,10 +1,13 @@
 """Assessment parsing, email notifications, and monitoring scheduler endpoints."""
+import tempfile
+from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
 from pydantic import BaseModel
 
 from ..assessment import parse_security_assessment
+from ..contract import extract_from_pdf, extract_from_text
 from ..notifications import send_monthly_summary, send_expiry_alerts, send_breach_notification
 from ..scheduler import start_scheduler, stop_scheduler, scheduler_status, run_once
 from ..deps import AnyUser, require_role
@@ -27,6 +30,41 @@ def parse_assessment(body: AssessmentRequest, _user: AnyUser):
     Covers NIST SA-9 (third-party security assessments) and GDPR Art. 28.
     """
     return parse_security_assessment(body.text, vendor_id=body.vendor_id)
+
+
+# ── Contract Parsing ─────────────────────────────────────────────────────────
+
+class ContractTextRequest(BaseModel):
+    text: str
+    vendor_id: Optional[str] = None
+
+
+@router.post("/contract/parse-text")
+def parse_contract_text(body: ContractTextRequest, _user: AnyUser):
+    """Extract key contract fields from pasted text."""
+    return extract_from_text(body.text, vendor_id=body.vendor_id)
+
+
+@router.post("/contract/parse-pdf")
+async def parse_contract_pdf(
+    vendor_id: Optional[str] = None,
+    file: UploadFile = File(...),
+    _user: AnyUser = Depends(AnyUser),
+):
+    """Upload a PDF contract and extract key fields via pdfplumber + regex."""
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported")
+    contents = await file.read()
+    if len(contents) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="PDF must be under 10 MB")
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+        tmp.write(contents)
+        tmp_path = Path(tmp.name)
+    try:
+        result = extract_from_pdf(tmp_path, vendor_id=vendor_id)
+    finally:
+        tmp_path.unlink(missing_ok=True)
+    return result
 
 
 # ── Email Notifications ───────────────────────────────────────────────────────

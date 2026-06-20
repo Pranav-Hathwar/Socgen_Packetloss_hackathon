@@ -3,6 +3,7 @@ import type {
   AskRequest,
   AskResponse,
   CertDocument,
+  ContractAnalysis,
   ReportSummary,
   SandboxResponse,
   SimulateRequest,
@@ -137,6 +138,14 @@ export const api = {
       post<{ status: string; rows_processed: number; message: string }>("/ingest/email", { text }),
     json: (vendors: object[]) =>
       post<{ status: string; rows_processed: number; message: string }>("/ingest/json", { vendors }),
+  },
+  contract: {
+    parsePdf: (file: File, vendorId?: string) => {
+      const form = new FormData();
+      form.append("file", file);
+      const url = `/contract/parse-pdf${vendorId ? `?vendor_id=${vendorId}` : ""}`;
+      return postForm<ContractAnalysis>(url, form);
+    },
   },
   ask: (body: AskRequest) => post<AskResponse>("/ask", body),
   simulate: (body: SimulateRequest) => post<SimulateResponse>("/simulate", body),
