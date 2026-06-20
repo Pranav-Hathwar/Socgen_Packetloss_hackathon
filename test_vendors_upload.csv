@@ -1,0 +1,4 @@
+vendor_id,name,category,data_sensitivity,access_type,systems,contract_start,contract_end,soc2_type2,soc2_expiry,iso27001,gdpr_dpa,breach_notification_sla_hours,financial_rating,concentration_risk,sub_processor_count,data_residency,under_investigation,last_assessment_date,breach_history
+V-TESTCSV-01,Nexus AI Solutions,AI Services,HIGH,read_write,"ML Models, Training DB",2026-06-01,2028-06-01,1,2027-01-01,0,1,24,A,HIGH,5,EU,0,2026-05-15,
+V-TESTCSV-02,RapidPay Global,Payment Gateway,HIGH,read_write,"CRM, Billing",2025-01-01,2026-12-31,0,,,0,72,CCC,MEDIUM,12,USA,1,2025-10-01,2026-01-15|HIGH|Leaked 5000 test cards
+V-TESTCSV-03,CloudSync Storage,Cloud,MEDIUM,read,"Backups, Archives",2024-05-01,2027-05-01,1,2026-10-31,1,1,48,AA,LOW,2,EU,0,2026-04-20,

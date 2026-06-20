@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { useReactToPrint } from "react-to-print";
 import {
   PieChart,
   Pie,
@@ -21,11 +22,168 @@ import type { ReportSummary, VendorSummary } from "../types/vendor";
 const RAG_COLORS: Record<string, string> = { RED: "#ef4444", AMBER: "#f59e0b", GREEN: "#10b981" };
 const RISK_COLORS: Record<string, string> = { CRITICAL: "#ef4444", HIGH: "#f97316", MEDIUM: "#f59e0b", LOW: "#10b981" };
 
+// Printable wrapper component
+function PrintableReport({
+  report,
+  vendors,
+  ragData,
+  riskData,
+  complianceData,
+  printRef,
+}: {
+  report: ReportSummary;
+  vendors: VendorSummary[];
+  ragData: { name: string; value: number; color: string }[];
+  riskData: { level: string; count: number }[];
+  complianceData: { name: string; count: number; total: number; percentage: number }[];
+  printRef: React.RefObject<HTMLDivElement>;
+}) {
+  return (
+    <div ref={printRef} style={{ fontFamily: "Inter, sans-serif", padding: "32px", maxWidth: "900px", margin: "0 auto" }}>
+      {/* Print Header */}
+      <div style={{ marginBottom: "24px", borderBottom: "2px solid #e2e8f0", paddingBottom: "16px" }}>
+        <h1 style={{ fontSize: "24px", fontWeight: 700, color: "#0f172a", margin: 0 }}>VendorLens — Audit Report</h1>
+        <p style={{ fontSize: "13px", color: "#64748b", marginTop: "4px" }}>
+          Generated: {new Date(report.generated_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+        </p>
+      </div>
+
+      {/* Key Metrics */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "28px" }}>
+        {[
+          { label: "Total Vendors", value: report.total_vendors, color: "#0f172a" },
+          { label: "Avg Risk Score", value: report.average_risk_score.toFixed(1), color: "#0f172a" },
+          { label: "Red Flag Vendors", value: (report.red_flag_vendors ?? []).length, color: "#ef4444" },
+          { label: "Green Status", value: report.rag_summary.GREEN, color: "#10b981" },
+        ].map((m) => (
+          <div key={m.label} style={{ background: "#f8fafc", borderRadius: "12px", padding: "16px", border: "1px solid #e2e8f0" }}>
+            <p style={{ fontSize: "11px", color: "#64748b", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>{m.label}</p>
+            <p style={{ fontSize: "28px", fontWeight: 700, color: m.color, margin: "4px 0 0" }}>{m.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* RAG Summary */}
+      <div style={{ marginBottom: "24px" }}>
+        <h2 style={{ fontSize: "14px", fontWeight: 600, color: "#374151", marginBottom: "12px" }}>RAG Distribution</h2>
+        <div style={{ display: "flex", gap: "12px" }}>
+          {[
+            { label: "Red", value: report.rag_summary.RED, color: "#ef4444" },
+            { label: "Amber", value: report.rag_summary.AMBER, color: "#f59e0b" },
+            { label: "Green", value: report.rag_summary.GREEN, color: "#10b981" },
+          ].map((r) => (
+            <div key={r.label} style={{ flex: 1, background: r.color + "15", border: `1px solid ${r.color}40`, borderRadius: "10px", padding: "14px", textAlign: "center" }}>
+              <p style={{ fontSize: "11px", color: r.color, fontWeight: 700, textTransform: "uppercase", margin: 0 }}>{r.label}</p>
+              <p style={{ fontSize: "32px", fontWeight: 800, color: r.color, margin: "6px 0 0" }}>{r.value}</p>
+              <p style={{ fontSize: "11px", color: "#64748b", margin: "2px 0 0" }}>vendors</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Risk Level Breakdown */}
+      <div style={{ marginBottom: "24px" }}>
+        <h2 style={{ fontSize: "14px", fontWeight: 600, color: "#374151", marginBottom: "12px" }}>Risk Level Breakdown</h2>
+        <div style={{ display: "flex", gap: "12px" }}>
+          {riskData.map((r) => (
+            <div key={r.level} style={{ flex: 1, background: RISK_COLORS[r.level] + "15", border: `1px solid ${RISK_COLORS[r.level]}40`, borderRadius: "10px", padding: "14px", textAlign: "center" }}>
+              <p style={{ fontSize: "11px", color: RISK_COLORS[r.level], fontWeight: 700, textTransform: "uppercase", margin: 0 }}>{r.level}</p>
+              <p style={{ fontSize: "32px", fontWeight: 800, color: RISK_COLORS[r.level], margin: "6px 0 0" }}>{r.count}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Compliance Coverage */}
+      {complianceData.length > 0 && (
+        <div style={{ marginBottom: "24px" }}>
+          <h2 style={{ fontSize: "14px", fontWeight: 600, color: "#374151", marginBottom: "12px" }}>Compliance Coverage</h2>
+          {complianceData.map((c) => (
+            <div key={c.name} style={{ marginBottom: "12px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                <span style={{ fontSize: "13px", fontWeight: 600, color: "#374151" }}>{c.name}</span>
+                <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a" }}>{c.percentage}% ({c.count}/{c.total})</span>
+              </div>
+              <div style={{ width: "100%", height: "10px", background: "#e2e8f0", borderRadius: "999px", overflow: "hidden" }}>
+                <div style={{ width: `${c.percentage}%`, height: "100%", borderRadius: "999px", background: c.percentage >= 75 ? "#10b981" : c.percentage >= 50 ? "#f59e0b" : "#ef4444" }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* All Vendors Table */}
+      <div style={{ marginBottom: "24px", pageBreakBefore: "auto" }}>
+        <h2 style={{ fontSize: "14px", fontWeight: 600, color: "#374151", marginBottom: "12px" }}>Complete Vendor Register ({vendors.length} vendors)</h2>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+          <thead>
+            <tr style={{ background: "#f1f5f9" }}>
+              {["Vendor", "Category", "Risk Score", "Risk Level", "RAG", "Alerts"].map((h) => (
+                <th key={h} style={{ padding: "8px 10px", textAlign: "left", fontWeight: 600, color: "#374151", borderBottom: "2px solid #e2e8f0" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {vendors.map((v, i) => (
+              <tr key={v.vendor_id} style={{ background: i % 2 === 0 ? "#fff" : "#f8fafc", borderBottom: "1px solid #f1f5f9" }}>
+                <td style={{ padding: "8px 10px", fontWeight: 600, color: "#0f172a" }}>{v.name}</td>
+                <td style={{ padding: "8px 10px", color: "#64748b" }}>{v.category}</td>
+                <td style={{ padding: "8px 10px", fontWeight: 700, color: "#0f172a" }}>{v.risk_score.toFixed(1)}</td>
+                <td style={{ padding: "8px 10px" }}>
+                  <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "11px", fontWeight: 700, background: RISK_COLORS[v.risk_level] + "20", color: RISK_COLORS[v.risk_level] }}>
+                    {v.risk_level}
+                  </span>
+                </td>
+                <td style={{ padding: "8px 10px" }}>
+                  <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "11px", fontWeight: 700, background: RAG_COLORS[v.rag] + "20", color: RAG_COLORS[v.rag] }}>
+                    {v.rag}
+                  </span>
+                </td>
+                <td style={{ padding: "8px 10px", color: "#64748b", fontSize: "11px" }}>
+                  {v.alerts.slice(0, 2).join("; ")}
+                  {v.alerts.length > 2 && ` +${v.alerts.length - 2} more`}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Red Flag Vendors */}
+      {(report.red_flag_vendors ?? []).length > 0 && (
+        <div style={{ pageBreakBefore: "auto" }}>
+          <h2 style={{ fontSize: "14px", fontWeight: 600, color: "#374151", marginBottom: "12px" }}>Red-Flag Vendors — Required Actions</h2>
+          {(report.red_flag_vendors ?? []).map((v) => (
+            <div key={v.vendor_id} style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "10px", padding: "14px", marginBottom: "10px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+                <span style={{ fontWeight: 700, color: "#0f172a", fontSize: "14px" }}>{v.name}</span>
+                <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "11px", fontWeight: 700, background: "#ef444420", color: "#ef4444" }}>{v.risk_level}</span>
+                <span style={{ fontSize: "13px", color: "#64748b", fontFamily: "monospace" }}>{v.risk_score.toFixed(1)}</span>
+                <span style={{ fontSize: "12px", color: "#94a3b8" }}>{v.category}</span>
+              </div>
+              <span style={{ display: "inline-block", padding: "3px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: 700, background: v.action_type === "ESCALATE" ? "#ef444420" : "#f59e0b20", color: v.action_type === "ESCALATE" ? "#ef4444" : "#f59e0b", marginRight: "8px" }}>
+                {v.action_type}
+              </span>
+              <span style={{ fontSize: "13px", color: "#374151" }}>{v.required_actions}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Footer */}
+      <div style={{ marginTop: "32px", borderTop: "1px solid #e2e8f0", paddingTop: "12px", textAlign: "center" }}>
+        <p style={{ fontSize: "11px", color: "#94a3b8" }}>VendorLens — Confidential Third-Party Risk Report — {new Date().toLocaleDateString()}</p>
+      </div>
+    </div>
+  );
+}
+
 export default function ReportPage() {
   const [report, setReport] = useState<ReportSummary | null>(null);
   const [vendors, setVendors] = useState<VendorSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const printRef = useRef<HTMLDivElement>(null);
 
   function fetchData() {
     setLoading(true);
@@ -36,6 +194,18 @@ export default function ReportPage() {
   }
 
   useEffect(() => { fetchData(); }, []);
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `VendorLens_Audit_Report_${new Date().toISOString().slice(0, 10)}`,
+    pageStyle: `
+      @page { size: A4 portrait; margin: 0; }
+      @media print {
+        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        * { box-sizing: border-box; }
+      }
+    `,
+  });
 
   const exportCSV = useCallback(() => {
     if (!vendors.length) return;
@@ -105,7 +275,7 @@ export default function ReportPage() {
             Generated: {new Date(report.generated_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
           </p>
         </div>
-        <div className="flex gap-2 no-print">
+        <div className="flex gap-2">
           <button
             onClick={exportCSV}
             className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
@@ -114,13 +284,25 @@ export default function ReportPage() {
             Export CSV
           </button>
           <button
-            onClick={() => window.print()}
+            onClick={() => handlePrint()}
             className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors"
           >
             <PrinterIcon className="w-4 h-4" />
             Print Report
           </button>
         </div>
+      </div>
+
+      {/* Hidden printable version */}
+      <div style={{ display: "none" }}>
+        <PrintableReport
+          report={report}
+          vendors={vendors}
+          ragData={ragData}
+          riskData={riskData}
+          complianceData={complianceData}
+          printRef={printRef}
+        />
       </div>
 
       {/* Key Metrics */}
