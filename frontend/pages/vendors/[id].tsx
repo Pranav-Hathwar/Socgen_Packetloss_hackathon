@@ -100,10 +100,13 @@ export default function VendorDetail() {
       setEditForm({
         contact_name: v.contact_name ?? "",
         contact_email: v.contact_email ?? "",
+        category: v.category,
         contract_end: v.contract_end ?? "",
         soc2_type2: v.compliance.soc2_type2,
+        soc2_expiry: v.compliance.soc2_expiry ?? "",
         iso27001: v.compliance.iso27001,
         gdpr_dpa: v.compliance.gdpr_dpa,
+        breach_notification_sla_hours: v.compliance.breach_notification_sla_hours,
         financial_rating: v.financial_rating,
         data_sensitivity: v.data_access.data_sensitivity,
         access_type: v.data_access.access_type,
@@ -303,9 +306,12 @@ export default function VendorDetail() {
 
       {/* Edit Panel */}
       {editOpen && (
-        <div className="card p-6 border-l-4 border-slate-400 animate-slide-up">
-          <h2 className="text-sm font-bold text-slate-800 mb-4">Edit Vendor Details</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="card p-6 border-l-4 border-slate-400 animate-slide-up mb-6">
+          <h2 className="text-sm font-bold text-slate-800 mb-5">Edit Vendor Details</h2>
+
+          {/* Contact */}
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Contact</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1">Contact Name</label>
               <input
@@ -326,6 +332,23 @@ export default function VendorDetail() {
                 placeholder="jane@vendor.com"
               />
             </div>
+          </div>
+
+          {/* Vendor Profile */}
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Vendor Profile</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-5">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Category</label>
+              <select
+                value={String(editForm.category ?? "Other")}
+                onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value }))}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              >
+                {["Cloud","SaaS","ERP","HR","Payment","Security","Backup","Managed Service","Consulting","Other"].map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1">Contract End Date</label>
               <input
@@ -334,6 +357,18 @@ export default function VendorDetail() {
                 onChange={(e) => setEditForm((f) => ({ ...f, contract_end: e.target.value }))}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
               />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Financial Rating</label>
+              <select
+                value={String(editForm.financial_rating ?? "BBB")}
+                onChange={(e) => setEditForm((f) => ({ ...f, financial_rating: e.target.value }))}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              >
+                {["AAA","AA","A","BBB","BB","B","CCC","CC","C"].map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1">Data Sensitivity</label>
@@ -359,44 +394,75 @@ export default function VendorDetail() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Financial Rating</label>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Concentration Risk</label>
               <select
-                value={String(editForm.financial_rating ?? "BBB")}
-                onChange={(e) => setEditForm((f) => ({ ...f, financial_rating: e.target.value }))}
+                value={String(editForm.concentration_risk ?? "LOW")}
+                onChange={(e) => setEditForm((f) => ({ ...f, concentration_risk: e.target.value }))}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
               >
-                {["AAA","AA","A","BBB","BB","B","CCC","CC","C"].map((r) => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
+                <option value="LOW">LOW</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="HIGH">HIGH</option>
               </select>
             </div>
           </div>
-          <div className="mt-4 flex flex-wrap gap-4 items-center">
-            <div className="flex gap-4">
-              {(["soc2_type2","iso27001","gdpr_dpa"] as const).map((key) => (
-                <label key={key} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={!!editForm[key]}
-                    onChange={(e) => setEditForm((f) => ({ ...f, [key]: e.target.checked }))}
-                    className="rounded text-indigo-600"
-                  />
-                  <span className="text-xs font-medium text-slate-700">
-                    {key === "soc2_type2" ? "SOC 2 Type II" : key === "iso27001" ? "ISO 27001" : "GDPR DPA"}
-                  </span>
-                </label>
-              ))}
+
+          {/* Compliance */}
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Compliance</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">SOC 2 Expiry Date</label>
+              <input
+                type="date"
+                value={String(editForm.soc2_expiry ?? "")}
+                onChange={(e) => setEditForm((f) => ({ ...f, soc2_expiry: e.target.value }))}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              />
             </div>
-            <div className="ml-auto flex items-center gap-3">
-              {editMsg && (
-                <span className={`text-xs font-medium ${editMsg.startsWith("Error") ? "text-red-600" : "text-emerald-600"}`}>
-                  {editMsg}
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Breach Notification SLA (hours)</label>
+              <input
+                type="number"
+                value={Number(editForm.breach_notification_sla_hours ?? 72)}
+                onChange={(e) => setEditForm((f) => ({ ...f, breach_notification_sla_hours: parseInt(e.target.value) || 72 }))}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                min={1}
+              />
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-4 mb-5">
+            {(["soc2_type2","iso27001","gdpr_dpa"] as const).map((key) => (
+              <label key={key} className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-indigo-50 hover:border-indigo-200 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={!!editForm[key]}
+                  onChange={(e) => setEditForm((f) => ({ ...f, [key]: e.target.checked }))}
+                  className="rounded text-indigo-600"
+                />
+                <span className="text-xs font-medium text-slate-700">
+                  {key === "soc2_type2" ? "SOC 2 Type II" : key === "iso27001" ? "ISO 27001" : "GDPR DPA"}
                 </span>
-              )}
+              </label>
+            ))}
+          </div>
+
+          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+            {editMsg && (
+              <span className={`text-xs font-medium ${editMsg.startsWith("Error") ? "text-red-600" : "text-emerald-600"}`}>
+                {editMsg}
+              </span>
+            )}
+            <div className="ml-auto flex gap-2">
+              <button
+                onClick={() => { setEditOpen(false); setEditMsg(null); }}
+                className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
               <button
                 onClick={submitEdit}
                 disabled={editLoading}
-                className="px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-semibold hover:bg-slate-900 disabled:opacity-40 transition-colors"
+                className="px-5 py-2 bg-slate-800 text-white rounded-xl text-sm font-semibold hover:bg-slate-900 disabled:opacity-40 transition-colors"
               >
                 {editLoading ? "Saving…" : "Save Changes"}
               </button>
