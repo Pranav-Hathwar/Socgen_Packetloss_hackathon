@@ -48,12 +48,22 @@ def _authenticate(email: str, password: str) -> dict:
     return dict(user)
 
 
+def _validate_password(password: str) -> None:
+    if len(password) < 8:
+        raise HTTPException(400, "Password must be at least 8 characters")
+    if not any(c.isupper() for c in password):
+        raise HTTPException(400, "Password must contain at least one uppercase letter")
+    if not any(c.isdigit() for c in password):
+        raise HTTPException(400, "Password must contain at least one number")
+
+
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register(req: RegisterRequest):
     """Open registration — in production this would be invite-only or via SSO."""
     role = req.role.upper()
     if role not in VALID_ROLES:
         raise HTTPException(400, f"role must be one of {sorted(VALID_ROLES)}")
+    _validate_password(req.password)
     if get_user_by_email(req.email):
         raise HTTPException(400, "Email already registered")
     uid = create_user(req.email, hash_password(req.password), role)

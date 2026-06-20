@@ -33,7 +33,14 @@ def create_vendor_endpoint(body: VendorCreateRequest, _user=Depends(require_role
 
 
 @router.get("", response_model=list[VendorSummary])
-def list_vendors(_user: AnyUser):
+def list_vendors(
+    _user: AnyUser,
+    limit: int = 200,
+    offset: int = 0,
+    search: str = "",
+    risk_level: str = "",
+    category: str = "",
+):
     rows = fetch_all_vendors()
     result = []
     for row in rows:
@@ -48,7 +55,14 @@ def list_vendors(_user: AnyUser):
                 "alerts": str(scored["alerts"]),
             })
         result.append(row_to_summary(raw))
-    return result
+    if search:
+        q = search.lower()
+        result = [r for r in result if q in r.name.lower() or q in r.category.lower()]
+    if risk_level:
+        result = [r for r in result if r.risk_level == risk_level]
+    if category:
+        result = [r for r in result if r.category == category]
+    return result[offset: offset + limit]
 
 
 @router.get("/{vendor_id}", response_model=VendorScore)
