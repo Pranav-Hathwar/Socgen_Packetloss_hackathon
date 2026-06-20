@@ -348,7 +348,7 @@ def update_vendor_fields(vendor_id: str, fields: dict) -> bool:
         "contact_name", "contact_email", "category", "contract_end",
         "data_sensitivity", "access_type", "soc2_type2", "soc2_expiry",
         "iso27001", "gdpr_dpa", "financial_rating", "concentration_risk",
-        "under_investigation", "breach_notification_sla_hours",
+        "under_investigation", "breach_notification_sla_hours", "breach_history",
     }
     safe = {k: v for k, v in fields.items() if k in allowed}
     if not safe:

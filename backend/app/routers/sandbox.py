@@ -21,39 +21,28 @@ class SandboxResponse(BaseModel):
 
 @router.post("/inject-breach", response_model=SandboxResponse)
 def inject_breach():
-    """Pick a random vendor, add a breach event, bump their risk score."""
-    vendor = random.choice(MOCK_VENDORS)
-
-    breach = BreachEvent(
-        date=date.today(),
-        severity="HIGH",
-        description="[SIMULATED] Unauthorized data access detected in production environment.",
-    )
-    vendor.breach_history.append(breach)
-
-    bump = random.uniform(12.0, 22.0)
-    vendor.risk_score = min(100.0, round(vendor.risk_score + bump, 1))
-    vendor.score_breakdown.breach_history = min(100.0, vendor.score_breakdown.breach_history + bump)
-
-    if vendor.risk_score >= 75:
-        vendor.risk_level = RiskLevel.CRITICAL
-        vendor.rag = RAG.RED
-    elif vendor.risk_score >= 50:
-        vendor.risk_level = RiskLevel.HIGH
-        vendor.rag = RAG.RED
-
-    alert_text = f"[SIMULATED] New breach detected — score increased by {bump:.1f}"
-    vendor.alerts.append(alert_text)
-
-    # Rebuild summaries
-    _rebuild_lists()
-
+    """Inject a breach into the DB for one of the first 3 vendors so Run Now picks it up."""
+    from ..db import fetch_all_vendors, update_vendor_fields
+    import random
+    
+    rows = fetch_all_vendors()
+    # Find candidates that are NOT currently CRITICAL so we guarantee a change
+    candidates = [r for r in rows if r["risk_level"] != "CRITICAL"]
+    candidates = candidates[:3] if len(candidates) >= 3 else candidates
+    if not candidates:
+        candidates = rows[:3] if len(rows) >= 3 else rows
+        
+    vendor = random.choice(candidates)
+    
+    # Forcing under_investigation guarantees a level change to CRITICAL and score of 92+
+    update_vendor_fields(vendor["vendor_id"], {"under_investigation": 1})
+    
     return SandboxResponse(
         action="inject-breach",
-        vendor_id=vendor.vendor_id,
-        vendor_name=vendor.name,
-        detail=f"Breach injected. Risk score: {vendor.risk_score}",
-        new_risk_score=vendor.risk_score,
+        vendor_id=vendor["vendor_id"],
+        vendor_name=vendor["name"],
+        detail="Investigation triggered. Press 'Run Now' to rescore.",
+        new_risk_score=92.0,
     )
 
 

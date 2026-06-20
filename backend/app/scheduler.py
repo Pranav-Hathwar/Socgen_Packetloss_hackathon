@@ -81,4 +81,7 @@ def scheduler_status() -> dict:
 
 def run_once() -> dict:
     """Trigger an immediate rescore without starting the scheduler."""
-    return _rescore_all()
+    global _last_run
+    result = _rescore_all()
+    _last_run = result["run_at"]
+    return result

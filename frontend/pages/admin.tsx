@@ -31,6 +31,7 @@ export default function AdminPage() {
   const [status, setStatus] = useState<SchedulerStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
+  const [levelChanges, setLevelChanges] = useState<{name: string, old_level: string, new_level: string}[] | null>(null);
 
   const [notifyEmail, setNotifyEmail] = useState("");
   const [notifyType, setNotifyType] = useState<"summary" | "expiry">("summary");
@@ -54,12 +55,16 @@ export default function AdminPage() {
 
   async function runAction(fn: () => Promise<unknown>, msg: string) {
     setActionMsg(null);
+    setLevelChanges(null);
     try {
       const res = await fn() as Record<string, unknown>;
       const detail = res.vendors_rescored != null
         ? `${msg} — ${res.vendors_rescored} vendors rescored`
         : msg;
       setActionMsg(detail);
+      if (res.level_changes) {
+        setLevelChanges(res.level_changes as any);
+      }
       await loadStatus();
     } catch (e) {
       setActionMsg(`Error: ${String(e)}`);
@@ -124,9 +129,31 @@ export default function AdminPage() {
         )}
 
         {actionMsg && (
-          <p className={`text-sm px-3 py-2 rounded-lg ${actionMsg.startsWith("Error") ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}>
-            {actionMsg}
-          </p>
+          <div className="space-y-2">
+            <p className={`text-sm px-3 py-2 rounded-lg ${actionMsg.startsWith("Error") ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}>
+              {actionMsg}
+            </p>
+            {levelChanges && levelChanges.length > 0 && (
+              <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">Risk Level Changes</p>
+                <ul className="space-y-2">
+                  {levelChanges.map((c, i) => (
+                    <li key={i} className="text-sm text-slate-700 flex items-center justify-between border-b border-slate-100 pb-1 last:border-0 last:pb-0">
+                      <span className="font-medium bg-white px-2 py-0.5 rounded shadow-sm border border-slate-100">{c.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-medium">{c.old_level}</span>
+                        <span className="text-slate-400">→</span>
+                        <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-bold">{c.new_level}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {levelChanges && levelChanges.length === 0 && actionMsg.includes("rescored") && (
+              <p className="text-xs text-emerald-700 px-2 font-medium bg-emerald-50/50 py-1 rounded inline-block border border-emerald-100">✓ No risk level changes detected.</p>
+            )}
+          </div>
         )}
 
         <div className="flex flex-wrap gap-2">
