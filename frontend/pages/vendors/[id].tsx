@@ -926,16 +926,14 @@ export default function VendorDetail() {
                         {" · "}Uploaded {c.uploaded_at.slice(0, 10)}
                       </p>
                     </div>
-                    <a
-                      href={`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/vendors/${c.vendor_id}/certs/${c.id}/download`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      onClick={() => api.vendors.downloadCert(c.vendor_id, c.id, c.filename)}
                       title="Download certificate"
                       className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-indigo-200 bg-white text-xs font-semibold text-indigo-600 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all"
                     >
                       <ArrowDownTrayIcon className="w-3.5 h-3.5" />
                       Download
-                    </a>
+                    </button>
                   </div>
                 ))}
               </div>

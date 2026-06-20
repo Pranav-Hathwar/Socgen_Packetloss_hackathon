@@ -91,6 +91,20 @@ export const api = {
       form.append("file", file);
       return postForm<{ status: string; id: number; filename: string }>(`/vendors/${id}/certs?cert_type=${certType}&expiry_date=${expiryDate}`, form);
     },
+    downloadCert: async (vendorId: string, certId: number, filename: string): Promise<void> => {
+      const res = await fetch(`${BASE}/vendors/${vendorId}/certs/${certId}/download`, {
+        headers: authHeader(),
+      });
+      if (res.status === 401) { handle401(); throw new Error("Unauthorized"); }
+      if (!res.ok) throw new Error(`Download failed: ${res.status}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
     remediations: (id: string) => get<RemediationRecord[]>(`/vendors/${id}/remediations`),
     remediate: (id: string, body: RemediationRequest) => post<RemediationRecord>(`/vendors/${id}/remediate`, body),
     update: (id: string, body: Record<string, unknown>) => patch<{ status: string; new_risk_score: number; new_risk_level: string }>(`/vendors/${id}`, body),
