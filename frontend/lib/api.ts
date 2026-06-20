@@ -119,7 +119,7 @@ export const api = {
   },
   scheduler: {
     status: () => get<{ running: boolean; interval_seconds: number; next_run: string | null; last_run: string | null }>("/scheduler/status"),
-    start: () => post<{ status: string }>("/scheduler/start", {}),
+    start: (interval_seconds = 3600) => post<{ status: string }>("/scheduler/start", { interval_seconds }),
     stop: () => post<{ status: string }>("/scheduler/stop", {}),
     runNow: () => post<{ status: string; vendors_rescored: number }>("/scheduler/run-now", {}),
   },
