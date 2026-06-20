@@ -162,11 +162,11 @@ export default function AuditChat() {
                   </span>
                   {m.source && (
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                      m.source === "claude-haiku"
-                        ? "bg-violet-100 text-violet-600"
+                      m.source === "gemini-flash"
+                        ? "bg-blue-100 text-blue-600"
                         : "bg-slate-100 text-slate-500"
                     }`}>
-                      {m.source === "claude-haiku" ? "claude haiku" : "deterministic"}
+                      {m.source === "gemini-flash" ? "gemini flash" : "deterministic"}
                     </span>
                   )}
                   {m.role === "assistant" && i > 0 && (

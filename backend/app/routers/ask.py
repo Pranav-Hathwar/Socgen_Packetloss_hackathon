@@ -26,7 +26,7 @@ def ask(body: AskRequest, _user: AnyUser):
     # Try Claude (returns None if API key not set or call fails)
     claude_answer = cached_ask(body.question, vendor_context)
     if claude_answer is not None:
-        return AskResponse(answer=claude_answer, sources=["claude-haiku"])
+        return AskResponse(answer=claude_answer, sources=["gemini-flash"])
 
     # Deterministic fallback — always works, zero external calls
     result = answer_question(question=body.question, vendor_id=body.vendor_id, api_key=None)
