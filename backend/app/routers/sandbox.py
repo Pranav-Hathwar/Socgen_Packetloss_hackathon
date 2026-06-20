@@ -1,12 +1,21 @@
-"""Admin Sandbox endpoints for live monitoring demo."""
+"""Admin Sandbox endpoints for live monitoring demo.
+
+These mutate the REAL SQLite database (the same store the dashboard, vendor
+list, and report read from) so changes are immediately visible everywhere.
+A random vendor is selected, a risk event is applied, the engine re-scores
+it, and the result is persisted via save_scores().
+"""
+from __future__ import annotations
+
 import random
 from datetime import date
 
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from ..mock_data import ALL_VENDORS, MOCK_SUMMARIES, MOCK_ALERTS, MOCK_VENDORS
-from ..schema import BreachEvent, AlertItem, RAG, RiskLevel
+from ..db import fetch_all_vendors, fetch_vendor, get_conn, save_scores
+from ..deps import AnyUser
+from ..engine import score_vendor
 
 router = APIRouter(prefix="/sandbox", tags=["sandbox"])
 
@@ -16,109 +25,115 @@ class SandboxResponse(BaseModel):
     vendor_id: str
     vendor_name: str
     detail: str
+    reason: str
+    old_risk_score: float
     new_risk_score: float
+    old_risk_level: str
+    new_risk_level: str
+
+
+def _fmt_score(v: float) -> float:
+    return round(float(v or 0), 1)
+
+
+def _append_breach_history(existing: str, new_date: date, severity: str, description: str) -> str:
+    """Breach history is pipe-separated: date|severity|description[|date|...]."""
+    parts = [p.strip() for p in (existing or "").split("|") if p.strip()]
+    parts += [new_date.isoformat(), severity.upper(), description]
+    return "|".join(parts)
+
+
+def _pick_random_vendor() -> dict:
+    rows = [dict(r) for r in fetch_all_vendors()]
+    if not rows:
+        raise RuntimeError("No vendors in database to target.")
+    return random.choice(rows)
 
 
 @router.post("/inject-breach", response_model=SandboxResponse)
-def inject_breach():
-    """Pick a random vendor, add a breach event, bump their risk score."""
-    vendor = random.choice(MOCK_VENDORS)
+def inject_breach(_user: AnyUser):
+    """Pick a random vendor, append a HIGH-severity breach, re-score and persist."""
+    raw = _pick_random_vendor()
+    vendor_id = raw["vendor_id"]
+    old_score = _fmt_score(raw.get("risk_score"))
+    old_level = str(raw.get("risk_level") or "LOW")
 
-    breach = BreachEvent(
-        date=date.today(),
-        severity="HIGH",
-        description="[SIMULATED] Unauthorized data access detected in production environment.",
+    description = "[SIMULATED] Unauthorized data access detected in production environment."
+    new_history = _append_breach_history(
+        str(raw.get("breach_history") or ""), date.today(), "HIGH", description
     )
-    vendor.breach_history.append(breach)
 
-    bump = random.uniform(12.0, 22.0)
-    vendor.risk_score = min(100.0, round(vendor.risk_score + bump, 1))
-    vendor.score_breakdown.breach_history = min(100.0, vendor.score_breakdown.breach_history + bump)
+    with get_conn() as conn:
+        conn.execute(
+            "UPDATE vendors SET breach_history=? WHERE vendor_id=?",
+            (new_history, vendor_id),
+        )
 
-    if vendor.risk_score >= 75:
-        vendor.risk_level = RiskLevel.CRITICAL
-        vendor.rag = RAG.RED
-    elif vendor.risk_score >= 50:
-        vendor.risk_level = RiskLevel.HIGH
-        vendor.rag = RAG.RED
+    fresh = dict(fetch_vendor(vendor_id))
+    scored = score_vendor(fresh)
+    # We DO NOT call save_scores here so that scheduler's Run Now detects the DB gap and rescores!
 
-    alert_text = f"[SIMULATED] New breach detected — score increased by {bump:.1f}"
-    vendor.alerts.append(alert_text)
-
-    # Rebuild summaries
-    _rebuild_lists()
+    new_score = _fmt_score(scored["risk_score"])
+    new_level = scored["risk_level"]
+    delta = round(new_score - old_score, 1)
 
     return SandboxResponse(
         action="inject-breach",
-        vendor_id=vendor.vendor_id,
-        vendor_name=vendor.name,
-        detail=f"Breach injected. Risk score: {vendor.risk_score}",
-        new_risk_score=vendor.risk_score,
+        vendor_id=vendor_id,
+        vendor_name=fresh["name"],
+        detail=f"Breached injected into {fresh['name']}.",
+        reason=f"New HIGH-severity breach logged today (+{delta:.1f} points from breach history).",
+        old_risk_score=old_score,
+        new_risk_score=new_score,
+        old_risk_level=old_level,
+        new_risk_level=new_level,
     )
 
 
 @router.post("/advance-time", response_model=SandboxResponse)
-def advance_time():
-    """Find a vendor with SOC2 expiry and mark it as expired."""
+def advance_time(_user: AnyUser):
+    """Find a vendor with a valid SOC2 cert and mark it expired, then re-score."""
+    rows = [dict(r) for r in fetch_all_vendors()]
     candidates = [
-        v for v in MOCK_VENDORS
-        if v.compliance.soc2_type2 and v.compliance.soc2_expiry
+        r for r in rows
+        if int(r.get("soc2_type2", 0) or 0) and r.get("soc2_expiry")
     ]
     if not candidates:
-        vendor = MOCK_VENDORS[0]
-        detail = "No SOC2 vendors to expire. Applied penalty to first vendor."
+        raw = rows[0] if rows else None
+        if raw is None:
+            raise RuntimeError("No vendors in database to target.")
+        reason_suffix = "No SOC2 vendors left to expire — no change applied."
     else:
-        vendor = random.choice(candidates)
-        vendor.compliance.soc2_type2 = False
-        vendor.compliance.soc2_expiry = None
-        detail = f"SOC 2 Type II certification expired for {vendor.name}."
+        raw = random.choice(candidates)
+        reason_suffix = "SOC 2 Type II certification marked expired."
 
-    bump = random.uniform(8.0, 15.0)
-    vendor.risk_score = min(100.0, round(vendor.risk_score + bump, 1))
-    vendor.score_breakdown.compliance_gaps = min(100.0, vendor.score_breakdown.compliance_gaps + bump)
+    vendor_id = raw["vendor_id"]
+    old_score = _fmt_score(raw.get("risk_score"))
+    old_level = str(raw.get("risk_level") or "LOW")
 
-    if vendor.risk_score >= 75:
-        vendor.risk_level = RiskLevel.CRITICAL
-        vendor.rag = RAG.RED
-    elif vendor.risk_score >= 50:
-        vendor.risk_level = RiskLevel.HIGH
-        vendor.rag = RAG.RED
-    elif vendor.risk_score >= 30:
-        vendor.risk_level = RiskLevel.MEDIUM
-        vendor.rag = RAG.AMBER
+    if candidates:
+        with get_conn() as conn:
+            conn.execute(
+                "UPDATE vendors SET soc2_type2=0, soc2_expiry=NULL WHERE vendor_id=?",
+                (vendor_id,),
+            )
 
-    alert_text = "[SIMULATED] SOC 2 certification expired"
-    vendor.alerts.append(alert_text)
+    fresh = dict(fetch_vendor(vendor_id))
+    scored = score_vendor(fresh)
+    # We DO NOT call save_scores here so that scheduler's Run Now detects the DB gap and rescores!
 
-    _rebuild_lists()
+    new_score = _fmt_score(scored["risk_score"])
+    new_level = scored["risk_level"]
+    delta = round(new_score - old_score, 1)
 
     return SandboxResponse(
         action="advance-time",
-        vendor_id=vendor.vendor_id,
-        vendor_name=vendor.name,
-        detail=detail,
-        new_risk_score=vendor.risk_score,
+        vendor_id=vendor_id,
+        vendor_name=fresh["name"],
+        detail=f"Time advanced for {fresh['name']}.",
+        reason=f"{reason_suffix} (+{delta:.1f} points from compliance gap).",
+        old_risk_score=old_score,
+        new_risk_score=new_score,
+        old_risk_level=old_level,
+        new_risk_level=new_level,
     )
-
-
-def _rebuild_lists():
-    """Rebuild summary & alert lists from current vendor state."""
-    from ..schema import VendorSummary
-    MOCK_SUMMARIES.clear()
-    MOCK_ALERTS.clear()
-    for v in MOCK_VENDORS:
-        MOCK_SUMMARIES.append(
-            VendorSummary(
-                vendor_id=v.vendor_id,
-                name=v.name,
-                category=v.category,
-                risk_score=v.risk_score,
-                risk_level=v.risk_level,
-                rag=v.rag,
-                alerts=v.alerts,
-            )
-        )
-        for a in v.alerts:
-            MOCK_ALERTS.append(
-                AlertItem(vendor_id=v.vendor_id, vendor_name=v.name, alert=a, rag=v.rag)
-            )

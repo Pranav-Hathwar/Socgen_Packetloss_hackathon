@@ -76,17 +76,54 @@
 
 /* Print styles for report */
 @media print {
-  nav, .admin-sandbox, .no-print {
+  nav, .admin-sandbox, .no-print,
+  /* App shell chrome from Layout.tsx */
+  .print-hide {
     display: none !important;
   }
-  body {
+
+  /* Reset the app shell scroll container so the whole document paginates.
+     Without this, the fixed `h-screen` + `overflow-hidden`/`overflow-y-auto`
+     shell makes the browser treat it as a single-viewport scroll box and
+     only the first screen prints. */
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
     background: white !important;
   }
+  .app-shell {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
+    position: static !important;
+  }
+  .app-main {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 0 !important;
+  }
+  .app-content {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
   .card {
     box-shadow: none !important;
     border: 1px solid #e2e8f0 !important;
     break-inside: avoid;
   }
+
+  /* Recharts renders fixed-width SVGs sized to the screen viewport; cap them
+     to the page width so charts don't get clipped off the right edge. */
+  .recharts-wrapper,
+  .recharts-surface,
+  .recharts-surface svg {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
   @page {
     margin: 1.5cm;
   }

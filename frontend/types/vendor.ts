@@ -189,7 +189,22 @@ export interface SandboxResponse {
   vendor_id: string;
   vendor_name: string;
   detail: string;
+  reason: string;
+  old_risk_score: number;
   new_risk_score: number;
+  old_risk_level: string;
+  new_risk_level: string;
+}
+
+export interface ScoreChange {
+  vendor_id: string;
+  name: string;
+  old_score: number;
+  new_score: number;
+  delta: number;
+  old_level: string;
+  new_level: string;
+  reason: string;
 }
 
 export interface VendorCreateRequest {
