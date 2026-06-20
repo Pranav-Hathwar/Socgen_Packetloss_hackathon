@@ -310,37 +310,35 @@ export default function VendorDetail() {
           {/* ── Current details (read-only snapshot) ── */}
           <div className="px-6 py-5 bg-slate-50 border-b border-slate-200">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Current Vendor Details</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-3 text-sm">
-              <Detail label="Vendor ID"     value={vendor.vendor_id} />
-              <Detail label="Name"          value={vendor.name} />
-              <Detail label="Category"      value={vendor.category} />
-              <Detail label="Risk Score"    value={`${vendor.risk_score.toFixed(1)} (${vendor.risk_level})`} />
-              <Detail label="Financial"     value={vendor.financial_rating} />
-              <Detail label="Data Sensitivity" value={vendor.data_access.data_sensitivity} />
-              <Detail label="Access Type"   value={vendor.data_access.access_type.replace("_", " ")} />
-              <Detail label="Data Residency" value={vendor.data_residency} />
-              <Detail label="Concentration" value={vendor.concentration_risk} />
-              <Detail label="Sub-processors" value={String(vendor.sub_processor_count)} />
-              <Detail label="Contract Start" value={vendor.contract_start} />
-              <Detail label="Contract End"  value={vendor.contract_end} />
-              <Detail label="Last Assessment" value={vendor.last_assessment_date} />
-              <Detail label="Breach SLA"    value={`${vendor.compliance.breach_notification_sla_hours}h`} />
-              <Detail label="SOC 2 Type II" value={vendor.compliance.soc2_type2 ? "✓ Certified" : "✗ Missing"} highlight={vendor.compliance.soc2_type2} />
-              <Detail label="ISO 27001"     value={vendor.compliance.iso27001 ? "✓ Certified" : "✗ Missing"} highlight={vendor.compliance.iso27001} />
-              <Detail label="GDPR DPA"      value={vendor.compliance.gdpr_dpa ? "✓ Signed" : "✗ Missing"} highlight={vendor.compliance.gdpr_dpa} />
-              {vendor.compliance.soc2_expiry && <Detail label="SOC 2 Expiry" value={vendor.compliance.soc2_expiry} />}
-              {vendor.contact_name && <Detail label="Contact Name" value={vendor.contact_name} />}
-              {vendor.contact_email && <Detail label="Contact Email" value={vendor.contact_email} />}
-              {vendor.data_access.systems.length > 0 && (
-                <Detail label="Systems" value={vendor.data_access.systems.join(", ")} />
-              )}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-4 text-sm">
+              <Detail label="Vendor ID"        desc="Unique system identifier for this vendor" value={vendor.vendor_id} />
+              <Detail label="Name"             desc="Legal registered name of the vendor organisation" value={vendor.name} />
+              <Detail label="Contact Name"     desc="Primary liaison at the vendor organisation" value={vendor.contact_name || "—"} />
+              <Detail label="Contact Email"    desc="Email address of the vendor liaison" value={vendor.contact_email || "—"} />
+              <Detail label="Category"         desc="Type of service this vendor provides" value={vendor.category} />
+              <Detail label="Risk Score"       desc="Calculated 0–100 score across 5 risk factors" value={`${vendor.risk_score.toFixed(1)} (${vendor.risk_level})`} />
+              <Detail label="Financial Rating" desc="Credit rating indicating vendor financial health" value={vendor.financial_rating} />
+              <Detail label="Data Sensitivity" desc="Classification of data shared with this vendor" value={vendor.data_access.data_sensitivity} />
+              <Detail label="Access Type"      desc="Level of system access granted to this vendor" value={vendor.data_access.access_type.replace("_", " ")} />
+              <Detail label="Data Residency"   desc="Geographic region where vendor stores your data" value={vendor.data_residency} />
+              <Detail label="Concentration Risk" desc="Risk from over-reliance on this single vendor" value={vendor.concentration_risk} />
+              <Detail label="Sub-processors"   desc="Number of third parties the vendor sub-contracts to" value={String(vendor.sub_processor_count)} />
+              <Detail label="Contract Start"   desc="Date the vendor contract became effective" value={vendor.contract_start} />
+              <Detail label="Contract End"     desc="Date the current vendor contract expires" value={vendor.contract_end} />
+              <Detail label="Last Assessment"  desc="Date of the most recent vendor risk assessment" value={vendor.last_assessment_date} />
+              <Detail label="Breach SLA"       desc="Max hours vendor must notify you after a breach" value={`${vendor.compliance.breach_notification_sla_hours}h`} />
+              <Detail label="SOC 2 Type II"    desc="Independent audit of vendor security controls" value={vendor.compliance.soc2_type2 ? "✓ Certified" : "✗ Missing"} highlight={vendor.compliance.soc2_type2} />
+              <Detail label="ISO 27001"        desc="International information security management standard" value={vendor.compliance.iso27001 ? "✓ Certified" : "✗ Missing"} highlight={vendor.compliance.iso27001} />
+              <Detail label="GDPR DPA"         desc="Data Processing Agreement for EU data protection" value={vendor.compliance.gdpr_dpa ? "✓ Signed" : "✗ Missing"} highlight={vendor.compliance.gdpr_dpa} />
+              <Detail label="SOC 2 Expiry"     desc="Date the current SOC 2 certification expires" value={vendor.compliance.soc2_expiry || "—"} />
+              <Detail label="Systems"          desc="Internal systems this vendor has access to" value={vendor.data_access.systems.length > 0 ? vendor.data_access.systems.join(", ") : "—"} />
             </div>
             {vendor.breach_history.length > 0 && (
-              <div className="mt-3">
-                <p className="text-xs font-semibold text-slate-500 mb-1">Breach History</p>
+              <div className="mt-4 pt-4 border-t border-slate-200">
+                <p className="text-xs font-semibold text-slate-500 mb-2">Breach History <span className="text-slate-400 font-normal">— recorded security incidents for this vendor</span></p>
                 <div className="flex flex-wrap gap-2">
                   {vendor.breach_history.map((b, i) => (
-                    <span key={i} className="text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full">
+                    <span key={i} className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
                       {b.date} · {b.severity} · {b.description}
                     </span>
                   ))}
@@ -354,17 +352,19 @@ export default function VendorDetail() {
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Update Fields</p>
 
             {/* Contact */}
-            <p className="text-xs font-medium text-slate-500 mb-2">Contact</p>
+            <p className="text-xs font-medium text-slate-500 mb-3">Contact</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Contact Name</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-0.5">Contact Name</label>
+                <p className="text-[10px] text-slate-400 mb-1">Primary liaison at the vendor organisation</p>
                 <input type="text" value={String(editForm.contact_name ?? "")}
                   onChange={(e) => setEditForm((f) => ({ ...f, contact_name: e.target.value }))}
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
                   placeholder="Jane Smith" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Contact Email</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-0.5">Contact Email</label>
+                <p className="text-[10px] text-slate-400 mb-1">Email address of the vendor liaison</p>
                 <input type="email" value={String(editForm.contact_email ?? "")}
                   onChange={(e) => setEditForm((f) => ({ ...f, contact_email: e.target.value }))}
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
@@ -373,10 +373,11 @@ export default function VendorDetail() {
             </div>
 
             {/* Vendor Profile */}
-            <p className="text-xs font-medium text-slate-500 mb-2">Vendor Profile</p>
+            <p className="text-xs font-medium text-slate-500 mb-3">Vendor Profile</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-5">
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Category</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-0.5">Category</label>
+                <p className="text-[10px] text-slate-400 mb-1">Type of service this vendor provides</p>
                 <select value={String(editForm.category ?? "Other")}
                   onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value }))}
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
@@ -386,13 +387,15 @@ export default function VendorDetail() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Contract End Date</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-0.5">Contract End Date</label>
+                <p className="text-[10px] text-slate-400 mb-1">Date the current vendor contract expires</p>
                 <input type="date" value={String(editForm.contract_end ?? "")}
                   onChange={(e) => setEditForm((f) => ({ ...f, contract_end: e.target.value }))}
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Financial Rating</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-0.5">Financial Rating</label>
+                <p className="text-[10px] text-slate-400 mb-1">Credit rating indicating vendor financial health</p>
                 <select value={String(editForm.financial_rating ?? "BBB")}
                   onChange={(e) => setEditForm((f) => ({ ...f, financial_rating: e.target.value }))}
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
@@ -402,7 +405,8 @@ export default function VendorDetail() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Data Sensitivity</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-0.5">Data Sensitivity</label>
+                <p className="text-[10px] text-slate-400 mb-1">Classification of data shared with this vendor</p>
                 <select value={String(editForm.data_sensitivity ?? "LOW")}
                   onChange={(e) => setEditForm((f) => ({ ...f, data_sensitivity: e.target.value }))}
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
@@ -412,7 +416,8 @@ export default function VendorDetail() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Access Type</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-0.5">Access Type</label>
+                <p className="text-[10px] text-slate-400 mb-1">Level of system access granted to this vendor</p>
                 <select value={String(editForm.access_type ?? "read")}
                   onChange={(e) => setEditForm((f) => ({ ...f, access_type: e.target.value }))}
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
@@ -421,7 +426,8 @@ export default function VendorDetail() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Concentration Risk</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-0.5">Concentration Risk</label>
+                <p className="text-[10px] text-slate-400 mb-1">Risk from over-reliance on this single vendor</p>
                 <select value={String(editForm.concentration_risk ?? "LOW")}
                   onChange={(e) => setEditForm((f) => ({ ...f, concentration_risk: e.target.value }))}
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
@@ -433,16 +439,18 @@ export default function VendorDetail() {
             </div>
 
             {/* Compliance */}
-            <p className="text-xs font-medium text-slate-500 mb-2">Compliance</p>
+            <p className="text-xs font-medium text-slate-500 mb-3">Compliance</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">SOC 2 Expiry Date</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-0.5">SOC 2 Expiry Date</label>
+                <p className="text-[10px] text-slate-400 mb-1">Date the current SOC 2 certification expires</p>
                 <input type="date" value={String(editForm.soc2_expiry ?? "")}
                   onChange={(e) => setEditForm((f) => ({ ...f, soc2_expiry: e.target.value }))}
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Breach Notification SLA (hours)</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-0.5">Breach Notification SLA (hours)</label>
+                <p className="text-[10px] text-slate-400 mb-1">Max hours vendor must notify you after a security breach</p>
                 <input type="number" value={Number(editForm.breach_notification_sla_hours ?? 72)}
                   onChange={(e) => setEditForm((f) => ({ ...f, breach_notification_sla_hours: parseInt(e.target.value) || 72 }))}
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
@@ -450,14 +458,19 @@ export default function VendorDetail() {
               </div>
             </div>
             <div className="flex flex-wrap gap-3 mb-5">
-              {(["soc2_type2","iso27001","gdpr_dpa"] as const).map((key) => (
-                <label key={key} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-indigo-50 hover:border-indigo-200 transition-colors">
+              {([
+                { key: "soc2_type2", label: "SOC 2 Type II", desc: "Independent audit of vendor security controls" },
+                { key: "iso27001",   label: "ISO 27001",     desc: "International information security standard" },
+                { key: "gdpr_dpa",   label: "GDPR DPA",      desc: "Data Processing Agreement for EU compliance" },
+              ] as const).map(({ key, label, desc }) => (
+                <label key={key} className="flex items-start gap-2 px-3 py-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-indigo-50 hover:border-indigo-200 transition-colors min-w-[180px]">
                   <input type="checkbox" checked={!!editForm[key]}
                     onChange={(e) => setEditForm((f) => ({ ...f, [key]: e.target.checked }))}
-                    className="rounded text-indigo-600" />
-                  <span className="text-xs font-medium text-slate-700">
-                    {key === "soc2_type2" ? "SOC 2 Type II" : key === "iso27001" ? "ISO 27001" : "GDPR DPA"}
-                  </span>
+                    className="rounded text-indigo-600 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-medium text-slate-700">{label}</p>
+                    <p className="text-[10px] text-slate-400">{desc}</p>
+                  </div>
                 </label>
               ))}
             </div>
@@ -1006,11 +1019,12 @@ export default function VendorDetail() {
   );
 }
 
-function Detail({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function Detail({ label, desc, value, highlight }: { label: string; desc: string; value: string; highlight?: boolean }) {
   return (
     <div>
-      <p className="text-xs text-slate-400 mb-0.5">{label}</p>
-      <p className={`text-sm font-semibold truncate ${
+      <p className="text-xs font-semibold text-slate-700">{label}</p>
+      <p className="text-[10px] text-slate-400 mb-0.5">{desc}</p>
+      <p className={`text-sm font-bold truncate ${
         highlight === true ? "text-emerald-600" : highlight === false ? "text-red-500" : "text-slate-800"
       }`}>{value || "—"}</p>
     </div>
