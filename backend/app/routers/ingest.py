@@ -8,6 +8,15 @@ from ..schema import IngestResponse
 router = APIRouter(prefix="/ingest", tags=["ingest"])
 
 
+def _refresh_rag() -> None:
+    """Rebuild RAG index after bulk ingest. Best-effort — never blocks ingest."""
+    try:
+        from ..rag import reindex
+        reindex()
+    except Exception:
+        pass
+
+
 class EmailIngestRequest(BaseModel):
     text: str
 
@@ -25,6 +34,7 @@ async def ingest(
     content = await file.read()
     filename = file.filename or "upload.csv"
     result = ingest_auto(content, filename, content_type=file.content_type or "")
+    _refresh_rag()
     return IngestResponse(
         status=result["status"],
         rows_processed=result["rows_processed"],
@@ -40,6 +50,7 @@ def ingest_email(
 ):
     """Parse a pasted email body and extract vendor records from key:value pairs."""
     result = ingest_email_text(body.text)
+    _refresh_rag()
     return IngestResponse(
         status=result["status"],
         rows_processed=result["rows_processed"],
@@ -56,6 +67,7 @@ def ingest_json(
     import json as _json
     content = _json.dumps(body.vendors).encode()
     result = ingest_json_bytes(content, "api_json")
+    _refresh_rag()
     return IngestResponse(
         status=result["status"],
         rows_processed=result["rows_processed"],

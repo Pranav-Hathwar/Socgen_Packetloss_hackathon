@@ -280,7 +280,7 @@ export default function VendorDetail() {
         </div>
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={() => { setEditOpen(!editOpen); setEditMsg(null); }}
+            onClick={() => { const next = !editOpen; setEditOpen(next); setEditMsg(null); if (next) setSimOpen(false); }}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
               editOpen
                 ? "bg-slate-700 text-white"
@@ -291,7 +291,7 @@ export default function VendorDetail() {
             Edit
           </button>
           <button
-            onClick={() => setSimOpen(!simOpen)}
+            onClick={() => { const next = !simOpen; setSimOpen(next); if (next) { setEditOpen(false); setEditMsg(null); } }}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
               simOpen
                 ? "bg-indigo-600 text-white"

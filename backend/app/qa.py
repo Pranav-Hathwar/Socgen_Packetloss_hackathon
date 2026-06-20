@@ -143,7 +143,7 @@ def _find_vendor_by_name(question: str, rows: list[dict]) -> list[dict]:
 
 # ── 3. Register filter ────────────────────────────────────────────────────
 
-def _filter(rows: list[dict], intent: dict, vendor_id: str | None) -> list[dict]:
+def _filter(rows: list[dict], intent: dict, vendor_id: str | None, limit: int = 50) -> list[dict]:
     attrs = set(intent.get("attributes", []))
     days = intent.get("threshold_days") or 90
     result = rows
@@ -229,7 +229,7 @@ def _filter(rows: list[dict], intent: dict, vendor_id: str | None) -> list[dict]
 
     # Sort by risk_score desc
     result.sort(key=lambda r: r.get("risk_score") or 0, reverse=True)
-    return result[:25]
+    return result[:limit]
 
 
 # ── 4. Templated answer builder ───────────────────────────────────────────

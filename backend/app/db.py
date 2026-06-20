@@ -131,7 +131,7 @@ def init_db() -> None:
 
 def _migrate(conn: sqlite3.Connection) -> None:
     existing = {row[1] for row in conn.execute("PRAGMA table_info(vendors)").fetchall()}
-    for col, defn in [("contact_name", "TEXT"), ("contact_email", "TEXT")]:
+    for col, defn in [("contact_name", "TEXT"), ("contact_email", "TEXT"), ("created_at", "TEXT")]:
         if col not in existing:
             conn.execute(f"ALTER TABLE vendors ADD COLUMN {col} {defn}")
 
@@ -388,7 +388,7 @@ def create_vendor(data: dict) -> str:
                 breach_notification_sla_hours, financial_rating,
                 data_residency, sub_processor_count, concentration_risk,
                 last_assessment_date, under_investigation, breach_history,
-                contact_name, contact_email
+                contact_name, contact_email, created_at
             ) VALUES (
                 :vendor_id,:name,:category,:contract_start,:contract_end,
                 :systems,:data_sensitivity,:access_type,:access_last_used_at,
@@ -396,7 +396,7 @@ def create_vendor(data: dict) -> str:
                 :breach_notification_sla_hours,:financial_rating,
                 :data_residency,:sub_processor_count,:concentration_risk,
                 :last_assessment_date,:under_investigation,:breach_history,
-                :contact_name,:contact_email
+                :contact_name,:contact_email,:created_at
             )
             """,
             {
@@ -423,6 +423,7 @@ def create_vendor(data: dict) -> str:
                 "breach_history": data.get("breach_history") or "",
                 "contact_name": data.get("contact_name"),
                 "contact_email": data.get("contact_email"),
+                "created_at": datetime.now().isoformat(timespec="seconds"),
             },
         )
     return vendor_id

@@ -23,8 +23,12 @@ _SYSTEM_PROMPT = (
     "You answer questions strictly about vendor risk management: risk scores, "
     "compliance certifications (SOC 2, ISO 27001, GDPR DPA, DORA, NIS2), "
     "breach history, financial health, contract terms, and remediation actions. "
-    "Base every answer on the vendor profile data provided. "
-    "Do not speculate beyond the data. Keep answers concise (2-4 sentences max). "
+    "Base every answer ONLY on the vendor profile data provided — never invent "
+    "vendors, IDs, or facts not present in the context. Always cite the vendor "
+    "ID in [BRACKETS] when naming a vendor. "
+    "When the question asks to list or show vendors matching a condition, list "
+    "EVERY matching vendor from the provided data — do not omit any. "
+    "For single-vendor or explanatory questions, keep it concise (2-4 sentences). "
     "If asked anything unrelated to vendor risk management, reply exactly: "
     "'I can only assist with vendor risk management topics.' "
     "Never disclose that you are an AI system."
@@ -126,7 +130,7 @@ def _ask_groq(question: str, vendor_context: str) -> Optional[str]:
                 {"role": "system", "content": _SYSTEM_PROMPT},
                 {"role": "user", "content": user_msg},
             ],
-            max_tokens=300,
+            max_tokens=800,
             temperature=0.2,
         )
         text = resp.choices[0].message.content.strip()
@@ -155,7 +159,7 @@ def _ask_gemini(question: str, vendor_context: str) -> Optional[str]:
             contents=user_msg,
             config=types.GenerateContentConfig(
                 system_instruction=_SYSTEM_PROMPT,
-                max_output_tokens=300,
+                max_output_tokens=800,
                 temperature=0.2,
             ),
         )

@@ -31,6 +31,9 @@ backend/uploads/
 *.db-shm
 *.db-wal
 
+# RAG vector store (rebuilt on startup)
+backend/.rag_store/
+
 # TypeScript build artifacts
 frontend/tsconfig.tsbuildinfo
 

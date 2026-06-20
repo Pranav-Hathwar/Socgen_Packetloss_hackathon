@@ -83,10 +83,19 @@ def bootstrap() -> dict:
                 save_scores(raw["vendor_id"], result, trigger="seed")
                 history_seeded += 1
 
+    # Build RAG index (non-fatal — falls back to deterministic Q&A if it fails)
+    rag_status = {"status": "skipped"}
+    try:
+        from .rag import build_index
+        rag_status = build_index()
+    except Exception as e:  # pragma: no cover
+        rag_status = {"status": "error", "reason": str(e)}
+
     return {
         "vendors_loaded": reg,
         "labels_loaded": lbl,
         "vendors_scored": scored,
         "history_seeded": history_seeded,
         "users_seeded": users_seeded,
+        "rag_index": rag_status,
     }

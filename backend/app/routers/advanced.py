@@ -133,3 +133,17 @@ def monitoring_status(_user: AnyUser):
 def trigger_rescore(_user=Depends(require_role("ADMIN", "ANALYST"))):
     """Immediately rescore all vendors and return level changes."""
     return run_once()
+
+
+@router.post("/rag/reindex")
+def rag_reindex(_user=Depends(require_role("ADMIN", "ANALYST"))):
+    """Force a full rebuild of the RAG vector index over all vendors."""
+    from ..rag import reindex
+    return reindex()
+
+
+@router.get("/rag/status")
+def rag_status(_user: AnyUser):
+    """Report RAG index size and whether the embedding model is available."""
+    from ..rag import _meta, _get_model
+    return {"indexed_vendors": len(_meta), "model_ready": _get_model() is not None}
