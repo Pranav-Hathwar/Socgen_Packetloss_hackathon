@@ -22,11 +22,14 @@ import {
   BeakerIcon,
   ArrowTrendingDownIcon,
   ArrowTrendingUpIcon,
+  PencilSquareIcon,
+  ArrowUpTrayIcon,
+  DocumentCheckIcon,
 } from "@heroicons/react/24/outline";
 import { api } from "../../lib/api";
 import { RagBadge } from "../../components/RagBadge";
 import { ErrorState } from "../../components/ErrorState";
-import type { VendorScore, SimulateResponse, ScoreHistoryPoint, RemediationRecord } from "../../types/vendor";
+import type { VendorScore, SimulateResponse, ScoreHistoryPoint, RemediationRecord, CertDocument } from "../../types/vendor";
 
 export default function VendorDetail() {
   const router = useRouter();
@@ -50,6 +53,19 @@ export default function VendorDetail() {
   const [remForm, setRemForm] = useState({ issue: "", resolved_by: "", note: "" });
   const [remLoading, setRemLoading] = useState(false);
 
+  // Edit vendor panel
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState<Record<string, unknown>>({});
+  const [editLoading, setEditLoading] = useState(false);
+  const [editMsg, setEditMsg] = useState<string | null>(null);
+
+  // Cert upload
+  const [certs, setCerts] = useState<CertDocument[]>([]);
+  const [certFile, setCertFile] = useState<File | null>(null);
+  const [certType, setCertType] = useState("soc2_type2");
+  const [certExpiry, setCertExpiry] = useState("");
+  const [certLoading, setCertLoading] = useState(false);
+
   function fetchVendor() {
     if (typeof id !== "string") return;
     setLoading(true);
@@ -58,10 +74,24 @@ export default function VendorDetail() {
       api.vendors.get(id),
       api.vendors.history(id).catch(() => [] as ScoreHistoryPoint[]),
       api.vendors.remediations(id).catch(() => [] as RemediationRecord[]),
-    ]).then(([v, h, r]) => {
+      api.vendors.certs(id).catch(() => [] as CertDocument[]),
+    ]).then(([v, h, r, c]) => {
       setVendor(v);
       setHistory(h);
       setRemediations(r);
+      setCerts(c);
+      setEditForm({
+        contact_name: v.contact_name ?? "",
+        contact_email: v.contact_email ?? "",
+        contract_end: v.contract_end ?? "",
+        soc2_type2: v.compliance.soc2_type2,
+        iso27001: v.compliance.iso27001,
+        gdpr_dpa: v.compliance.gdpr_dpa,
+        financial_rating: v.financial_rating,
+        data_sensitivity: v.data_access.data_sensitivity,
+        access_type: v.data_access.access_type,
+        concentration_risk: v.concentration_risk,
+      });
       setLoading(false);
     }).catch((e) => { setError(String(e)); setLoading(false); });
   }
@@ -83,6 +113,37 @@ export default function VendorDetail() {
       console.error(e);
     } finally {
       setRemLoading(false);
+    }
+  }
+
+  async function submitEdit() {
+    if (!vendor) return;
+    setEditLoading(true);
+    setEditMsg(null);
+    try {
+      const res = await api.vendors.update(vendor.vendor_id, editForm);
+      setEditMsg(`Saved — new score: ${res.new_risk_score.toFixed(1)} (${res.new_risk_level})`);
+      fetchVendor();
+    } catch (e) {
+      setEditMsg(`Error: ${String(e)}`);
+    } finally {
+      setEditLoading(false);
+    }
+  }
+
+  async function uploadCert() {
+    if (!vendor || !certFile) return;
+    setCertLoading(true);
+    try {
+      await api.vendors.uploadCert(vendor.vendor_id, certFile, certType, certExpiry);
+      setCertFile(null);
+      setCertExpiry("");
+      const updated = await api.vendors.certs(vendor.vendor_id);
+      setCerts(updated);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setCertLoading(false);
     }
   }
 
@@ -163,6 +224,17 @@ export default function VendorDetail() {
         </div>
         <div className="flex gap-2">
           <button
+            onClick={() => { setEditOpen(!editOpen); setEditMsg(null); }}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              editOpen
+                ? "bg-slate-700 text-white"
+                : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+            }`}
+          >
+            <PencilSquareIcon className="w-4 h-4" />
+            Edit
+          </button>
+          <button
             onClick={() => setSimOpen(!simOpen)}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
               simOpen
@@ -171,7 +243,7 @@ export default function VendorDetail() {
             }`}
           >
             <BeakerIcon className="w-4 h-4" />
-            What-If Simulator
+            What-If
           </button>
           <Link
             href={`/chat?vendor_id=${vendor.vendor_id}`}
@@ -183,6 +255,110 @@ export default function VendorDetail() {
         </div>
       </div>
 
+      {/* Edit Panel */}
+      {editOpen && (
+        <div className="card p-6 border-l-4 border-slate-400 animate-slide-up">
+          <h2 className="text-sm font-bold text-slate-800 mb-4">Edit Vendor Details</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Contact Name</label>
+              <input
+                type="text"
+                value={String(editForm.contact_name ?? "")}
+                onChange={(e) => setEditForm((f) => ({ ...f, contact_name: e.target.value }))}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                placeholder="Jane Smith"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Contact Email</label>
+              <input
+                type="email"
+                value={String(editForm.contact_email ?? "")}
+                onChange={(e) => setEditForm((f) => ({ ...f, contact_email: e.target.value }))}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                placeholder="jane@vendor.com"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Contract End Date</label>
+              <input
+                type="date"
+                value={String(editForm.contract_end ?? "")}
+                onChange={(e) => setEditForm((f) => ({ ...f, contract_end: e.target.value }))}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Data Sensitivity</label>
+              <select
+                value={String(editForm.data_sensitivity ?? "LOW")}
+                onChange={(e) => setEditForm((f) => ({ ...f, data_sensitivity: e.target.value }))}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              >
+                <option value="LOW">LOW</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="HIGH">HIGH</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Access Type</label>
+              <select
+                value={String(editForm.access_type ?? "read")}
+                onChange={(e) => setEditForm((f) => ({ ...f, access_type: e.target.value }))}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              >
+                <option value="read">Read only</option>
+                <option value="read_write">Read / Write</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Financial Rating</label>
+              <select
+                value={String(editForm.financial_rating ?? "BBB")}
+                onChange={(e) => setEditForm((f) => ({ ...f, financial_rating: e.target.value }))}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              >
+                {["AAA","AA","A","BBB","BB","B","CCC","CC","C"].map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-4 items-center">
+            <div className="flex gap-4">
+              {(["soc2_type2","iso27001","gdpr_dpa"] as const).map((key) => (
+                <label key={key} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!!editForm[key]}
+                    onChange={(e) => setEditForm((f) => ({ ...f, [key]: e.target.checked }))}
+                    className="rounded text-indigo-600"
+                  />
+                  <span className="text-xs font-medium text-slate-700">
+                    {key === "soc2_type2" ? "SOC 2 Type II" : key === "iso27001" ? "ISO 27001" : "GDPR DPA"}
+                  </span>
+                </label>
+              ))}
+            </div>
+            <div className="ml-auto flex items-center gap-3">
+              {editMsg && (
+                <span className={`text-xs font-medium ${editMsg.startsWith("Error") ? "text-red-600" : "text-emerald-600"}`}>
+                  {editMsg}
+                </span>
+              )}
+              <button
+                onClick={submitEdit}
+                disabled={editLoading}
+                className="px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-semibold hover:bg-slate-900 disabled:opacity-40 transition-colors"
+              >
+                {editLoading ? "Saving…" : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-6">
         {/* Main content */}
         <div className="flex-1 space-y-6 min-w-0">
@@ -193,6 +369,17 @@ export default function VendorDetail() {
             <StatCard label="Financial Rating" value={vendor.financial_rating} />
             <StatCard label="Contract End" value={vendor.contract_end} />
           </div>
+
+          {/* Contact info (shown when set) */}
+          {(vendor.contact_name || vendor.contact_email) && (
+            <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm animate-fade-in">
+              <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Liaison</span>
+              {vendor.contact_name && <span className="font-medium text-slate-800">{vendor.contact_name}</span>}
+              {vendor.contact_email && (
+                <a href={`mailto:${vendor.contact_email}`} className="text-indigo-600 hover:underline">{vendor.contact_email}</a>
+              )}
+            </div>
+          )}
 
           {/* Radar + Compliance */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up" style={{ animationDelay: "0.1s" }}>
@@ -468,6 +655,76 @@ export default function VendorDetail() {
                         )}
                       </div>
                       {r.note && <p className="text-xs text-slate-400 mt-1">{r.note}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          {/* Certification Documents */}
+          <div className="card p-6 animate-slide-up" style={{ animationDelay: "0.5s" }}>
+            <h2 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
+              <DocumentCheckIcon className="w-4 h-4 text-indigo-500" />
+              Certification Documents
+            </h2>
+
+            {/* Upload form */}
+            <div className="mb-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <p className="text-xs font-semibold text-slate-500 mb-3">Upload Certificate</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                <select
+                  value={certType}
+                  onChange={(e) => setCertType(e.target.value)}
+                  className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                >
+                  <option value="soc2_type2">SOC 2 Type II</option>
+                  <option value="iso27001">ISO 27001</option>
+                  <option value="gdpr_dpa">GDPR DPA</option>
+                  <option value="pen_test">Pen Test Report</option>
+                  <option value="other">Other</option>
+                </select>
+                <input
+                  type="date"
+                  value={certExpiry}
+                  onChange={(e) => setCertExpiry(e.target.value)}
+                  className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  placeholder="Expiry date"
+                />
+                <label className="flex items-center gap-2 px-3 py-2 bg-white border border-dashed border-slate-300 rounded-lg text-sm text-slate-600 cursor-pointer hover:border-indigo-400 hover:text-indigo-600 transition-colors">
+                  <ArrowUpTrayIcon className="w-4 h-4" />
+                  {certFile ? certFile.name : "Choose file…"}
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    className="hidden"
+                    onChange={(e) => setCertFile(e.target.files?.[0] ?? null)}
+                  />
+                </label>
+              </div>
+              <button
+                onClick={uploadCert}
+                disabled={certLoading || !certFile}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+              >
+                {certLoading ? "Uploading…" : "Upload"}
+              </button>
+            </div>
+
+            {/* Uploaded certs list */}
+            {certs.length === 0 ? (
+              <p className="text-sm text-slate-400">No certificate documents uploaded yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {certs.map((c) => (
+                  <div key={c.id} className="flex items-center gap-3 px-4 py-3 bg-indigo-50 border border-indigo-100 rounded-xl">
+                    <DocumentCheckIcon className="w-5 h-5 text-indigo-500 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-800 truncate">{c.filename}</p>
+                      <p className="text-xs text-slate-500">
+                        {c.cert_type.replace("_", " ").toUpperCase()}
+                        {c.expiry_date ? ` · Expires ${c.expiry_date}` : ""}
+                        {" · "}Uploaded {c.uploaded_at.slice(0, 10)}
+                      </p>
                     </div>
                   </div>
                 ))}

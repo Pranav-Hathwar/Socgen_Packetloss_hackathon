@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon, PlusIcon } from "@heroicons/react/24/outline";
 import {
   ShieldExclamationIcon,
   ExclamationTriangleIcon,
@@ -24,8 +24,25 @@ import { RagBadge } from "../components/RagBadge";
 import { TableSkeleton, CardRowSkeleton } from "../components/LoadingSkeleton";
 import { EmptyState } from "../components/EmptyState";
 import { ErrorState } from "../components/ErrorState";
-import type { VendorSummary, RiskLevel } from "../types/vendor";
+import type { VendorSummary, RiskLevel, VendorCreateRequest } from "../types/vendor";
 import { useRefresh } from "./_app";
+
+const BLANK_VENDOR: VendorCreateRequest = {
+  name: "",
+  category: "Cloud",
+  contract_end: "",
+  data_sensitivity: "LOW",
+  access_type: "read",
+  systems: "",
+  soc2_type2: false,
+  iso27001: false,
+  gdpr_dpa: false,
+  financial_rating: "BBB",
+  data_residency: "EU",
+  concentration_risk: "LOW",
+  contact_name: "",
+  contact_email: "",
+};
 
 type SortField = "name" | "category" | "risk_score" | "risk_level";
 type SortDir = "asc" | "desc";
@@ -52,6 +69,12 @@ export default function Dashboard() {
   // Sort
   const [sortField, setSortField] = useState<SortField>("risk_score");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+
+  // Add vendor modal
+  const [addOpen, setAddOpen] = useState(false);
+  const [addForm, setAddForm] = useState<VendorCreateRequest>(BLANK_VENDOR);
+  const [addLoading, setAddLoading] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
 
   function fetchVendors() {
     setLoading(true);
@@ -144,6 +167,22 @@ export default function Dashboard() {
 
   const hasFilters = search || catFilter || riskFilter;
 
+  async function handleAddVendor() {
+    if (!addForm.name.trim()) return;
+    setAddLoading(true);
+    setAddError(null);
+    try {
+      await api.vendors.create(addForm);
+      setAddOpen(false);
+      setAddForm(BLANK_VENDOR);
+      fetchVendors();
+    } catch (e) {
+      setAddError(String(e));
+    } finally {
+      setAddLoading(false);
+    }
+  }
+
   if (error && !loading && vendors.length === 0) {
     return (
       <div className="p-8">
@@ -155,10 +194,200 @@ export default function Dashboard() {
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Portfolio Dashboard</h1>
-        <p className="text-sm text-slate-500 mt-1">Third-party vendor risk overview</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Portfolio Dashboard</h1>
+          <p className="text-sm text-slate-500 mt-1">Third-party vendor risk overview</p>
+        </div>
+        <button
+          onClick={() => { setAddOpen(true); setAddError(null); }}
+          className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
+        >
+          <PlusIcon className="w-4 h-4" />
+          Add Vendor
+        </button>
       </div>
+
+      {/* Add Vendor Modal */}
+      {addOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto animate-scale-in">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <h2 className="text-base font-bold text-slate-900">Add New Vendor</h2>
+              <button onClick={() => setAddOpen(false)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
+                <XMarkIcon className="w-5 h-5 text-slate-500" />
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              {/* Name + Category */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Vendor Name *</label>
+                  <input
+                    type="text"
+                    placeholder="Acme Corp"
+                    value={addForm.name}
+                    onChange={(e) => setAddForm((f) => ({ ...f, name: e.target.value }))}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Category</label>
+                  <select
+                    value={addForm.category}
+                    onChange={(e) => setAddForm((f) => ({ ...f, category: e.target.value }))}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  >
+                    {["Cloud","SaaS","ERP","HR","Payment","Security","Backup","Managed Service","Consulting","Other"].map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Contract end + Financial rating */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Contract End Date</label>
+                  <input
+                    type="date"
+                    value={addForm.contract_end ?? ""}
+                    onChange={(e) => setAddForm((f) => ({ ...f, contract_end: e.target.value }))}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Financial Rating</label>
+                  <select
+                    value={addForm.financial_rating}
+                    onChange={(e) => setAddForm((f) => ({ ...f, financial_rating: e.target.value }))}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  >
+                    {["AAA","AA","A","BBB","BB","B","CCC","CC","C"].map((r) => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Data sensitivity + Access type */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Data Sensitivity</label>
+                  <select
+                    value={addForm.data_sensitivity}
+                    onChange={(e) => setAddForm((f) => ({ ...f, data_sensitivity: e.target.value as "LOW"|"MEDIUM"|"HIGH" }))}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  >
+                    <option value="LOW">LOW</option>
+                    <option value="MEDIUM">MEDIUM</option>
+                    <option value="HIGH">HIGH</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Access Type</label>
+                  <select
+                    value={addForm.access_type}
+                    onChange={(e) => setAddForm((f) => ({ ...f, access_type: e.target.value as "read"|"read_write" }))}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  >
+                    <option value="read">Read only</option>
+                    <option value="read_write">Read / Write</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Systems + Data residency */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Systems (comma-separated)</label>
+                  <input
+                    type="text"
+                    placeholder="CRM, Payroll"
+                    value={addForm.systems ?? ""}
+                    onChange={(e) => setAddForm((f) => ({ ...f, systems: e.target.value }))}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Data Residency</label>
+                  <select
+                    value={addForm.data_residency}
+                    onChange={(e) => setAddForm((f) => ({ ...f, data_residency: e.target.value as "EU"|"non-EU" }))}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  >
+                    <option value="EU">EU</option>
+                    <option value="non-EU">non-EU</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Contact */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Contact Name</label>
+                  <input
+                    type="text"
+                    placeholder="Jane Smith"
+                    value={addForm.contact_name ?? ""}
+                    onChange={(e) => setAddForm((f) => ({ ...f, contact_name: e.target.value }))}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Contact Email</label>
+                  <input
+                    type="email"
+                    placeholder="jane@vendor.com"
+                    value={addForm.contact_email ?? ""}
+                    onChange={(e) => setAddForm((f) => ({ ...f, contact_email: e.target.value }))}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  />
+                </div>
+              </div>
+
+              {/* Compliance toggles */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-2">Compliance</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["soc2_type2","iso27001","gdpr_dpa"] as const).map((key) => (
+                    <label key={key} className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-indigo-50 hover:border-indigo-200 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={!!addForm[key]}
+                        onChange={(e) => setAddForm((f) => ({ ...f, [key]: e.target.checked }))}
+                        className="rounded text-indigo-600"
+                      />
+                      <span className="text-xs font-medium text-slate-700">
+                        {key === "soc2_type2" ? "SOC 2" : key === "iso27001" ? "ISO 27001" : "GDPR DPA"}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {addError && (
+                <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{addError}</p>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 px-6 py-4 border-t border-slate-100">
+              <button
+                onClick={() => setAddOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddVendor}
+                disabled={addLoading || !addForm.name.trim()}
+                className="px-5 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+              >
+                {addLoading ? "Creating…" : "Create Vendor"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Summary Cards */}
       {loading ? (

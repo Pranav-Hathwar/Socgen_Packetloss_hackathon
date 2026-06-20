@@ -376,3 +376,53 @@ def fetch_cert_documents(vendor_id: str) -> list[sqlite3.Row]:
             "SELECT * FROM cert_documents WHERE vendor_id=? ORDER BY uploaded_at DESC",
             (vendor_id,),
         ).fetchall()
+
+
+def create_vendor(data: dict) -> str:
+    """Insert a new vendor row. Returns the assigned vendor_id."""
+    import uuid as _uuid
+    vendor_id = data.get("vendor_id") or "V" + _uuid.uuid4().hex[:6].upper()
+    with get_conn() as conn:
+        conn.execute(
+            """
+            INSERT INTO vendors (
+                vendor_id, name, category, contract_start, contract_end,
+                systems, data_sensitivity, access_type, access_last_used_at,
+                soc2_type2, soc2_expiry, iso27001, gdpr_dpa,
+                breach_notification_sla_hours, financial_rating,
+                data_residency, sub_processor_count, concentration_risk,
+                last_assessment_date, contact_name, contact_email
+            ) VALUES (
+                :vendor_id,:name,:category,:contract_start,:contract_end,
+                :systems,:data_sensitivity,:access_type,:access_last_used_at,
+                :soc2_type2,:soc2_expiry,:iso27001,:gdpr_dpa,
+                :breach_notification_sla_hours,:financial_rating,
+                :data_residency,:sub_processor_count,:concentration_risk,
+                :last_assessment_date,:contact_name,:contact_email
+            )
+            """,
+            {
+                "vendor_id": vendor_id,
+                "name": data["name"],
+                "category": data.get("category", "Other"),
+                "contract_start": date.today().isoformat(),
+                "contract_end": data.get("contract_end") or "",
+                "systems": data.get("systems") or "",
+                "data_sensitivity": data.get("data_sensitivity", "LOW"),
+                "access_type": data.get("access_type", "read"),
+                "access_last_used_at": date.today().isoformat(),
+                "soc2_type2": _parse_bool(data.get("soc2_type2", False)),
+                "soc2_expiry": data.get("soc2_expiry") or "",
+                "iso27001": _parse_bool(data.get("iso27001", False)),
+                "gdpr_dpa": _parse_bool(data.get("gdpr_dpa", False)),
+                "breach_notification_sla_hours": int(data.get("breach_notification_sla_hours") or 72),
+                "financial_rating": data.get("financial_rating") or "BBB",
+                "data_residency": data.get("data_residency") or "EU",
+                "sub_processor_count": int(data.get("sub_processor_count") or 0),
+                "concentration_risk": data.get("concentration_risk") or "LOW",
+                "last_assessment_date": date.today().isoformat(),
+                "contact_name": data.get("contact_name"),
+                "contact_email": data.get("contact_email"),
+            },
+        )
+    return vendor_id

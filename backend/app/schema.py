@@ -151,6 +151,23 @@ class AskResponse(BaseModel):
     sources: list[str]
 
 
+class VendorCreateRequest(BaseModel):
+    name: str
+    category: str = "Other"
+    contract_end: Optional[str] = None
+    data_sensitivity: str = "LOW"
+    access_type: str = "read"
+    systems: Optional[str] = None
+    soc2_type2: bool = False
+    iso27001: bool = False
+    gdpr_dpa: bool = False
+    financial_rating: str = "BBB"
+    data_residency: str = "EU"
+    concentration_risk: str = "LOW"
+    contact_name: Optional[str] = None
+    contact_email: Optional[str] = None
+
+
 class VendorUpdateRequest(BaseModel):
     contact_name: Optional[str] = None
     contact_email: Optional[str] = None

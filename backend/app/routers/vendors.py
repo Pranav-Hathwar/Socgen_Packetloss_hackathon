@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, File, UploadFile, Depends
 
 from ..db import (
     fetch_all_vendors, fetch_vendor, save_scores,
-    delete_vendor, update_vendor_fields,
+    delete_vendor, update_vendor_fields, create_vendor,
     fetch_score_history, add_remediation, fetch_remediations,
     add_cert_document, fetch_cert_documents,
 )
@@ -13,13 +13,23 @@ from ..deps import AnyUser, require_role
 from ..engine import score_vendor
 from ..hydrate import row_to_summary, row_to_vendor_score
 from ..schema import (
-    VendorScore, VendorSummary, VendorUpdateRequest,
+    VendorScore, VendorSummary, VendorCreateRequest, VendorUpdateRequest,
     RemediationRequest, RemediationRecord, ScoreHistoryPoint,
 )
 
 router = APIRouter(prefix="/vendors", tags=["vendors"])
 
 CERT_UPLOAD_DIR = Path(__file__).parent.parent.parent / "uploads" / "certs"
+
+
+@router.post("", status_code=201, response_model=VendorScore)
+def create_vendor_endpoint(body: VendorCreateRequest, _user=Depends(require_role("ADMIN", "ANALYST"))):
+    vendor_id = create_vendor(body.model_dump())
+    raw = dict(fetch_vendor(vendor_id))
+    scored = score_vendor(raw)
+    save_scores(vendor_id, scored, trigger="initial")
+    raw.update(scored)
+    return row_to_vendor_score(raw)
 
 
 @router.get("", response_model=list[VendorSummary])

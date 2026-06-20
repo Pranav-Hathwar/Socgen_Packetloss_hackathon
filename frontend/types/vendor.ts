@@ -157,6 +157,32 @@ export interface SandboxResponse {
   new_risk_score: number;
 }
 
+export interface VendorCreateRequest {
+  name: string;
+  category: string;
+  contract_end?: string;
+  data_sensitivity: DataSensitivity;
+  access_type: AccessType;
+  systems?: string;
+  soc2_type2: boolean;
+  iso27001: boolean;
+  gdpr_dpa: boolean;
+  financial_rating: string;
+  data_residency: DataResidency;
+  concentration_risk: ConcentrationRisk;
+  contact_name?: string;
+  contact_email?: string;
+}
+
+export interface CertDocument {
+  id: number;
+  vendor_id: string;
+  cert_type: string;
+  filename: string;
+  uploaded_at: string;
+  expiry_date?: string;
+}
+
 export interface ScoreHistoryPoint {
   scored_at: string;
   risk_score: number;
