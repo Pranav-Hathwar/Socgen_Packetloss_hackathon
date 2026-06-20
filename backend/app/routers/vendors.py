@@ -114,7 +114,7 @@ def get_narrative(vendor_id: str, _user: AnyUser):
     return {
         "vendor_id": vendor_id,
         "narrative": narrative,
-        "source": "gemini-2.0-flash" if narrative else "unavailable",
+        "source": "groq-llama3" if narrative else "unavailable",
     }
 
 

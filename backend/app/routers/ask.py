@@ -26,7 +26,7 @@ def ask(body: AskRequest, _user: AnyUser):
     # Try AI (returns None if API key not set or call fails)
     ai_answer = cached_ask(body.question, vendor_context)
     if ai_answer is not None:
-        return AskResponse(answer=ai_answer, sources=["gemini-flash"])
+        return AskResponse(answer=ai_answer, sources=["groq-llama3"])
 
     # Deterministic fallback — always works, zero external calls
     result = answer_question(question=body.question, vendor_id=body.vendor_id, api_key=None)

@@ -1,6 +1,6 @@
 """
-Gemini 2.0 Flash integration for VendorLens.
-Free tier: 15 req/min, 1 500 req/day — sufficient for demo and hackathon use.
+AI integration for VendorLens — supports Groq (preferred) and Gemini 2.0 Flash.
+Free tiers: Groq (gsk_...) or Gemini AI Studio (AIza...).
 
 Security model:
   - Vendor name, ID, contact details STRIPPED before anything is sent.
@@ -8,8 +8,7 @@ Security model:
   - System prompt hard-locks the model to TPRM topics only.
   - In-memory SHA-256 LRU cache prevents duplicate API calls.
   - max_output_tokens=300 hard cap on every response.
-  - Returns None if GEMINI_API_KEY unset — callers fall back to
-    deterministic Q&A automatically. No exceptions propagate to callers.
+  - Returns None if no key set — callers fall back to deterministic Q&A.
 """
 from __future__ import annotations
 
@@ -109,30 +108,44 @@ def _is_tprm_response(text: str) -> bool:
     return any(kw in lower for kw in _TPRM_KEYWORDS)
 
 
-def _get_client():
-    """Lazy-load Gemini client only when needed."""
-    api_key = os.getenv("GEMINI_API_KEY", "").strip()
-    if not api_key:
+def _ask_groq(question: str, vendor_context: str) -> Optional[str]:
+    """Call Groq (llama-3.3-70b-versatile). Free tier, no credit card needed."""
+    key = os.getenv("GROQ_API_KEY", "").strip()
+    if not key:
         return None
     try:
-        from google import genai  # type: ignore
-        return genai.Client(api_key=api_key)
+        from groq import Groq  # type: ignore
+        client = Groq(api_key=key)
+        user_msg = (
+            f"Vendor profile (anonymized):\n{vendor_context}\n\n"
+            f"Question: {question}"
+        )
+        resp = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": _SYSTEM_PROMPT},
+                {"role": "user", "content": user_msg},
+            ],
+            max_tokens=300,
+            temperature=0.2,
+        )
+        text = resp.choices[0].message.content.strip()
+        if not _is_tprm_response(text):
+            return "I can only assist with vendor risk management topics."
+        return text
     except Exception:
         return None
 
 
-def ask_ai(question: str, vendor_context: str) -> Optional[str]:
-    """
-    Single Gemini 2.0 Flash call with anonymized vendor context.
-    Returns None on any failure so callers fall back to deterministic Q&A.
-    Never raises.
-    """
-    client = _get_client()
-    if client is None:
+def _ask_gemini(question: str, vendor_context: str) -> Optional[str]:
+    """Call Gemini 2.0 Flash via AI Studio key (AIza...)."""
+    key = os.getenv("GEMINI_API_KEY", "").strip()
+    if not key or not key.startswith("AIza"):
         return None
-
     try:
+        from google import genai  # type: ignore
         from google.genai import types  # type: ignore
+        client = genai.Client(api_key=key)
         user_msg = (
             f"Vendor profile (anonymized):\n{vendor_context}\n\n"
             f"Question: {question}"
@@ -147,13 +160,16 @@ def ask_ai(question: str, vendor_context: str) -> Optional[str]:
             ),
         )
         text = response.text.strip()
-
         if not _is_tprm_response(text):
             return "I can only assist with vendor risk management topics."
-
         return text
     except Exception:
         return None
+
+
+def ask_ai(question: str, vendor_context: str) -> Optional[str]:
+    """Try Groq first, then Gemini. Returns None → caller falls back to Q&A."""
+    return _ask_groq(question, vendor_context) or _ask_gemini(question, vendor_context)
 
 
 def cached_ask(question: str, vendor_context: str) -> Optional[str]:
