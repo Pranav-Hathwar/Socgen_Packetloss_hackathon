@@ -6,6 +6,7 @@ import type {
   ContractAnalysis,
   ReportSummary,
   SandboxResponse,
+  ScoreChange,
   SimulateRequest,
   SimulateResponse,
   VendorCreateRequest,
@@ -119,10 +120,10 @@ export const api = {
     get: () => get<ReportSummary>("/report"),
   },
   scheduler: {
-    status: () => get<{ running: boolean; interval_seconds: number; next_run: string | null; last_run: string | null }>("/scheduler/status"),
+    status: () => get<{ running: boolean; interval_seconds: number; next_run: string | null; last_run: string | null; last_changes?: ScoreChange[] }>("/scheduler/status"),
     start: (interval_seconds = 3600) => post<{ status: string }>("/scheduler/start", { interval_seconds }),
     stop: () => post<{ status: string }>("/scheduler/stop", {}),
-    runNow: () => post<{ status: string; vendors_rescored: number }>("/scheduler/run-now", {}),
+    runNow: () => post<{ vendors_rescored: number; changes: ScoreChange[]; run_at: string }>("/scheduler/run-now", {}),
   },
   notify: {
     summary: (to_email: string) => post<{ status: string; message: string }>("/notify/summary", { to_email, notify_type: "summary" }),

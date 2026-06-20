@@ -16,8 +16,8 @@ export function AdminSandbox({ onDataChange }: AdminSandboxProps) {
     try {
       const res = await api.sandbox.injectBreach();
       toast.error(
-        `🔓 Breach injected: ${res.vendor_name}\nNew score: ${res.new_risk_score}`,
-        { duration: 5000 }
+        `🔓 ${res.vendor_name}\n${res.old_risk_score.toFixed(1)} → ${res.new_risk_score.toFixed(1)}  (${res.old_risk_level} → ${res.new_risk_level})\n${res.reason}`,
+        { duration: 6000 }
       );
       onDataChange?.();
     } catch (e) {
@@ -32,8 +32,8 @@ export function AdminSandbox({ onDataChange }: AdminSandboxProps) {
     try {
       const res = await api.sandbox.advanceTime();
       toast(
-        `📋 ${res.detail}\nNew score: ${res.new_risk_score}`,
-        { duration: 5000, icon: "⏰" }
+        `⏰ ${res.vendor_name}\n${res.old_risk_score.toFixed(1)} → ${res.new_risk_score.toFixed(1)}  (${res.old_risk_level} → ${res.new_risk_level})\n${res.reason}`,
+        { duration: 6000, icon: "⏰" }
       );
       onDataChange?.();
     } catch (e) {

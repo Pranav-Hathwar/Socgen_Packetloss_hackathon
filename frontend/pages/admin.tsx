@@ -5,26 +5,27 @@ import { useRefresh } from "./_app";
 import { AdminSandbox } from "../components/AdminSandbox";
 import { api } from "../lib/api";
 import {
-  PlayIcon,
-  StopIcon,
   BoltIcon,
   ClockIcon,
   EnvelopeIcon,
   ArrowPathIcon,
 } from "@heroicons/react/24/outline";
+import type { ScoreChange } from "../types/vendor";
 
 interface SchedulerStatus {
   running: boolean;
   interval_seconds: number;
   next_run: string | null;
   last_run: string | null;
+  last_changes?: ScoreChange[];
 }
 
-function StatusDot({ running }: { running: boolean }) {
-  return (
-    <span className={`inline-flex w-2.5 h-2.5 rounded-full ${running ? "bg-emerald-500 animate-pulse" : "bg-slate-300"}`} />
-  );
-}
+const LEVEL_COLORS: Record<string, string> = {
+  CRITICAL: "bg-red-100 text-red-700",
+  HIGH: "bg-orange-100 text-orange-700",
+  MEDIUM: "bg-amber-100 text-amber-700",
+  LOW: "bg-emerald-100 text-emerald-700",
+};
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
@@ -33,8 +34,9 @@ export default function AdminPage() {
 
   const [status, setStatus] = useState<SchedulerStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
-  const [actionMsg, setActionMsg] = useState<string | null>(null);
-  const [intervalSeconds, setIntervalSeconds] = useState(3600);
+  const [runLoading, setRunLoading] = useState(false);
+  const [lastRunAt, setLastRunAt] = useState<string | null>(null);
+  const [changes, setChanges] = useState<ScoreChange[]>([]);
 
   const [notifyEmail, setNotifyEmail] = useState("");
   const [notifyType, setNotifyType] = useState<"summary" | "expiry">("summary");
@@ -52,21 +54,29 @@ export default function AdminPage() {
   function loadStatus() {
     setStatusLoading(true);
     api.scheduler.status()
-      .then((s) => { setStatus(s); setStatusLoading(false); })
+      .then((s) => { 
+        setStatus(s);
+        if (s.last_changes) setChanges(s.last_changes);
+        if (s.last_run) setLastRunAt(s.last_run);
+        setStatusLoading(false); 
+      })
       .catch(() => setStatusLoading(false));
   }
 
-  async function runAction(fn: () => Promise<unknown>, msg: string) {
-    setActionMsg(null);
+  async function runNow() {
+    setRunLoading(true);
+    setChanges([]);
     try {
-      const res = await fn() as Record<string, unknown>;
-      const detail = res.vendors_rescored != null
-        ? `${msg} — ${res.vendors_rescored} vendors rescored`
-        : msg;
-      setActionMsg(detail);
-      await loadStatus();
+      const res = await api.scheduler.runNow();
+      setChanges(res.changes ?? []);
+      setLastRunAt(res.run_at ?? null);
+      triggerRefresh();
     } catch (e) {
-      setActionMsg(`Error: ${String(e)}`);
+      setChanges([]);
+      setLastRunAt(`Error: ${String(e)}`);
+    } finally {
+      setRunLoading(false);
+      loadStatus();
     }
   }
 
@@ -89,18 +99,18 @@ export default function AdminPage() {
   if (user.role !== "ADMIN") return null;
 
   return (
-    <div className="p-6 lg:p-8 max-w-2xl mx-auto space-y-6">
+    <div className="p-6 lg:p-8 max-w-3xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Admin Panel</h1>
-        <p className="text-sm text-slate-500 mt-1">Scheduler controls and email notifications</p>
+        <p className="text-sm text-slate-500 mt-1">Rescore monitoring and email notifications</p>
       </div>
 
-      {/* Scheduler Card */}
+      {/* Rescore Card */}
       <div className="card p-6 space-y-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ClockIcon className="w-5 h-5 text-indigo-500" />
-            <h2 className="text-base font-semibold text-slate-800">Background Scheduler</h2>
+            <h2 className="text-base font-semibold text-slate-800">Continuous Monitoring</h2>
           </div>
           <button onClick={loadStatus} className="text-slate-400 hover:text-slate-600 transition-colors" title="Refresh status">
             <ArrowPathIcon className={`w-4 h-4 ${statusLoading ? "animate-spin" : ""}`} />
@@ -108,80 +118,76 @@ export default function AdminPage() {
         </div>
 
         {status && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-slate-50 rounded-xl p-3">
-              <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Status</p>
-              <div className="flex items-center gap-2 mt-1">
-                <StatusDot running={status.running} />
-                <p className="text-sm font-bold text-slate-800">{status.running ? "Running" : "Stopped"}</p>
-              </div>
-            </div>
-            <div className="bg-slate-50 rounded-xl p-3">
-              <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Interval</p>
-              <p className="text-sm font-bold text-slate-800 mt-1">{Math.round(status.interval_seconds / 60)} min</p>
-            </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div className="bg-slate-50 rounded-xl p-3">
               <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Last Run</p>
               <p className="text-sm font-bold text-slate-800 mt-1 truncate">
-                {status.last_run ? new Date(status.last_run).toLocaleTimeString() : "Never"}
+                {status.last_run ? new Date(status.last_run).toLocaleString() : "Never"}
               </p>
             </div>
             <div className="bg-slate-50 rounded-xl p-3">
-              <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Next Run</p>
+              <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Vendors Changed</p>
+              <p className="text-sm font-bold text-slate-800 mt-1">{changes.length}</p>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-3">
+              <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Run At</p>
               <p className="text-sm font-bold text-slate-800 mt-1 truncate">
-                {status.next_run ? new Date(status.next_run).toLocaleTimeString() : "—"}
+                {lastRunAt && !lastRunAt.startsWith("Error") ? new Date(lastRunAt).toLocaleTimeString() : "—"}
               </p>
             </div>
           </div>
         )}
 
-        {/* Interval picker */}
-        <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-slate-700 shrink-0">Interval</label>
-          <select
-            value={intervalSeconds}
-            onChange={(e) => setIntervalSeconds(Number(e.target.value))}
-            disabled={status?.running}
-            className="px-3 py-2 border border-slate-200 rounded-xl text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <option value={300}>5 minutes</option>
-            <option value={900}>15 minutes</option>
-            <option value={1800}>30 minutes</option>
-            <option value={3600}>1 hour</option>
-            <option value={21600}>6 hours</option>
-            <option value={86400}>24 hours</option>
-          </select>
-        </div>
+        <button
+          onClick={runNow}
+          disabled={runLoading}
+          className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+        >
+          <BoltIcon className="w-4 h-4" />
+          {runLoading ? "Rescoring…" : "Run Now"}
+        </button>
 
-        {actionMsg && (
-          <p className={`text-sm px-3 py-2 rounded-lg ${actionMsg.startsWith("Error") ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}>
-            {actionMsg}
-          </p>
+        {lastRunAt?.startsWith("Error") && (
+          <p className="text-sm px-3 py-2 rounded-lg bg-red-50 text-red-700">{lastRunAt}</p>
         )}
-
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => runAction(() => api.scheduler.start(intervalSeconds), "Scheduler started")}
-            disabled={status?.running}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            <PlayIcon className="w-4 h-4" /> Start
-          </button>
-          <button
-            onClick={() => runAction(api.scheduler.stop, "Scheduler stopped")}
-            disabled={!status?.running}
-            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            <StopIcon className="w-4 h-4" /> Stop
-          </button>
-          <button
-            onClick={() => runAction(api.scheduler.runNow, "Rescore triggered")}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors"
-          >
-            <BoltIcon className="w-4 h-4" /> Run Now
-          </button>
-        </div>
       </div>
+
+      {/* Changed Vendors */}
+      {changes.length > 0 && (
+        <div className="card overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100">
+            <h2 className="text-sm font-semibold text-slate-700">
+              Vendors with score changes ({changes.length})
+            </h2>
+          </div>
+          <div className="divide-y divide-slate-50">
+            {changes.map((c) => {
+              const up = c.delta > 0;
+              const levelChanged = c.old_level !== c.new_level;
+              return (
+                <div key={c.vendor_id} className="px-6 py-4">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <span className="font-semibold text-slate-900">{c.name}</span>
+                    <span className="font-mono text-xs text-slate-400">{c.vendor_id}</span>
+                    <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${up ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}>
+                      {up ? "▲" : "▼"} {up ? "+" : ""}{c.delta.toFixed(1)}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-sm">
+                    <span className="font-mono font-semibold text-slate-700">{c.old_score.toFixed(1)}</span>
+                    <span className="text-slate-500 font-bold">→</span>
+                    <span className="font-mono font-semibold text-slate-900">{c.new_score.toFixed(1)}</span>
+                    <span className={`text-xs font-semibold px-2 py-0.5 ml-2 rounded-full ${up ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}>
+                      {c.old_level} → {c.new_level}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1.5">{c.reason}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Email Notifications Card */}
       <div className="card p-6 space-y-5">
