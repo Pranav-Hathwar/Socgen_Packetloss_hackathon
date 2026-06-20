@@ -7,6 +7,7 @@ backend/app/routers/__pycache__/
 *.pyc
 *.pyo
 backend/.env
+backend/*.db
 
 # Node
 frontend/node_modules/
