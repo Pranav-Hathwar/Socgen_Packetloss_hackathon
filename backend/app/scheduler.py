@@ -27,14 +27,23 @@ def _rescore_all() -> dict:
     changed = []
     for raw in rows:
         old_level = raw.get("risk_level") or "LOW"
+        old_score = float(raw.get("risk_score") or 0.0)
+        
         scored = score_vendor(raw)
         save_scores(raw["vendor_id"], scored, trigger="scheduled")
-        if scored["risk_level"] != old_level:
+        
+        new_score = float(scored["risk_score"])
+        
+        # Track if the numerical score changed at all, not just the categorical level
+        if abs(new_score - old_score) > 0.01:
             changed.append({
                 "vendor_id": raw["vendor_id"],
                 "name": raw["name"],
                 "old_level": old_level,
                 "new_level": scored["risk_level"],
+                "old_score": old_score,
+                "new_score": new_score,
+                "reason": " | ".join(scored.get("alerts", [])) or f"Score adjusted by {abs(new_score - old_score):.1f} pts"
             })
 
     return {"vendors_rescored": len(rows), "level_changes": changed, "run_at": datetime.utcnow().isoformat()}

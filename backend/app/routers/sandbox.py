@@ -48,45 +48,37 @@ def inject_breach():
 
 @router.post("/advance-time", response_model=SandboxResponse)
 def advance_time():
-    """Find a vendor with SOC2 expiry and mark it as expired."""
-    candidates = [
-        v for v in MOCK_VENDORS
-        if v.compliance.soc2_type2 and v.compliance.soc2_expiry
-    ]
+    """Find a vendor with SOC2 expiry and mark it as expired in the DB."""
+    from ..db import fetch_all_vendors, update_vendor_fields
+    import random
+    from datetime import date, timedelta
+    
+    rows = fetch_all_vendors()
+    # Find candidates that have a valid SOC 2 cert, and aren't already HIGH or CRITICAL
+    candidates = [r for r in rows if int(dict(r).get("soc2_type2") or 0) and dict(r).get("risk_level") not in ("HIGH", "CRITICAL")]
+    
     if not candidates:
-        vendor = MOCK_VENDORS[0]
-        detail = "No SOC2 vendors to expire. Applied penalty to first vendor."
-    else:
-        vendor = random.choice(candidates)
-        vendor.compliance.soc2_type2 = False
-        vendor.compliance.soc2_expiry = None
-        detail = f"SOC 2 Type II certification expired for {vendor.name}."
-
-    bump = random.uniform(8.0, 15.0)
-    vendor.risk_score = min(100.0, round(vendor.risk_score + bump, 1))
-    vendor.score_breakdown.compliance_gaps = min(100.0, vendor.score_breakdown.compliance_gaps + bump)
-
-    if vendor.risk_score >= 75:
-        vendor.risk_level = RiskLevel.CRITICAL
-        vendor.rag = RAG.RED
-    elif vendor.risk_score >= 50:
-        vendor.risk_level = RiskLevel.HIGH
-        vendor.rag = RAG.RED
-    elif vendor.risk_score >= 30:
-        vendor.risk_level = RiskLevel.MEDIUM
-        vendor.rag = RAG.AMBER
-
-    alert_text = "[SIMULATED] SOC 2 certification expired"
-    vendor.alerts.append(alert_text)
-
-    _rebuild_lists()
-
+        # Fallback
+        candidates = [r for r in rows if int(dict(r).get("soc2_type2") or 0)]
+        if not candidates:
+            candidates = rows[:3] if len(rows) >= 3 else rows
+        
+    vendor = random.choice(candidates)
+    
+    # Simulate time advancing by setting expiry date to 10 days in the past.
+    # We also force data_sensitivity to HIGH so it trips the engine's major override rule.
+    past_date = (date.today() - timedelta(days=10)).isoformat()
+    update_vendor_fields(vendor["vendor_id"], {
+        "soc2_expiry": past_date,
+        "data_sensitivity": "HIGH"
+    })
+    
     return SandboxResponse(
         action="advance-time",
-        vendor_id=vendor.vendor_id,
-        vendor_name=vendor.name,
-        detail=detail,
-        new_risk_score=vendor.risk_score,
+        vendor_id=vendor["vendor_id"],
+        vendor_name=vendor["name"],
+        detail=f"Time advanced! SOC 2 expired for {vendor['name']}. Press 'Run Now' to rescore.",
+        new_risk_score=vendor["risk_score"] or 0.0,
     )
 
 

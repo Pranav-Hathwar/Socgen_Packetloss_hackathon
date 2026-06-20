@@ -31,7 +31,7 @@ export default function AdminPage() {
   const [status, setStatus] = useState<SchedulerStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
-  const [levelChanges, setLevelChanges] = useState<{name: string, old_level: string, new_level: string}[] | null>(null);
+  const [levelChanges, setLevelChanges] = useState<{name: string, old_level: string, new_level: string, old_score?: number, new_score?: number, reason?: string}[] | null>(null);
 
   const [notifyEmail, setNotifyEmail] = useState("");
   const [notifyType, setNotifyType] = useState<"summary" | "expiry">("summary");
@@ -136,15 +136,29 @@ export default function AdminPage() {
             {levelChanges && levelChanges.length > 0 && (
               <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
                 <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">Risk Level Changes</p>
-                <ul className="space-y-2">
+                <ul className="space-y-3">
                   {levelChanges.map((c, i) => (
-                    <li key={i} className="text-sm text-slate-700 flex items-center justify-between border-b border-slate-100 pb-1 last:border-0 last:pb-0">
-                      <span className="font-medium bg-white px-2 py-0.5 rounded shadow-sm border border-slate-100">{c.name}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-medium">{c.old_level}</span>
-                        <span className="text-slate-400">→</span>
-                        <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-bold">{c.new_level}</span>
+                    <li key={i} className="text-sm text-slate-700 flex flex-col gap-2 border-b border-slate-100 pb-3 last:border-0 last:pb-0">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium bg-white px-2 py-0.5 rounded shadow-sm border border-slate-100">
+                          {c.name}
+                          {c.old_score != null && c.new_score != null && (
+                            <span className="ml-2 text-xs font-mono text-slate-500 whitespace-nowrap">
+                              [{c.old_score.toFixed(1)} → {c.new_score.toFixed(1)}]
+                            </span>
+                          )}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-medium">{c.old_level}</span>
+                          <span className="text-slate-400">→</span>
+                          <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-bold">{c.new_level}</span>
+                        </div>
                       </div>
+                      {c.reason && (
+                        <p className="text-xs text-rose-700 bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-100/50 flex-grow-0 whitespace-normal self-start">
+                          <span className="font-semibold mr-1">Alert:</span>{c.reason}
+                        </p>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -157,20 +171,6 @@ export default function AdminPage() {
         )}
 
         <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => runAction(api.scheduler.start, "Scheduler started")}
-            disabled={status?.running}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            <PlayIcon className="w-4 h-4" /> Start
-          </button>
-          <button
-            onClick={() => runAction(api.scheduler.stop, "Scheduler stopped")}
-            disabled={!status?.running}
-            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            <StopIcon className="w-4 h-4" /> Stop
-          </button>
           <button
             onClick={() => runAction(api.scheduler.runNow, "Rescore triggered")}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors"
