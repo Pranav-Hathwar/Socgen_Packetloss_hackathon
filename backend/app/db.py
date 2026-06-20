@@ -366,6 +366,14 @@ def fetch_cert_documents(vendor_id: str) -> list[sqlite3.Row]:
         ).fetchall()
 
 
+def fetch_cert_document(cert_id: int, vendor_id: str) -> Optional[sqlite3.Row]:
+    with get_conn() as conn:
+        return conn.execute(
+            "SELECT * FROM cert_documents WHERE id=? AND vendor_id=?",
+            (cert_id, vendor_id),
+        ).fetchone()
+
+
 def create_vendor(data: dict) -> str:
     """Insert a new vendor row. Returns the assigned vendor_id."""
     import uuid as _uuid
