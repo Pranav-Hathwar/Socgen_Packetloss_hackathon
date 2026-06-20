@@ -95,6 +95,7 @@ export const api = {
     remediate: (id: string, body: RemediationRequest) => post<RemediationRecord>(`/vendors/${id}/remediate`, body),
     update: (id: string, body: Record<string, unknown>) => patch<{ status: string; new_risk_score: number; new_risk_level: string }>(`/vendors/${id}`, body),
     suggestions: (id: string) => get<{ vendor_id: string; suggestions: VendorSuggestion[] }>(`/vendors/${id}/suggestions`),
+    narrative: (id: string) => get<{ vendor_id: string; narrative: string | null; source: string }>(`/vendors/${id}/narrative`),
   },
   alerts: {
     list: () => get<AlertItem[]>("/alerts"),
