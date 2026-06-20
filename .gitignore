@@ -29,3 +29,4 @@ backend/uploads/
 # Secrets
 .env
 .env.local
+.claude/
