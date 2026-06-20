@@ -109,43 +109,42 @@ def _is_tprm_response(text: str) -> bool:
     return any(kw in lower for kw in _TPRM_KEYWORDS)
 
 
-def _get_model():
-    """Lazy-load Gemini model only when needed."""
+def _get_client():
+    """Lazy-load Gemini client only when needed."""
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
     if not api_key:
         return None
     try:
-        import google.generativeai as genai  # type: ignore
-        genai.configure(api_key=api_key)
-        return genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            system_instruction=_SYSTEM_PROMPT,
-        )
+        from google import genai  # type: ignore
+        return genai.Client(api_key=api_key)
     except Exception:
         return None
 
 
 def ask_claude(question: str, vendor_context: str) -> Optional[str]:
     """
-    Single Gemini 1.5 Flash call with anonymized vendor context.
+    Single Gemini 2.0 Flash call with anonymized vendor context.
     Returns None on any failure so callers fall back to deterministic Q&A.
     Never raises.
     """
-    model = _get_model()
-    if model is None:
+    client = _get_client()
+    if client is None:
         return None
 
     try:
+        from google.genai import types  # type: ignore
         user_msg = (
             f"Vendor profile (anonymized):\n{vendor_context}\n\n"
             f"Question: {question}"
         )
-        response = model.generate_content(
-            user_msg,
-            generation_config={
-                "max_output_tokens": 300,
-                "temperature": 0.2,   # low temp = consistent, factual answers
-            },
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=user_msg,
+            config=types.GenerateContentConfig(
+                system_instruction=_SYSTEM_PROMPT,
+                max_output_tokens=300,
+                temperature=0.2,
+            ),
         )
         text = response.text.strip()
 
