@@ -174,16 +174,23 @@ export interface SandboxResponse {
 export interface VendorCreateRequest {
   name: string;
   category: string;
+  contract_start?: string;
   contract_end?: string;
   data_sensitivity: DataSensitivity;
   access_type: AccessType;
   systems?: string;
   soc2_type2: boolean;
+  soc2_expiry?: string;
   iso27001: boolean;
   gdpr_dpa: boolean;
+  breach_notification_sla_hours: number;
   financial_rating: string;
   data_residency: DataResidency;
   concentration_risk: ConcentrationRisk;
+  sub_processor_count: number;
+  under_investigation: boolean;
+  breach_history?: string;
+  last_assessment_date?: string;
   contact_name?: string;
   contact_email?: string;
 }

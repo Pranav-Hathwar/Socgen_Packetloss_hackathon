@@ -375,21 +375,23 @@ def create_vendor(data: dict) -> str:
                 soc2_type2, soc2_expiry, iso27001, gdpr_dpa,
                 breach_notification_sla_hours, financial_rating,
                 data_residency, sub_processor_count, concentration_risk,
-                last_assessment_date, contact_name, contact_email
+                last_assessment_date, under_investigation, breach_history,
+                contact_name, contact_email
             ) VALUES (
                 :vendor_id,:name,:category,:contract_start,:contract_end,
                 :systems,:data_sensitivity,:access_type,:access_last_used_at,
                 :soc2_type2,:soc2_expiry,:iso27001,:gdpr_dpa,
                 :breach_notification_sla_hours,:financial_rating,
                 :data_residency,:sub_processor_count,:concentration_risk,
-                :last_assessment_date,:contact_name,:contact_email
+                :last_assessment_date,:under_investigation,:breach_history,
+                :contact_name,:contact_email
             )
             """,
             {
                 "vendor_id": vendor_id,
                 "name": data["name"],
                 "category": data.get("category", "Other"),
-                "contract_start": date.today().isoformat(),
+                "contract_start": data.get("contract_start") or date.today().isoformat(),
                 "contract_end": data.get("contract_end") or "",
                 "systems": data.get("systems") or "",
                 "data_sensitivity": data.get("data_sensitivity", "LOW"),
@@ -404,7 +406,9 @@ def create_vendor(data: dict) -> str:
                 "data_residency": data.get("data_residency") or "EU",
                 "sub_processor_count": int(data.get("sub_processor_count") or 0),
                 "concentration_risk": data.get("concentration_risk") or "LOW",
-                "last_assessment_date": date.today().isoformat(),
+                "last_assessment_date": data.get("last_assessment_date") or date.today().isoformat(),
+                "under_investigation": _parse_bool(data.get("under_investigation", False)),
+                "breach_history": data.get("breach_history") or "",
                 "contact_name": data.get("contact_name"),
                 "contact_email": data.get("contact_email"),
             },
