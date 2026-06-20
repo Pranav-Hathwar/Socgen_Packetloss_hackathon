@@ -37,7 +37,7 @@ def create_vendor_endpoint(body: VendorCreateRequest, _user=Depends(require_role
 @router.get("", response_model=list[VendorSummary])
 def list_vendors(
     _user: AnyUser,
-    limit: int = 200,
+    limit: int = 2000,
     offset: int = 0,
     search: str = "",
     risk_level: str = "",
