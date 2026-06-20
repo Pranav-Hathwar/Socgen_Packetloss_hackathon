@@ -26,6 +26,14 @@ Thumbs.db
 # Uploads (cert files stored on server, not in repo)
 backend/uploads/
 
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# TypeScript build artifacts
+frontend/tsconfig.tsbuildinfo
+
 # Secrets
 .env
 .env.local
