@@ -58,6 +58,9 @@ def simulate(body: SimulateRequest, _user: AnyUser):
     if body.revoke_access:
         modified["access_type"] = "read"
         modified["data_sensitivity"] = "LOW"
+        # Clear access_last_used_at so the "contract-expired + active access"
+        # override in engine (_apply_overrides rule 3) no longer fires.
+        modified["access_last_used_at"] = None
         actions.append("Revoked write/sensitive system access")
 
     new_scored = score_vendor(modified)
