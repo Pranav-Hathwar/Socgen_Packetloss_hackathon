@@ -259,11 +259,54 @@ def _doc_for_row(r: dict) -> str:
     return _vendor_doc(raw)
 
 
+# Generic words that are NOT vendor-identifying (avoid false name matches).
+_NAME_STOPWORDS = frozenset({
+    "vendor", "vendors", "data", "tech", "technologies", "technology",
+    "global", "group", "systems", "solutions", "services", "software",
+    "enterprise", "consulting", "europe", "india", "bank", "cloud",
+    "gdpr", "soc", "iso", "dpa", "eu", "pii", "dora", "nis", "high",
+    "low", "medium", "critical", "red", "amber", "green", "saas", "bpo",
+    "risk", "breach", "compliance", "compliant", "certification", "with",
+    "which", "what", "show", "list", "have", "handle", "under", "investigation",
+})
+
+
+def _resolve_named_vendors(question: str, rows: list[dict]) -> list[dict]:
+    """
+    Detect vendors EXPLICITLY referenced in the question — by vendor ID or by a
+    distinctive name token. Strict on purpose: only scopes when the user clearly
+    names a specific vendor, so portfolio questions stay broad.
+    """
+    import re
+
+    by_id = {r["vendor_id"]: r for r in rows}
+    matched: list[dict] = []
+    seen: set[str] = set()
+
+    # 1. Explicit vendor IDs (e.g. V103, VAC2803) — must contain a digit.
+    for vid in re.findall(r"\bV(?=[0-9A-Z]*\d)[0-9A-Z]{2,}\b", question.upper()):
+        if vid in by_id and vid not in seen:
+            matched.append(by_id[vid]); seen.add(vid)
+
+    # 2. Distinctive name tokens (>=4 chars, not generic) appearing as whole words.
+    q_words = set(re.findall(r"[a-z0-9]+", question.lower()))
+    for r in rows:
+        if r["vendor_id"] in seen:
+            continue
+        name_tokens = re.findall(r"[a-z0-9]+", str(r.get("name", "")).lower())
+        distinctive = [t for t in name_tokens if len(t) >= 4 and t not in _NAME_STOPWORDS]
+        if distinctive and any(t in q_words for t in distinctive):
+            matched.append(r); seen.add(r["vendor_id"])
+
+    return matched
+
+
 def hybrid_context(question: str, k: int = 8) -> tuple[str, list[str]]:
     """
-    Combine deterministic structured filter (EXACT, complete) with semantic
-    retrieval (fuzzy). Structured rows guarantee no 'show all X' question
-    silently drops matches past the top-K cutoff.
+    Question-driven vendor scoping with three tiers:
+      1. Named vendors  — question references specific vendor(s) -> scope to ONLY them.
+      2. Structured filter — attribute/threshold question -> exact, complete match set.
+      3. Semantic retrieval — open-ended question -> top-K nearest vendors.
 
     Returns (context_string, ordered_source_vendor_ids).
     """
@@ -275,19 +318,22 @@ def hybrid_context(question: str, k: int = 8) -> tuple[str, list[str]]:
     ordered_ids: list[str] = []
     exact_count = None
 
-    # 1. Structured filter — authoritative for attribute/threshold questions.
-    #    When it matches, use it EXCLUSIVELY (no semantic dilution): the filter
-    #    is complete and exact, so every returned vendor truly matches.
-    intent = _parse_intent(question)
-    matched: list[dict] = []
-    if intent.get("attributes"):
-        matched = _filter(rows, intent, None, limit=10000)  # uncapped for true count
+    # 1. Named vendors take top priority — scope strictly to what the user asked.
+    named = _resolve_named_vendors(question, rows)
+    if named:
+        ordered_ids = [r["vendor_id"] for r in named]
 
-    if matched:
-        exact_count = len(matched)
-        ordered_ids = [r["vendor_id"] for r in matched]  # already sorted by risk desc
-    else:
-        # 2. No structured match — fall back to pure semantic retrieval.
+    # 2. Structured filter — authoritative for attribute/threshold questions.
+    if not ordered_ids:
+        intent = _parse_intent(question)
+        if intent.get("attributes"):
+            matched = _filter(rows, intent, None, limit=10000)  # uncapped for true count
+            if matched:
+                exact_count = len(matched)
+                ordered_ids = [r["vendor_id"] for r in matched]  # sorted by risk desc
+
+    # 3. No named/structured match — fall back to pure semantic retrieval.
+    if not ordered_ids:
         ordered_ids = [h["vendor_id"] for h in retrieve(question, k=k)]
 
     # Cap context size (Groq input budget) — highest-risk matches kept first.
