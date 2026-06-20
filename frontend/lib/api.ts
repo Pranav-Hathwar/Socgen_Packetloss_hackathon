@@ -11,6 +11,9 @@ import type {
   ScoreHistoryPoint,
   RemediationRecord,
   RemediationRequest,
+  GlobalIncident,
+  IncidentCreate,
+  ContractAnalysisResult,
 } from "../types/vendor";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -46,7 +49,21 @@ async function post<T>(path: string, body: unknown): Promise<T> {
     body: JSON.stringify(body),
   });
   if (res.status === 401) { handle401(); throw new Error("Unauthorized"); }
-  if (!res.ok) throw new Error(`POST ${path} → ${res.status}`);
+  return res.json() as Promise<T>;
+}
+
+async function postFile<T>(path: string, file: File, vendorId?: string): Promise<T> {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (vendorId) formData.append("vendor_id", vendorId);
+
+  const res = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    headers: { ...authHeader() },
+    body: formData,
+  });
+  if (res.status === 401) { handle401(); throw new Error("Unauthorized"); }
+  if (!res.ok) throw new Error(`POST ${path} (File) → ${res.status}`);
   return res.json() as Promise<T>;
 }
 
@@ -87,4 +104,13 @@ export const api = {
     advanceTime: (days: number) => post("/monitor/advance-time", { days }),
     whatif: (body: object) => post("/whatif", body),
   },
+  incidents: {
+    report: (body: IncidentCreate) => post<{ status: string; incident_id: number; impacted_vendors: number; impacted_vendor_names: string[] }>("/incidents/report", body),
+    list: () => get<GlobalIncident[]>("/incidents/active"),
+    resolve: (id: number) => post<{ status: string }>("/incidents/resolve", { id }),
+    systems: () => get<string[]>("/incidents/systems"),
+  },
+  contracts: {
+    analyze: (file: File, vendor_id?: string) => postFile<ContractAnalysisResult>("/contracts/analyze", file, vendor_id),
+  }
 };

@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routers import advanced, alerts, ask, auth_router, ingest, monitor, report, sandbox, simulate, vendors
+from .routers import advanced, incidents, contracts, alerts, ask, auth_router, ingest, monitor, report, sandbox, simulate, vendors
 from .startup import bootstrap
 
 
@@ -38,6 +38,8 @@ app.include_router(monitor.router)
 app.include_router(simulate.router)
 app.include_router(sandbox.router)
 app.include_router(advanced.router)
+app.include_router(incidents.router)
+app.include_router(contracts.router)
 
 
 @app.get("/health")

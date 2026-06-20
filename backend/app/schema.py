@@ -166,6 +166,8 @@ class VendorUpdateRequest(BaseModel):
     concentration_risk: Optional[str] = None
     under_investigation: Optional[bool] = None
     breach_notification_sla_hours: Optional[int] = None
+    data_residency: Optional[str] = None
+    sub_processor_count: Optional[int] = None
 
 
 class RemediationRequest(BaseModel):

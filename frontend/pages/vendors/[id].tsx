@@ -22,6 +22,10 @@ import {
   BeakerIcon,
   ArrowTrendingDownIcon,
   ArrowTrendingUpIcon,
+  DocumentMagnifyingGlassIcon,
+  ShieldExclamationIcon,
+  CheckCircleIcon,
+  CloudArrowUpIcon,
 } from "@heroicons/react/24/outline";
 import { api } from "../../lib/api";
 import { RagBadge } from "../../components/RagBadge";
@@ -49,6 +53,11 @@ export default function VendorDetail() {
   const [remOpen, setRemOpen] = useState(false);
   const [remForm, setRemForm] = useState({ issue: "", resolved_by: "", note: "" });
   const [remLoading, setRemLoading] = useState(false);
+
+  // Contract Analysis
+  const [contractAnalysis, setContractAnalysis] = useState<ContractAnalysisResult | null>(null);
+  const [contractLoading, setContractLoading] = useState(false);
+  const [contractFile, setContractFile] = useState<File | null>(null);
 
   function fetchVendor() {
     if (typeof id !== "string") return;
@@ -96,6 +105,47 @@ export default function VendorDetail() {
       console.error(e);
     } finally {
       setSimLoading(false);
+    }
+  }
+
+  async function handleContractUpload(file: File) {
+    if (!vendor) return;
+    setContractLoading(true);
+    setContractAnalysis(null);
+    try {
+      const res = await api.contracts.analyze(file, vendor.vendor_id);
+      setContractAnalysis(res);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to analyze contract. Ensure it is a valid PDF.");
+    } finally {
+      setContractLoading(false);
+    }
+  }
+
+  async function applyContractFindings() {
+    if (!vendor || !contractAnalysis) return;
+    setContractLoading(true);
+    try {
+      const updates: any = {};
+      if (contractAnalysis.breach_notification_sla_hours.value) {
+        updates.breach_notification_sla_hours = contractAnalysis.breach_notification_sla_hours.value;
+      }
+      if (contractAnalysis.data_residency.value) {
+        updates.data_residency = (contractAnalysis.data_residency.value as string).toUpperCase().includes("EU") ? "EU" : "non-EU";
+      }
+      if (contractAnalysis.sub_processors.value) {
+        updates.sub_processor_count = contractAnalysis.sub_processors.value.length;
+      }
+
+      await api.vendors.update(vendor.vendor_id, updates);
+      fetchVendor(); // Refresh data
+      alert("Vendor profile updated with contract findings!");
+    } catch (e) {
+      console.error(e);
+      alert("Failed to update vendor profile.");
+    } finally {
+      setContractLoading(false);
     }
   }
 
@@ -390,8 +440,107 @@ export default function VendorDetail() {
             </div>
           )}
 
-          {/* Remediation Tracking */}
+          {/* Contract Intelligence */}
           <div className="card p-6 animate-slide-up" style={{ animationDelay: "0.45s" }}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                <DocumentMagnifyingGlassIcon className="w-5 h-5 text-indigo-500" />
+                Contract Intelligence
+              </h2>
+              <div className="flex gap-2">
+                <label className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-50 cursor-pointer transition-colors flex items-center gap-2">
+                  <CloudArrowUpIcon className="w-4 h-4" />
+                  Upload Contract
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="application/pdf"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleContractUpload(file);
+                    }}
+                  />
+                </label>
+                {contractAnalysis && (
+                  <button
+                    onClick={applyContractFindings}
+                    disabled={contractLoading}
+                    className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition-colors disabled:opacity-40"
+                  >
+                    Apply Findings
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {contractLoading && (
+              <div className="py-12 flex flex-col items-center justify-center space-y-3">
+                <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-xs text-slate-500">Analyzing document structure...</p>
+              </div>
+            )}
+
+            {!contractLoading && !contractAnalysis && (
+              <div className="py-10 border-2 border-dashed border-slate-100 rounded-2xl flex flex-col items-center justify-center text-center px-4">
+                <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center mb-3">
+                  <DocumentMagnifyingGlassIcon className="w-6 h-6 text-slate-300" />
+                </div>
+                <p className="text-sm font-medium text-slate-600">No contract analyzed for this vendor.</p>
+                <p className="text-xs text-slate-400 mt-1 max-w-[240px]">Upload a Master Service Agreement (MSA) or DPA to extract legal risk data.</p>
+              </div>
+            )}
+
+            {contractAnalysis && (
+              <div className="space-y-4 animate-fade-in">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <ExtractionField
+                    label="Breach Notification SLA"
+                    value={contractAnalysis.breach_notification_sla_hours.value ? `${contractAnalysis.breach_notification_sla_hours.value} hours` : "Not Found"}
+                    evidence={contractAnalysis.breach_notification_sla_hours.evidence}
+                    isMatch={contractAnalysis.breach_notification_sla_hours.value !== null}
+                  />
+                  <ExtractionField
+                    label="Data Residency"
+                    value={contractAnalysis.data_residency.value || "Not Found"}
+                    evidence={contractAnalysis.data_residency.evidence}
+                    isMatch={contractAnalysis.data_residency.value !== null}
+                  />
+                  <ExtractionField
+                    label="Sub-Processors"
+                    value={Array.isArray(contractAnalysis.sub_processors.value) ? `${contractAnalysis.sub_processors.value.length} listed` : "Not Found"}
+                    evidence={contractAnalysis.sub_processors.evidence}
+                    isMatch={contractAnalysis.sub_processors.value.length > 0}
+                  />
+                  <ExtractionField
+                    label="Governing Law"
+                    value={contractAnalysis.governing_law.value || "Not Found"}
+                    evidence={contractAnalysis.governing_law.evidence}
+                    isMatch={contractAnalysis.governing_law.value !== null}
+                  />
+                </div>
+
+                {contractAnalysis.key_risks.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-slate-50">
+                    <h3 className="text-xs font-bold text-red-600 uppercase tracking-wider mb-3 flex items-center gap-2">
+                       <ShieldExclamationIcon className="w-4 h-4" />
+                       Unfavorable Clauses Detected
+                    </h3>
+                    <div className="space-y-2">
+                       {contractAnalysis.key_risks.map((r, i) => (
+                         <div key={i} className="p-3 bg-red-50 border border-red-100 rounded-xl">
+                            <p className="text-xs font-bold text-red-800">{r.risk}</p>
+                            <p className="text-[10px] text-red-600 mt-1 italic leading-relaxed">&quot;{r.evidence}&quot;</p>
+                         </div>
+                       ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Remediation Tracking */}
+          <div className="card p-6 animate-slide-up" style={{ animationDelay: "0.5s" }}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-slate-700">Remediation Log</h2>
               <button
@@ -622,5 +771,41 @@ function Toggle({
         }`} />
       </button>
     </label>
+  );
+}
+
+function ExtractionField({ label, value, evidence, isMatch }: { label: string; value: string; evidence: string | null; isMatch: boolean }) {
+  const [showEvidence, setShowEvidence] = useState(false);
+
+  return (
+    <div className="p-3 bg-white border border-slate-100 rounded-xl">
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">{label}</p>
+        {isMatch && (
+           <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+              <CheckCircleIcon className="w-3 h-3" />
+              Verified
+           </span>
+        )}
+      </div>
+      <p className={`text-sm font-bold ${isMatch ? "text-slate-900" : "text-slate-400"}`}>{value}</p>
+      {evidence && (
+        <div className="mt-2">
+          <button
+            onClick={() => setShowEvidence(!showEvidence)}
+            className="text-[10px] font-semibold text-indigo-600 hover:text-indigo-700 underline flex items-center gap-1"
+          >
+            {showEvidence ? "Hide Evidence" : "View Legal Snippet"}
+          </button>
+          {showEvidence && (
+            <div className="mt-2 p-2 bg-slate-50 rounded-lg border border-slate-100 animate-slide-up">
+              <p className="text-[10px] text-slate-500 italic leading-relaxed leading-relaxed line-clamp-3">
+                &quot;{evidence}&quot;
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

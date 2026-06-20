@@ -119,6 +119,15 @@ CREATE TABLE IF NOT EXISTS labels (
     severity     TEXT,
     explanation  TEXT
 );
+
+CREATE TABLE IF NOT EXISTS global_incidents (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    platform     TEXT NOT NULL,
+    severity     TEXT NOT NULL,
+    description  TEXT,
+    reported_at  TEXT NOT NULL,
+    resolved_at  TEXT
+);
 """
 
 
@@ -349,6 +358,7 @@ def update_vendor_fields(vendor_id: str, fields: dict) -> bool:
         "data_sensitivity", "access_type", "soc2_type2", "soc2_expiry",
         "iso27001", "gdpr_dpa", "financial_rating", "concentration_risk",
         "under_investigation", "breach_notification_sla_hours",
+        "data_residency", "sub_processor_count",
     }
     safe = {k: v for k, v in fields.items() if k in allowed}
     if not safe:
@@ -376,3 +386,25 @@ def fetch_cert_documents(vendor_id: str) -> list[sqlite3.Row]:
             "SELECT * FROM cert_documents WHERE vendor_id=? ORDER BY uploaded_at DESC",
             (vendor_id,),
         ).fetchall()
+
+
+def add_incident(platform: str, severity: str, description: str) -> int:
+    now = datetime.utcnow().isoformat()
+    with get_conn() as conn:
+        cur = conn.execute(
+            "INSERT INTO global_incidents (platform, severity, description, reported_at) VALUES (?,?,?,?)",
+            (platform, severity, description, now),
+        )
+        return cur.lastrowid
+
+
+def fetch_active_incidents() -> list[sqlite3.Row]:
+    with get_conn() as conn:
+        return conn.execute("SELECT * FROM global_incidents WHERE resolved_at IS NULL ORDER BY reported_at DESC").fetchall()
+
+
+def resolve_incident(incident_id: int) -> bool:
+    now = datetime.utcnow().isoformat()
+    with get_conn() as conn:
+        cur = conn.execute("UPDATE global_incidents SET resolved_at=? WHERE id=?", (now, incident_id))
+        return cur.rowcount > 0

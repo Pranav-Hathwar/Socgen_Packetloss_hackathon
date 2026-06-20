@@ -181,3 +181,44 @@ export interface RemediationRequest {
   resolved_by: string;
   note?: string;
 }
+
+export interface GlobalIncident {
+  id: number;
+  platform: string;
+  severity: string;
+  description: string;
+  reported_at: string;
+  resolved_at: string | null;
+}
+
+export interface IncidentCreate {
+  platform: string;
+  severity: string;
+  description: string;
+}
+
+export interface ContractField {
+  value: any;
+  evidence: string | null;
+  unit?: string;
+}
+
+export interface ContractAnalysisResult {
+  vendor_id?: string;
+  breach_notification_sla_hours: ContractField;
+  data_ownership_clause: ContractField;
+  sub_processors: {
+    value: string[];
+    prior_approval_required: boolean | null;
+    evidence: string | null;
+  };
+  offboarding_terms: ContractField;
+  data_residency: ContractField;
+  audit_rights: ContractField;
+  governing_law: ContractField;
+  key_risks: {
+    risk: string;
+    evidence: string;
+  }[];
+  extraction_method: string;
+}

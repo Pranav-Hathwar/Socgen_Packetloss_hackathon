@@ -24,6 +24,7 @@ import { RagBadge } from "../components/RagBadge";
 import { TableSkeleton, CardRowSkeleton } from "../components/LoadingSkeleton";
 import { EmptyState } from "../components/EmptyState";
 import { ErrorState } from "../components/ErrorState";
+import { IncidentManager } from "../components/IncidentManager";
 import type { VendorSummary, RiskLevel } from "../types/vendor";
 import { useRefresh } from "./_app";
 
@@ -224,6 +225,11 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
       )}
+
+      {/* Incident Center */}
+      <div className="animate-slide-up" style={{ animationDelay: "0.15s" }}>
+        <IncidentManager onUpdate={fetchVendors} />
+      </div>
 
       {/* Search & Filters */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
