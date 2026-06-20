@@ -587,7 +587,7 @@ export default function VendorDetail() {
                   <p className="text-sm text-slate-700 leading-relaxed">{narrative}</p>
                 )}
               </div>
-              <span className="text-xs text-slate-400 shrink-0 mt-0.5">gemini flash</span>
+              <span className="text-xs text-slate-400 shrink-0 mt-0.5">groq llama3</span>
             </div>
           )}
 
