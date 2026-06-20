@@ -25,11 +25,13 @@ import {
   PencilSquareIcon,
   ArrowUpTrayIcon,
   DocumentCheckIcon,
+  LightBulbIcon,
+  XMarkIcon as XIcon,
 } from "@heroicons/react/24/outline";
 import { api } from "../../lib/api";
 import { RagBadge } from "../../components/RagBadge";
 import { ErrorState } from "../../components/ErrorState";
-import type { VendorScore, SimulateResponse, ScoreHistoryPoint, RemediationRecord, CertDocument } from "../../types/vendor";
+import type { VendorScore, SimulateResponse, ScoreHistoryPoint, RemediationRecord, CertDocument, VendorSuggestion } from "../../types/vendor";
 
 export default function VendorDetail() {
   const router = useRouter();
@@ -58,6 +60,11 @@ export default function VendorDetail() {
   const [editForm, setEditForm] = useState<Record<string, unknown>>({});
   const [editLoading, setEditLoading] = useState(false);
   const [editMsg, setEditMsg] = useState<string | null>(null);
+
+  // AI Suggestions
+  const [suggestions, setSuggestions] = useState<VendorSuggestion[]>([]);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
 
   // Cert upload
   const [certs, setCerts] = useState<CertDocument[]>([]);
@@ -144,6 +151,20 @@ export default function VendorDetail() {
       console.error(e);
     } finally {
       setCertLoading(false);
+    }
+  }
+
+  async function loadSuggestions() {
+    if (!vendor) return;
+    setSuggestionsLoading(true);
+    try {
+      const res = await api.vendors.suggestions(vendor.vendor_id);
+      setSuggestions(res.suggestions);
+      setSuggestionsOpen(true);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSuggestionsLoading(false);
     }
   }
 
@@ -252,6 +273,21 @@ export default function VendorDetail() {
             <ChatBubbleLeftRightIcon className="w-4 h-4" />
             Ask AI
           </Link>
+          <button
+            onClick={loadSuggestions}
+            disabled={suggestionsLoading}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              suggestionsOpen
+                ? "bg-amber-500 text-white"
+                : "bg-amber-50 border border-amber-300 text-amber-800 hover:bg-amber-100"
+            }`}
+          >
+            <LightBulbIcon className="w-4 h-4" />
+            {suggestionsLoading ? "Loading…" : "AI Suggestions"}
+            {suggestions.length > 0 && !suggestionsLoading && (
+              <span className="bg-amber-200 text-amber-900 text-xs font-bold px-1.5 py-0.5 rounded-full">{suggestions.length}</span>
+            )}
+          </button>
         </div>
       </div>
 
@@ -355,6 +391,50 @@ export default function VendorDetail() {
                 {editLoading ? "Saving…" : "Save Changes"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Suggestions Panel */}
+      {suggestionsOpen && suggestions.length > 0 && (
+        <div className="card p-6 border-l-4 border-amber-400 animate-slide-up">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <LightBulbIcon className="w-5 h-5 text-amber-500" />
+              <h2 className="text-sm font-bold text-slate-900">AI Remediation Suggestions</h2>
+              <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded-full">{suggestions.length}</span>
+            </div>
+            <button onClick={() => setSuggestionsOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <XIcon className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="space-y-3">
+            {suggestions.map((s) => (
+              <div key={s.id} className={`rounded-xl border p-4 ${
+                s.priority === "CRITICAL" ? "border-red-200 bg-red-50" :
+                s.priority === "HIGH" ? "border-orange-200 bg-orange-50" :
+                s.priority === "MEDIUM" ? "border-amber-200 bg-amber-50" :
+                "border-slate-200 bg-slate-50"
+              }`}>
+                <div className="flex flex-wrap items-start gap-2 mb-2">
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                    s.priority === "CRITICAL" ? "bg-red-100 text-red-700" :
+                    s.priority === "HIGH" ? "bg-orange-100 text-orange-700" :
+                    s.priority === "MEDIUM" ? "bg-amber-100 text-amber-700" :
+                    "bg-slate-100 text-slate-600"
+                  }`}>{s.priority}</span>
+                  <span className="text-xs text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-full">{s.category}</span>
+                  <span className="text-xs text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-full">{s.framework}</span>
+                  <span className="ml-auto text-xs font-semibold text-emerald-700">−{s.score_impact.toFixed(0)} pts</span>
+                </div>
+                <p className="text-sm font-semibold text-slate-800 mb-1">{s.action}</p>
+                <p className="text-xs text-slate-600 mb-2">{s.detail}</p>
+                <div className="flex gap-4 text-xs text-slate-500">
+                  <span>Effort: <strong>{s.effort}</strong></span>
+                  <span>Timeline: <strong>{s.timeline}</strong></span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
