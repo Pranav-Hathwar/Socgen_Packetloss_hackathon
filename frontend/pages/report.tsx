@@ -1,8 +1,8 @@
 import { SearchSelect, SearchSelectItem } from "@tremor/react";
 import { useEffect, useState, useCallback } from "react";
+import { useSpring, animated } from "@react-spring/web";
+import { PieChart as MuiPieChart } from "@mui/x-charts/PieChart";
 import {
-  PieChart,
-  Pie,
   Cell,
   ResponsiveContainer,
   BarChart,
@@ -14,6 +14,54 @@ import {
   LineChart,
   Line,
 } from "recharts";
+import type { RectangleProps } from "recharts";
+
+// ── Animated bar shape for the Risk Level Breakdown (single-color bars) ──────
+function AnimatedBar(props: RectangleProps & { fill?: string }) {
+  const { x = 0, y = 0, width = 0, height = 0, fill, radius } = props;
+  const spring = useSpring({
+    from: { height: 0, y: (y as number) + (height as number) },
+    to:   { height: height as number, y: y as number },
+    config: { tension: 120, friction: 14 },
+    reset: false,
+  });
+  // Build a rounded-top path to preserve radius={[8,8,0,0]}
+  const r = Array.isArray(radius) ? (radius[0] as number) : 0;
+  return (
+    <animated.rect
+      x={x as number}
+      width={width as number}
+      y={spring.y}
+      height={spring.height}
+      fill={fill}
+      rx={r}
+      ry={r}
+    />
+  );
+}
+
+// ── Animated bar shape for the stacked Risk by Category chart ────────────────
+function AnimatedStackedBar(props: RectangleProps & { fill?: string }) {
+  const { x = 0, y = 0, width = 0, height = 0, fill, radius } = props;
+  const spring = useSpring({
+    from: { height: 0, y: (y as number) + (height as number) },
+    to:   { height: height as number, y: y as number },
+    config: { tension: 120, friction: 14 },
+    reset: false,
+  });
+  const r = Array.isArray(radius) ? (radius[0] as number) : 0;
+  return (
+    <animated.rect
+      x={x as number}
+      width={width as number}
+      y={spring.y}
+      height={spring.height}
+      fill={fill}
+      rx={r}
+      ry={r}
+    />
+  );
+}
 import { PrinterIcon, ArrowDownTrayIcon, DocumentArrowDownIcon } from "@heroicons/react/24/outline";
 import { jsPDF } from "jspdf";
 import { api } from "../lib/api";
@@ -386,31 +434,25 @@ export default function ReportPage() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up" style={{ animationDelay: "0.1s" }}>
         {/* RAG Distribution Pie */}
-        <div className="card p-6">
-          <h2 className="text-sm font-semibold text-slate-700 mb-4">RAG Distribution</h2>
-          <ResponsiveContainer width="100%" height={220}>
-            <PieChart>
-              <Pie
-                data={ragData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={90}
-                dataKey="value"
-                paddingAngle={4}
-                stroke="none"
-              >
-                {ragData.map((entry, i) => (
-                  <Cell key={i} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "13px" }}
-                formatter={(value: number, name: string) => [`${value} vendors`, name]}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="flex justify-center gap-6 mt-2">
+        <div className="card p-6 flex flex-col items-center">
+          <h2 className="text-sm font-semibold text-slate-700 mb-2 self-start">RAG Distribution</h2>
+          <MuiPieChart
+            series={[
+              {
+                data: ragData.map((d) => ({ id: d.name, value: d.value, label: d.name, color: d.color })),
+                highlightScope: { fade: "global", highlight: "item" },
+                faded: { innerRadius: 30, additionalRadius: -30, color: "#cbd5e1" },
+                innerRadius: 55,
+                outerRadius: 95,
+                paddingAngle: 4,
+                valueFormatter: (item) => `${item.value} vendors`,
+              },
+            ]}
+            width={260}
+            height={220}
+            slotProps={{ legend: { hidden: true } }}
+          />
+          <div className="flex justify-center gap-6 mt-1">
             {ragData.map((d) => (
               <div key={d.name} className="flex items-center gap-2 text-xs">
                 <span className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }} />
@@ -429,7 +471,7 @@ export default function ReportPage() {
               <XAxis dataKey="level" tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} allowDecimals={false} />
               <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "13px" }} />
-              <Bar dataKey="count" radius={[8, 8, 0, 0]}>
+              <Bar dataKey="count" radius={[8, 8, 0, 0]} shape={<AnimatedBar />}>
                 {riskData.map((entry) => (
                   <Cell key={entry.level} fill={RISK_COLORS[entry.level]} />
                 ))}
@@ -474,9 +516,9 @@ export default function ReportPage() {
               <XAxis dataKey="category" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} allowDecimals={false} />
               <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "13px" }} />
-              <Bar dataKey="red" name="Red" stackId="a" fill="#ef4444" radius={[0,0,0,0]} />
-              <Bar dataKey="amber" name="Amber" stackId="a" fill="#f59e0b" />
-              <Bar dataKey="green" name="Green" stackId="a" fill="#10b981" radius={[4,4,0,0]} />
+              <Bar dataKey="red" name="Red" stackId="a" fill="#ef4444" radius={[0,0,0,0]} shape={<AnimatedStackedBar />} />
+              <Bar dataKey="amber" name="Amber" stackId="a" fill="#f59e0b" shape={<AnimatedStackedBar />} />
+              <Bar dataKey="green" name="Green" stackId="a" fill="#10b981" radius={[4,4,0,0]} shape={<AnimatedStackedBar />} />
             </BarChart>
           </ResponsiveContainer>
         </div>
