@@ -31,6 +31,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { api } from "../../lib/api";
 import { RagBadge } from "../../components/RagBadge";
+import { RiskLedgerBar } from "../../components/RiskLedgerBar";
 import { ErrorState } from "../../components/ErrorState";
 import type { VendorScore, SimulateResponse, ScoreHistoryPoint, RemediationRecord, CertDocument, VendorSuggestion, ContractAnalysis } from "../../types/vendor";
 
@@ -253,7 +254,7 @@ export default function VendorDetail() {
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto">
       {/* Breadcrumb */}
-      <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-indigo-600 transition-colors mb-6">
+      <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-teal-600 transition-colors mb-6">
         <ArrowLeftIcon className="w-4 h-4" />
         Dashboard
       </Link>
@@ -261,12 +262,12 @@ export default function VendorDetail() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8 animate-fade-in">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center shadow-lg shadow-indigo-200">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-700 flex items-center justify-center shadow-lg shadow-teal/30">
             <span className="text-white font-bold text-lg">{vendor.name.charAt(0)}</span>
           </div>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{vendor.name}</h1>
+              <h1 className="text-2xl font-display font-bold text-ink tracking-tight">{vendor.name}</h1>
               <RagBadge rag={vendor.rag} size="md" pulse={vendor.risk_level === "CRITICAL"} />
             </div>
             <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
@@ -294,7 +295,7 @@ export default function VendorDetail() {
             onClick={() => { const next = !simOpen; setSimOpen(next); if (next) { setEditOpen(false); setEditMsg(null); } }}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
               simOpen
-                ? "bg-indigo-600 text-white"
+                ? "bg-teal-600 text-white"
                 : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
             }`}
           >
@@ -303,7 +304,7 @@ export default function VendorDetail() {
           </button>
           <Link
             href={`/chat?vendor_id=${vendor.vendor_id}`}
-            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-medium hover:bg-teal-700 transition-colors"
           >
             <ChatBubbleLeftRightIcon className="w-4 h-4" />
             Ask AI
@@ -381,7 +382,7 @@ export default function VendorDetail() {
                 <p className="text-[10px] text-slate-400 mb-1">Primary liaison at the vendor organisation</p>
                 <input type="text" value={String(editForm.contact_name ?? "")}
                   onChange={(e) => setEditForm((f) => ({ ...f, contact_name: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal/30"
                   placeholder="Jane Smith" />
               </div>
               <div>
@@ -389,7 +390,7 @@ export default function VendorDetail() {
                 <p className="text-[10px] text-slate-400 mb-1">Email address of the vendor liaison</p>
                 <input type="email" value={String(editForm.contact_email ?? "")}
                   onChange={(e) => setEditForm((f) => ({ ...f, contact_email: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal/30"
                   placeholder="jane@vendor.com" />
               </div>
             </div>
@@ -402,7 +403,7 @@ export default function VendorDetail() {
                 <p className="text-[10px] text-slate-400 mb-1">Type of service this vendor provides</p>
                 <select value={String(editForm.category ?? "Other")}
                   onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal/30">
                   {["Cloud","SaaS","ERP","HR","Payment","Security","Backup","Managed Service","Consulting","Other"].map((c) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
@@ -413,14 +414,14 @@ export default function VendorDetail() {
                 <p className="text-[10px] text-slate-400 mb-1">Date the current vendor contract expires</p>
                 <input type="date" value={String(editForm.contract_end ?? "")}
                   onChange={(e) => setEditForm((f) => ({ ...f, contract_end: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal/30" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-0.5">Financial Rating</label>
                 <p className="text-[10px] text-slate-400 mb-1">Credit rating indicating vendor financial health</p>
                 <select value={String(editForm.financial_rating ?? "BBB")}
                   onChange={(e) => setEditForm((f) => ({ ...f, financial_rating: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal/30">
                   {["AAA","AA","A","BBB","BB","B","CCC","CC","C"].map((r) => (
                     <option key={r} value={r}>{r}</option>
                   ))}
@@ -431,7 +432,7 @@ export default function VendorDetail() {
                 <p className="text-[10px] text-slate-400 mb-1">Classification of data shared with this vendor</p>
                 <select value={String(editForm.data_sensitivity ?? "LOW")}
                   onChange={(e) => setEditForm((f) => ({ ...f, data_sensitivity: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal/30">
                   <option value="LOW">LOW</option>
                   <option value="MEDIUM">MEDIUM</option>
                   <option value="HIGH">HIGH</option>
@@ -442,7 +443,7 @@ export default function VendorDetail() {
                 <p className="text-[10px] text-slate-400 mb-1">Level of system access granted to this vendor</p>
                 <select value={String(editForm.access_type ?? "read")}
                   onChange={(e) => setEditForm((f) => ({ ...f, access_type: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal/30">
                   <option value="read">Read only</option>
                   <option value="read_write">Read / Write</option>
                 </select>
@@ -452,7 +453,7 @@ export default function VendorDetail() {
                 <p className="text-[10px] text-slate-400 mb-1">Risk from over-reliance on this single vendor</p>
                 <select value={String(editForm.concentration_risk ?? "LOW")}
                   onChange={(e) => setEditForm((f) => ({ ...f, concentration_risk: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal/30">
                   <option value="LOW">LOW</option>
                   <option value="MEDIUM">MEDIUM</option>
                   <option value="HIGH">HIGH</option>
@@ -468,14 +469,14 @@ export default function VendorDetail() {
                 <p className="text-[10px] text-slate-400 mb-1">Date the current SOC 2 certification expires</p>
                 <input type="date" value={String(editForm.soc2_expiry ?? "")}
                   onChange={(e) => setEditForm((f) => ({ ...f, soc2_expiry: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal/30" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-0.5">Breach Notification SLA (hours)</label>
                 <p className="text-[10px] text-slate-400 mb-1">Max hours vendor must notify you after a security breach</p>
                 <input type="number" value={Number(editForm.breach_notification_sla_hours ?? 72)}
                   onChange={(e) => setEditForm((f) => ({ ...f, breach_notification_sla_hours: parseInt(e.target.value) || 72 }))}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal/30"
                   min={1} />
               </div>
             </div>
@@ -485,10 +486,10 @@ export default function VendorDetail() {
                 { key: "iso27001",   label: "ISO 27001",     desc: "International information security standard" },
                 { key: "gdpr_dpa",   label: "GDPR DPA",      desc: "Data Processing Agreement for EU compliance" },
               ] as const).map(({ key, label, desc }) => (
-                <label key={key} className="flex items-start gap-2 px-3 py-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-indigo-50 hover:border-indigo-200 transition-colors min-w-[180px]">
+                <label key={key} className="flex items-start gap-2 px-3 py-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-teal-50 hover:border-teal/30 transition-colors min-w-[180px]">
                   <input type="checkbox" checked={!!editForm[key]}
                     onChange={(e) => setEditForm((f) => ({ ...f, [key]: e.target.checked }))}
-                    className="rounded text-indigo-600 mt-0.5" />
+                    className="rounded text-teal-600 mt-0.5" />
                   <div>
                     <p className="text-xs font-medium text-slate-700">{label}</p>
                     <p className="text-[10px] text-slate-400">{desc}</p>
@@ -509,7 +510,7 @@ export default function VendorDetail() {
                   Cancel
                 </button>
                 <button onClick={submitEdit} disabled={editLoading}
-                  className="px-5 py-2 bg-slate-800 text-white rounded-xl text-sm font-semibold hover:bg-slate-900 disabled:opacity-40 transition-colors">
+                  className="px-5 py-2 bg-slate-800 text-white rounded-xl text-sm font-semibold hover:bg-ink disabled:opacity-40 transition-colors">
                   {editLoading ? "Saving…" : "Save Changes"}
                 </button>
               </div>
@@ -524,7 +525,7 @@ export default function VendorDetail() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <LightBulbIcon className="w-5 h-5 text-amber-500" />
-              <h2 className="text-sm font-bold text-slate-900">AI Remediation Suggestions</h2>
+              <h2 className="text-sm font-bold text-ink">AI Remediation Suggestions</h2>
               <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded-full">{suggestions.length}</span>
             </div>
             <button onClick={() => setSuggestionsOpen(false)} className="text-slate-400 hover:text-slate-600">
@@ -576,11 +577,11 @@ export default function VendorDetail() {
           {/* AI narrative */}
           {(narrativeLoading || narrative) && (
             <div className={`flex items-start gap-3 px-4 py-3 rounded-xl border animate-fade-in ${
-              narrativeLoading ? "bg-slate-50 border-slate-200" : "bg-indigo-50 border-indigo-200"
+              narrativeLoading ? "bg-slate-50 border-slate-200" : "bg-teal-50 border-teal/30"
             }`}>
               <span className="text-base mt-0.5">{narrativeLoading ? "⏳" : "🤖"}</span>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-indigo-700 mb-0.5">AI Risk Analysis</p>
+                <p className="text-xs font-semibold text-teal-700 mb-0.5">AI Risk Analysis</p>
                 {narrativeLoading ? (
                   <div className="h-4 bg-slate-200 rounded animate-pulse w-3/4" />
                 ) : (
@@ -597,7 +598,7 @@ export default function VendorDetail() {
               <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Liaison</span>
               {vendor.contact_name && <span className="font-medium text-slate-800">{vendor.contact_name}</span>}
               {vendor.contact_email && (
-                <a href={`mailto:${vendor.contact_email}`} className="text-indigo-600 hover:underline">{vendor.contact_email}</a>
+                <a href={`mailto:${vendor.contact_email}`} className="text-teal-600 hover:underline">{vendor.contact_email}</a>
               )}
             </div>
           )}
@@ -605,25 +606,15 @@ export default function VendorDetail() {
           {/* Radar + Compliance */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up" style={{ animationDelay: "0.1s" }}>
             <div className="card p-6">
-              <h2 className="text-sm font-semibold text-slate-700 mb-4">Score Breakdown</h2>
-              <ResponsiveContainer width="100%" height={280}>
-                <RadarChart data={radarData}>
-                  <PolarGrid stroke="#e2e8f0" />
-                  <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: "#64748b" }} />
-                  <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fontSize: 10, fill: "#94a3b8" }} />
-                  <Tooltip
-                    contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "13px" }}
-                    formatter={(value: number) => [`${value.toFixed(0)} / 100`, "Score"]}
-                  />
-                  <Radar
-                    dataKey="value"
-                    stroke="#6366f1"
-                    fill="#6366f1"
-                    fillOpacity={0.25}
-                    strokeWidth={2}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="w-6 h-6 rounded-md bg-brass/15 flex items-center justify-center ring-1 ring-brass/30"><span className="w-2 h-2 rounded-full bg-brass-600" /></span>
+                <h2 className="text-sm font-semibold text-slate-700">Risk Ledger — Explainable Breakdown</h2>
+              </div>
+              <RiskLedgerBar
+                breakdown={simResult ? simResult.simulated_breakdown : vendor.score_breakdown}
+                score={simResult ? simResult.simulated_score : vendor.risk_score}
+                previousScore={simResult ? simResult.original_score : undefined}
+              />
             </div>
 
             <div className="card p-6">
@@ -635,16 +626,16 @@ export default function VendorDetail() {
                 <div className="pt-3 border-t border-slate-100">
                   <div className="flex justify-between text-sm">
                     <dt className="text-slate-600">Breach Notification SLA</dt>
-                    <dd className="font-semibold text-slate-900">{vendor.compliance.breach_notification_sla_hours}h</dd>
+                    <dd className="font-semibold text-ink">{vendor.compliance.breach_notification_sla_hours}h</dd>
                   </div>
                 </div>
                 <div className="flex justify-between text-sm">
                   <dt className="text-slate-600">Sub-processors</dt>
-                  <dd className="font-semibold text-slate-900">{vendor.sub_processor_count}</dd>
+                  <dd className="font-semibold text-ink">{vendor.sub_processor_count}</dd>
                 </div>
                 <div className="flex justify-between text-sm">
                   <dt className="text-slate-600">Last Assessment</dt>
-                  <dd className="font-semibold text-slate-900">{vendor.last_assessment_date}</dd>
+                  <dd className="font-semibold text-ink">{vendor.last_assessment_date}</dd>
                 </div>
               </dl>
             </div>
@@ -756,15 +747,15 @@ export default function VendorDetail() {
               </div>
               <div>
                 <dt className="text-slate-500 mb-1">Sensitivity</dt>
-                <dd className="font-semibold text-slate-900">{vendor.data_access.data_sensitivity}</dd>
+                <dd className="font-semibold text-ink">{vendor.data_access.data_sensitivity}</dd>
               </div>
               <div>
                 <dt className="text-slate-500 mb-1">Access Type</dt>
-                <dd className="font-semibold text-slate-900">{vendor.data_access.access_type.replace("_", " ")}</dd>
+                <dd className="font-semibold text-ink">{vendor.data_access.access_type.replace("_", " ")}</dd>
               </div>
               <div>
                 <dt className="text-slate-500 mb-1">Last Used</dt>
-                <dd className="font-semibold text-slate-900">{vendor.data_access.access_last_used_at}</dd>
+                <dd className="font-semibold text-ink">{vendor.data_access.access_last_used_at}</dd>
               </div>
             </dl>
           </div>
@@ -792,7 +783,7 @@ export default function VendorDetail() {
                       "Risk Score",
                     ]}
                   />
-                  <Line type="monotone" dataKey="risk_score" stroke="#6366f1" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="risk_score" stroke="#0F766E" strokeWidth={2} dot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -804,7 +795,7 @@ export default function VendorDetail() {
               <h2 className="text-sm font-semibold text-slate-700">Remediation Log</h2>
               <button
                 onClick={() => setRemOpen(!remOpen)}
-                className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700 transition-colors"
+                className="px-3 py-1.5 bg-teal-600 text-white rounded-lg text-xs font-medium hover:bg-teal-700 transition-colors"
               >
                 + Log Action
               </button>
@@ -817,27 +808,27 @@ export default function VendorDetail() {
                   placeholder="Issue resolved (e.g. SOC 2 renewed)"
                   value={remForm.issue}
                   onChange={(e) => setRemForm((f) => ({ ...f, issue: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal/30"
                 />
                 <input
                   type="text"
                   placeholder="Resolved by (name / team)"
                   value={remForm.resolved_by}
                   onChange={(e) => setRemForm((f) => ({ ...f, resolved_by: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal/30"
                 />
                 <input
                   type="text"
                   placeholder="Notes (optional)"
                   value={remForm.note}
                   onChange={(e) => setRemForm((f) => ({ ...f, note: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal/30"
                 />
                 <div className="flex gap-2">
                   <button
                     onClick={submitRemediation}
                     disabled={remLoading || !remForm.issue || !remForm.resolved_by}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+                    className="px-4 py-2 bg-teal-600 text-white rounded-lg text-xs font-semibold hover:bg-teal-700 disabled:opacity-40 transition-colors"
                   >
                     {remLoading ? "Saving…" : "Save"}
                   </button>
@@ -885,7 +876,7 @@ export default function VendorDetail() {
           {/* Certification Documents */}
           <div className="card p-6 animate-slide-up" style={{ animationDelay: "0.5s" }}>
             <h2 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
-              <DocumentCheckIcon className="w-4 h-4 text-indigo-500" />
+              <DocumentCheckIcon className="w-4 h-4 text-teal-600" />
               Certification Documents
             </h2>
 
@@ -896,7 +887,7 @@ export default function VendorDetail() {
                 <select
                   value={certType}
                   onChange={(e) => setCertType(e.target.value)}
-                  className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal/30"
                 >
                   <option value="soc2_type2">SOC 2 Type II</option>
                   <option value="iso27001">ISO 27001</option>
@@ -908,10 +899,10 @@ export default function VendorDetail() {
                   type="date"
                   value={certExpiry}
                   onChange={(e) => setCertExpiry(e.target.value)}
-                  className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal/30"
                   placeholder="Expiry date"
                 />
-                <label className="flex items-center gap-2 px-3 py-2 bg-white border border-dashed border-slate-300 rounded-lg text-sm text-slate-600 cursor-pointer hover:border-indigo-400 hover:text-indigo-600 transition-colors">
+                <label className="flex items-center gap-2 px-3 py-2 bg-white border border-dashed border-slate-300 rounded-lg text-sm text-slate-600 cursor-pointer hover:border-teal-600 hover:text-teal-600 transition-colors">
                   <ArrowUpTrayIcon className="w-4 h-4" />
                   {certFile ? certFile.name : "Choose file…"}
                   <input
@@ -925,7 +916,7 @@ export default function VendorDetail() {
               <button
                 onClick={uploadCert}
                 disabled={certLoading || !certFile}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg text-xs font-semibold hover:bg-teal-700 disabled:opacity-40 transition-colors"
               >
                 {certLoading ? "Uploading…" : "Upload"}
               </button>
@@ -937,8 +928,8 @@ export default function VendorDetail() {
             ) : (
               <div className="space-y-2">
                 {certs.map((c) => (
-                  <div key={c.id} className="flex items-center gap-3 px-4 py-3 bg-indigo-50 border border-indigo-100 rounded-xl">
-                    <DocumentCheckIcon className="w-5 h-5 text-indigo-500 shrink-0" />
+                  <div key={c.id} className="flex items-center gap-3 px-4 py-3 bg-teal-50 border border-teal-100 rounded-xl">
+                    <DocumentCheckIcon className="w-5 h-5 text-teal-600 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-800 truncate">{c.filename}</p>
                       <p className="text-xs text-slate-500">
@@ -950,7 +941,7 @@ export default function VendorDetail() {
                     <button
                       onClick={() => api.vendors.downloadCert(c.vendor_id, c.id, c.filename)}
                       title="Download certificate"
-                      className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-indigo-200 bg-white text-xs font-semibold text-indigo-600 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all"
+                      className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-teal/30 bg-white text-xs font-semibold text-teal-600 hover:bg-teal-600 hover:text-white hover:border-teal-600 transition-all"
                     >
                       <ArrowDownTrayIcon className="w-3.5 h-3.5" />
                       Download
@@ -967,7 +958,7 @@ export default function VendorDetail() {
 
             {/* Upload row */}
             <div className="flex items-center gap-3 mb-4">
-              <label className="flex-1 flex items-center gap-2 px-4 py-2.5 border border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-colors text-sm text-slate-500">
+              <label className="flex-1 flex items-center gap-2 px-4 py-2.5 border border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-teal-600 hover:bg-teal-50 transition-colors text-sm text-slate-500">
                 <ArrowUpTrayIcon className="w-4 h-4 shrink-0" />
                 <span className="truncate">{contractFile ? contractFile.name : "Choose PDF contract…"}</span>
                 <input type="file" accept=".pdf" className="hidden" onChange={(e) => { setContractFile(e.target.files?.[0] ?? null); setContractResult(null); setContractError(null); }} />
@@ -975,7 +966,7 @@ export default function VendorDetail() {
               <button
                 onClick={parseContract}
                 disabled={!contractFile || contractLoading}
-                className="shrink-0 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="shrink-0 px-4 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 {contractLoading ? "Analysing…" : "Analyse"}
               </button>
@@ -1036,8 +1027,8 @@ export default function VendorDetail() {
           <div className="hidden lg:block w-80 shrink-0 animate-scale-in">
             <div className="card p-6 sticky top-8">
               <div className="flex items-center gap-2 mb-5">
-                <BeakerIcon className="w-5 h-5 text-indigo-600" />
-                <h2 className="text-sm font-bold text-slate-900">What-If Simulator</h2>
+                <BeakerIcon className="w-5 h-5 text-teal-600" />
+                <h2 className="text-sm font-bold text-ink">What-If Simulator</h2>
               </div>
               <p className="text-xs text-slate-500 mb-5">Toggle risk-mitigation actions to see their impact on the vendor&apos;s risk score.</p>
 
@@ -1065,7 +1056,7 @@ export default function VendorDetail() {
               <button
                 onClick={runSimulation}
                 disabled={simLoading || (!simToggles.renew_soc2 && !simToggles.sign_dpa && !simToggles.revoke_access)}
-                className="w-full py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-40"
+                className="w-full py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 transition-colors disabled:opacity-40"
               >
                 {simLoading ? "Simulating…" : "Run Simulation"}
               </button>
@@ -1075,12 +1066,12 @@ export default function VendorDetail() {
                   <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Impact</h3>
                   <div className="flex items-center justify-between mb-4">
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-slate-900">{simResult.original_score.toFixed(1)}</p>
+                      <p className="text-2xl font-display font-bold text-ink">{simResult.original_score.toFixed(1)}</p>
                       <p className="text-xs text-slate-500">Before</p>
                     </div>
                     <ChevronRightIcon className="w-5 h-5 text-slate-400" />
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-slate-900">{simResult.simulated_score.toFixed(1)}</p>
+                      <p className="text-2xl font-display font-bold text-ink">{simResult.simulated_score.toFixed(1)}</p>
                       <p className="text-xs text-slate-500">After</p>
                     </div>
                     <div className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm font-bold ${
@@ -1134,7 +1125,7 @@ function StatCard({ label, value, color }: { label: string; value: string; color
   return (
     <div className="card p-5">
       <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">{label}</p>
-      <p className={`text-2xl font-bold mt-1 tracking-tight ${color || "text-slate-900"}`}>{value}</p>
+      <p className={`text-2xl font-bold mt-1 tracking-tight ${color || "text-ink"}`}>{value}</p>
     </div>
   );
 }
@@ -1181,7 +1172,7 @@ function Toggle({
         aria-checked={checked}
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${
-          checked ? "bg-indigo-600" : "bg-slate-300"
+          checked ? "bg-teal-600" : "bg-slate-300"
         }`}
       >
         <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${

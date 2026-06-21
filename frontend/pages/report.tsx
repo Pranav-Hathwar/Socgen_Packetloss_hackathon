@@ -313,7 +313,7 @@ export default function ReportPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Audit Report</h1>
+          <h1 className="text-2xl font-display font-bold text-ink tracking-tight">Audit Report</h1>
           <p className="text-sm text-slate-500 mt-1">
             Generated: {new Date(report.generated_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
           </p>
@@ -323,7 +323,7 @@ export default function ReportPage() {
             <select
               value={selectedVendorId}
               onChange={(e) => setSelectedVendorId(e.target.value)}
-              className="px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200 max-w-[240px]"
+              className="px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-teal/30 max-w-[240px]"
             >
               <option value="">All vendors (portfolio)</option>
               {vendors.map((v) => (
@@ -351,7 +351,7 @@ export default function ReportPage() {
           </button>
           <button
             onClick={() => window.print()}
-            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-medium hover:bg-teal-700 transition-colors"
           >
             <PrinterIcon className="w-4 h-4" />
             Print Report
@@ -363,11 +363,11 @@ export default function ReportPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up">
         <div className="card p-5">
           <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Total Vendors</p>
-          <p className="text-3xl font-bold text-slate-900 mt-1">{report.total_vendors}</p>
+          <p className="text-3xl font-bold text-ink mt-1">{report.total_vendors}</p>
         </div>
         <div className="card p-5">
           <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Avg Risk Score</p>
-          <p className="text-3xl font-bold text-slate-900 mt-1">{report.average_risk_score.toFixed(1)}</p>
+          <p className="text-3xl font-bold text-ink mt-1">{report.average_risk_score.toFixed(1)}</p>
         </div>
         <div className="card p-5">
           <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Red Flag Vendors</p>
@@ -443,7 +443,7 @@ export default function ReportPage() {
             <div key={c.name}>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-slate-700">{c.name}</span>
-                <span className="text-sm font-bold text-slate-900">{c.percentage}%</span>
+                <span className="text-sm font-bold text-ink">{c.percentage}%</span>
               </div>
               <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
                 <div
@@ -488,7 +488,7 @@ export default function ReportPage() {
               <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} domain={[0, 100]} />
               <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "13px" }} />
-              <Line type="monotone" dataKey="avg_score" stroke="#6366f1" strokeWidth={2} dot={false} name="Avg Score" />
+              <Line type="monotone" dataKey="avg_score" stroke="#0F766E" strokeWidth={2} dot={false} name="Avg Score" />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -504,7 +504,7 @@ export default function ReportPage() {
             {(report.red_flag_vendors ?? []).map((v) => (
               <div key={v.vendor_id} className="px-6 py-5">
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="font-semibold text-slate-900">{v.name}</span>
+                  <span className="font-semibold text-ink">{v.name}</span>
                   <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700">{v.risk_level}</span>
                   <span className="font-mono text-sm text-slate-500">{v.risk_score.toFixed(1)}</span>
                   <span className="text-xs text-slate-400">{v.category}</span>

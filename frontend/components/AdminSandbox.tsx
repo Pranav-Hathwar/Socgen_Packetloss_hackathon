@@ -95,8 +95,8 @@ export function AdminSandbox({ onDataChange }: AdminSandboxProps) {
         onClick={() => setOpen(!open)}
         className={`flex items-center gap-2 px-4 py-3 rounded-full shadow-lg text-sm font-semibold transition-all duration-200 ${
           open
-            ? "bg-slate-900 text-white shadow-slate-300"
-            : "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-indigo-200 hover:shadow-indigo-300 hover:shadow-xl"
+            ? "bg-ink text-white shadow-slate-300"
+            : "bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-teal/30 hover:shadow-teal/40 hover:shadow-xl"
         }`}
       >
         <BoltIcon className="w-4 h-4" />

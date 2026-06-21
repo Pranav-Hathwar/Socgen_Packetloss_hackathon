@@ -101,7 +101,7 @@ export default function AdminPage() {
   return (
     <div className="p-6 lg:p-8 max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Admin Panel</h1>
+        <h1 className="text-2xl font-display font-bold text-ink tracking-tight">Admin Panel</h1>
         <p className="text-sm text-slate-500 mt-1">Rescore monitoring and email notifications</p>
       </div>
 
@@ -109,7 +109,7 @@ export default function AdminPage() {
       <div className="card p-6 space-y-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <ClockIcon className="w-5 h-5 text-indigo-500" />
+            <ClockIcon className="w-5 h-5 text-teal-600" />
             <h2 className="text-base font-semibold text-slate-800">Continuous Monitoring</h2>
           </div>
           <button onClick={loadStatus} className="text-slate-400 hover:text-slate-600 transition-colors" title="Refresh status">
@@ -141,7 +141,7 @@ export default function AdminPage() {
         <button
           onClick={runNow}
           disabled={runLoading}
-          className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 disabled:opacity-50 transition-colors"
         >
           <BoltIcon className="w-4 h-4" />
           {runLoading ? "Rescoring…" : "Run Now"}
@@ -167,7 +167,7 @@ export default function AdminPage() {
               return (
                 <div key={c.vendor_id} className="px-6 py-4">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <span className="font-semibold text-slate-900">{c.name}</span>
+                    <span className="font-semibold text-ink">{c.name}</span>
                     <span className="font-mono text-xs text-slate-400">{c.vendor_id}</span>
                     <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${up ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}>
                       {up ? "▲" : "▼"} {up ? "+" : ""}{c.delta.toFixed(1)}
@@ -176,7 +176,7 @@ export default function AdminPage() {
                   <div className="flex flex-wrap items-center gap-2 text-sm">
                     <span className="font-mono font-semibold text-slate-700">{c.old_score.toFixed(1)}</span>
                     <span className="text-slate-500 font-bold">→</span>
-                    <span className="font-mono font-semibold text-slate-900">{c.new_score.toFixed(1)}</span>
+                    <span className="font-mono font-semibold text-ink">{c.new_score.toFixed(1)}</span>
                     <span className={`text-xs font-semibold px-2 py-0.5 ml-2 rounded-full ${up ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}>
                       {c.old_level} → {c.new_level}
                     </span>
@@ -192,7 +192,7 @@ export default function AdminPage() {
       {/* Email Notifications Card */}
       <div className="card p-6 space-y-5">
         <div className="flex items-center gap-2">
-          <EnvelopeIcon className="w-5 h-5 text-indigo-500" />
+          <EnvelopeIcon className="w-5 h-5 text-teal-600" />
           <h2 className="text-base font-semibold text-slate-800">Email Notifications</h2>
         </div>
 
@@ -204,7 +204,7 @@ export default function AdminPage() {
               value={notifyEmail}
               onChange={(e) => setNotifyEmail(e.target.value)}
               placeholder="recipient@company.com"
-              className="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-600"
             />
           </div>
 
@@ -217,8 +217,8 @@ export default function AdminPage() {
                   onClick={() => setNotifyType(t)}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
                     notifyType === t
-                      ? "bg-indigo-600 text-white border-indigo-600"
-                      : "border-slate-200 text-slate-600 hover:border-indigo-300"
+                      ? "bg-teal-600 text-white border-teal-600"
+                      : "border-slate-200 text-slate-600 hover:border-teal/40"
                   }`}
                 >
                   {t === "summary" ? "Monthly Summary" : "Expiry Alerts"}
@@ -237,7 +237,7 @@ export default function AdminPage() {
         <button
           onClick={sendNotification}
           disabled={notifyLoading || !notifyEmail}
-          className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 disabled:opacity-50 transition-colors"
         >
           <EnvelopeIcon className="w-4 h-4" />
           {notifyLoading ? "Sending…" : "Send Email"}
