@@ -342,7 +342,7 @@ export default function VendorDetail() {
               <Detail label="Category"         desc="Type of service this vendor provides" value={vendor.category} />
               <Detail label="Risk Score"       desc="Calculated 0–100 score across 5 risk factors" value={`${vendor.risk_score.toFixed(1)} (${vendor.risk_level})`} />
               <Detail label="Financial Rating" desc="Credit rating indicating vendor financial health" value={vendor.financial_rating} />
-              <Detail label="Annual Spend"     desc="Annual contract spend with this vendor" value={vendor.annual_spend ? `$${Number(vendor.annual_spend).toLocaleString()}` : "—"} />
+              <Detail label="Annual Spend"     desc="Annual contract spend with this vendor" value={vendor.annual_spend ? `₹${Number(vendor.annual_spend).toLocaleString("en-IN")}` : "—"} />
               <Detail label="Data Sensitivity" desc="Classification of data shared with this vendor" value={vendor.data_access.data_sensitivity} />
               <Detail label="Access Type"      desc="Level of system access granted to this vendor" value={vendor.data_access.access_type.replace("_", " ")} />
               <Detail label="Data Residency"   desc="Geographic region where vendor stores your data" value={vendor.data_residency} />
@@ -573,7 +573,7 @@ export default function VendorDetail() {
             <StatCard label="Risk Score" value={vendor.risk_score.toFixed(1)} color={vendor.rag === "RED" ? "text-red-600" : vendor.rag === "AMBER" ? "text-amber-600" : "text-emerald-600"} />
             <StatCard label="Risk Level" value={vendor.risk_level} />
             <StatCard label="Financial Rating" value={vendor.financial_rating} />
-            <StatCard label="Annual Spend" value={vendor.annual_spend ? `$${Number(vendor.annual_spend).toLocaleString()}` : "—"} />
+            <StatCard label="Annual Spend" value={vendor.annual_spend ? `₹${Number(vendor.annual_spend).toLocaleString("en-IN")}` : "—"} />
             <StatCard label="Contract End" value={vendor.contract_end} />
           </div>
 

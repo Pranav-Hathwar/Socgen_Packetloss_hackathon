@@ -381,7 +381,7 @@ export default function Dashboard() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div><label className="block text-xs font-semibold text-slate-600 mb-1">Financial Rating</label><select value={addForm.financial_rating} onChange={(e) => setAddForm((f) => ({ ...f, financial_rating: e.target.value }))} className={inputCls}>{["AAA","AA","A","BBB","BB","B","CCC","CC","C"].map((r) => <option key={r} value={r}>{r}</option>)}</select></div>
-                <div><label className="block text-xs font-semibold text-slate-600 mb-1">Annual Spend ($)</label><input type="number" value={addForm.annual_spend ?? 0} onChange={(e) => setAddForm((f) => ({ ...f, annual_spend: parseFloat(e.target.value) || 0 }))} className={inputCls} /></div>
+                <div><label className="block text-xs font-semibold text-slate-600 mb-1">Annual Spend (₹)</label><input type="number" value={addForm.annual_spend ?? 0} onChange={(e) => setAddForm((f) => ({ ...f, annual_spend: parseFloat(e.target.value) || 0 }))} className={inputCls} /></div>
                 <div><label className="block text-xs font-semibold text-slate-600 mb-1">Concentration Risk</label><select value={addForm.concentration_risk} onChange={(e) => setAddForm((f) => ({ ...f, concentration_risk: e.target.value as "LOW"|"MEDIUM"|"HIGH" }))} className={inputCls}><option value="LOW">LOW</option><option value="MEDIUM">MEDIUM</option><option value="HIGH">HIGH</option></select></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
