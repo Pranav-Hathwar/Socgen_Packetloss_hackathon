@@ -95,41 +95,43 @@ export default function AlertsPage() {
 
   return (
     <div className="p-6 lg:p-8 max-w-5xl mx-auto space-y-5">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-ink tracking-tight">Alerts</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            {loading ? "Loading..." : `${alerts.length} active alert${alerts.length !== 1 ? "s" : ""} across ${vendorCount} vendor${vendorCount !== 1 ? "s" : ""}`}
-          </p>
+      <div className="sticky top-0 z-20 -mx-6 lg:-mx-8 px-6 lg:px-8 py-4 bg-slate-50/95 backdrop-blur-sm border-b border-hairline space-y-5">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-display font-bold text-ink tracking-tight">Alerts</h1>
+            <p className="text-sm text-slate-500 mt-1">
+              {loading ? "Loading..." : `${alerts.length} active alert${alerts.length !== 1 ? "s" : ""} across ${vendorCount} vendor${vendorCount !== 1 ? "s" : ""}`}
+            </p>
+          </div>
+          <button onClick={fetchAlerts} className="btn-liquid btn-liquid btn-liquid mt-1 text-xs text-teal-700 hover:underline font-medium">Refresh</button>
         </div>
-        <button onClick={fetchAlerts} className="btn-liquid btn-liquid btn-liquid mt-1 text-xs text-teal-700 hover:underline font-medium">Refresh</button>
+
+        {!loading && alerts.length > 0 && (
+          <motion.div initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }} className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {SEV_LIST.map((sev) => {
+              const cfg = SEV_CFG[sev];
+              return (
+                <motion.button key={sev} variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+                  onClick={() => { document.getElementById(`grp-${sev}`)?.scrollIntoView({ behavior: "smooth", block: "start" }); setCollapsed((c) => ({ ...c, [sev]: false })); }}
+                  className="relative text-left p-4 rounded-xl border bg-white border-hairline hover:border-slate-300 hover:shadow-card transition-all">
+                  <span className={`btn-liquid inline-flex w-2.5 h-2.5 rounded-full ${cfg.dot} mb-2`} />
+                  <p className="text-2xl font-display font-bold text-ink tabular">{counts[sev]}</p>
+                  <p className="text-xs font-semibold text-slate-500 mt-0.5">{sev}</p>
+                </motion.button>
+              );
+            })}
+          </motion.div>
+        )}
+
+        {!loading && alerts.length > 0 && (
+          <div className="relative max-w-md">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <input type="text" placeholder="Search by vendor or alert text..." value={search} onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-9 py-2.5 bg-white border border-hairline rounded-lg text-sm text-ink placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal/40 transition" />
+            {search && <button onClick={() => setSearch("")} className="btn-liquid absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><XMarkIcon className="w-4 h-4" /></button>}
+          </div>
+        )}
       </div>
-
-      {!loading && alerts.length > 0 && (
-        <motion.div initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }} className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {SEV_LIST.map((sev) => {
-            const cfg = SEV_CFG[sev];
-            return (
-              <motion.button key={sev} variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
-                onClick={() => { document.getElementById(`grp-${sev}`)?.scrollIntoView({ behavior: "smooth", block: "start" }); setCollapsed((c) => ({ ...c, [sev]: false })); }}
-                className="relative text-left p-4 rounded-xl border bg-white border-hairline hover:border-slate-300 hover:shadow-card transition-all">
-                <span className={`btn-liquid inline-flex w-2.5 h-2.5 rounded-full ${cfg.dot} mb-2`} />
-                <p className="text-2xl font-display font-bold text-ink tabular">{counts[sev]}</p>
-                <p className="text-xs font-semibold text-slate-500 mt-0.5">{sev}</p>
-              </motion.button>
-            );
-          })}
-        </motion.div>
-      )}
-
-      {!loading && alerts.length > 0 && (
-        <div className="relative max-w-md">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-          <input type="text" placeholder="Search by vendor or alert text..." value={search} onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-9 py-2.5 bg-white border border-hairline rounded-lg text-sm text-ink placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal/40 transition" />
-          {search && <button onClick={() => setSearch("")} className="btn-liquid absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><XMarkIcon className="w-4 h-4" /></button>}
-        </div>
-      )}
 
       {loading ? (
         <div className="space-y-3 animate-pulse">{[1, 2, 3, 4, 5].map((i) => <div key={i} className="h-20 bg-slate-100 rounded-xl" />)}</div>
