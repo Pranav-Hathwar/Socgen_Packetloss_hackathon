@@ -569,10 +569,11 @@ export default function VendorDetail() {
         {/* Main content */}
         <div className="flex-1 space-y-6 min-w-0">
           {/* Stat Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 animate-slide-up">
             <StatCard label="Risk Score" value={vendor.risk_score.toFixed(1)} color={vendor.rag === "RED" ? "text-red-600" : vendor.rag === "AMBER" ? "text-amber-600" : "text-emerald-600"} />
             <StatCard label="Risk Level" value={vendor.risk_level} />
             <StatCard label="Financial Rating" value={vendor.financial_rating} />
+            <StatCard label="Annual Spend" value={vendor.annual_spend ? `$${Number(vendor.annual_spend).toLocaleString()}` : "—"} />
             <StatCard label="Contract End" value={vendor.contract_end} />
           </div>
 
