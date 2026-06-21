@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS vendors (
     breach_notification_sla_hours INTEGER,
     breach_history       TEXT,          -- pipe-separated events
     financial_rating     TEXT,
+    annual_spend         REAL DEFAULT 0,
     data_residency       TEXT DEFAULT 'EU',
     sub_processor_count  INTEGER DEFAULT 0,
     concentration_risk   TEXT DEFAULT 'LOW',
@@ -131,7 +132,7 @@ def init_db() -> None:
 
 def _migrate(conn: sqlite3.Connection) -> None:
     existing = {row[1] for row in conn.execute("PRAGMA table_info(vendors)").fetchall()}
-    for col, defn in [("contact_name", "TEXT"), ("contact_email", "TEXT"), ("created_at", "TEXT")]:
+    for col, defn in [("contact_name", "TEXT"), ("contact_email", "TEXT"), ("created_at", "TEXT"), ("annual_spend", "REAL")]:
         if col not in existing:
             conn.execute(f"ALTER TABLE vendors ADD COLUMN {col} {defn}")
 
@@ -167,7 +168,7 @@ def load_registry_csv(path: Path | None = None) -> int:
                     systems, data_sensitivity, access_type, access_last_used_at,
                     soc2_type2, soc2_expiry, iso27001, gdpr_dpa,
                     breach_notification_sla_hours, breach_history,
-                    financial_rating, data_residency, sub_processor_count,
+                    financial_rating, annual_spend, data_residency, sub_processor_count,
                     concentration_risk, last_assessment_date, under_investigation,
                     contact_name, contact_email
                 ) VALUES (
@@ -175,7 +176,7 @@ def load_registry_csv(path: Path | None = None) -> int:
                     :systems, :data_sensitivity, :access_type, :access_last_used_at,
                     :soc2_type2, :soc2_expiry, :iso27001, :gdpr_dpa,
                     :breach_notification_sla_hours, :breach_history,
-                    :financial_rating, :data_residency, :sub_processor_count,
+                    :financial_rating, :annual_spend, :data_residency, :sub_processor_count,
                     :concentration_risk, :last_assessment_date, :under_investigation,
                     :contact_name, :contact_email
                 )
@@ -186,6 +187,7 @@ def load_registry_csv(path: Path | None = None) -> int:
                     "iso27001": _parse_bool(r.get("iso27001", False)),
                     "gdpr_dpa": _parse_bool(r.get("gdpr_dpa", False)),
                     "under_investigation": _parse_bool(r.get("under_investigation", False)),
+                    "annual_spend": float(r.get("annual_spend", 0) or 0),
                     "data_residency": r.get("data_residency", "EU") or "EU",
                     "sub_processor_count": int(r.get("sub_processor_count", 0) or 0),
                     "concentration_risk": r.get("concentration_risk", "LOW") or "LOW",
@@ -335,7 +337,7 @@ def update_vendor_fields(vendor_id: str, fields: dict) -> bool:
     allowed = {
         "contact_name", "contact_email", "category", "contract_end",
         "data_sensitivity", "access_type", "soc2_type2", "soc2_expiry",
-        "iso27001", "gdpr_dpa", "financial_rating", "concentration_risk",
+        "iso27001", "gdpr_dpa", "financial_rating", "annual_spend", "concentration_risk",
         "under_investigation", "breach_notification_sla_hours",
     }
     safe = {k: v for k, v in fields.items() if k in allowed}
@@ -385,7 +387,7 @@ def create_vendor(data: dict) -> str:
                 vendor_id, name, category, contract_start, contract_end,
                 systems, data_sensitivity, access_type, access_last_used_at,
                 soc2_type2, soc2_expiry, iso27001, gdpr_dpa,
-                breach_notification_sla_hours, financial_rating,
+                breach_notification_sla_hours, financial_rating, annual_spend,
                 data_residency, sub_processor_count, concentration_risk,
                 last_assessment_date, under_investigation, breach_history,
                 contact_name, contact_email, created_at
@@ -393,7 +395,7 @@ def create_vendor(data: dict) -> str:
                 :vendor_id,:name,:category,:contract_start,:contract_end,
                 :systems,:data_sensitivity,:access_type,:access_last_used_at,
                 :soc2_type2,:soc2_expiry,:iso27001,:gdpr_dpa,
-                :breach_notification_sla_hours,:financial_rating,
+                :breach_notification_sla_hours,:financial_rating,:annual_spend,
                 :data_residency,:sub_processor_count,:concentration_risk,
                 :last_assessment_date,:under_investigation,:breach_history,
                 :contact_name,:contact_email,:created_at
@@ -415,6 +417,7 @@ def create_vendor(data: dict) -> str:
                 "gdpr_dpa": _parse_bool(data.get("gdpr_dpa", False)),
                 "breach_notification_sla_hours": int(data.get("breach_notification_sla_hours") or 72),
                 "financial_rating": data.get("financial_rating") or "BBB",
+                "annual_spend": float(data.get("annual_spend") or 0),
                 "data_residency": data.get("data_residency") or "EU",
                 "sub_processor_count": int(data.get("sub_processor_count") or 0),
                 "concentration_risk": data.get("concentration_risk") or "LOW",

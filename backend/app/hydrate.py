@@ -153,6 +153,7 @@ def row_to_vendor_score(raw: dict[str, Any]) -> VendorScore:
         ),
         breach_history=breach_events,
         financial_rating=str(raw.get("financial_rating", "BBB") or "BBB"),
+        annual_spend=float(raw.get("annual_spend", 0) or 0),
         risk_score=float(scored["risk_score"]),
         risk_level=RiskLevel(scored["risk_level"]),
         rag=RAG(scored["rag"]),

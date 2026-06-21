@@ -55,6 +55,7 @@ export interface VendorScore {
   compliance: Compliance;
   breach_history: BreachEvent[];
   financial_rating: string;
+  annual_spend: number;
   risk_score: number;
   risk_level: RiskLevel;
   rag: RAG;
@@ -221,6 +222,7 @@ export interface VendorCreateRequest {
   gdpr_dpa: boolean;
   breach_notification_sla_hours: number;
   financial_rating: string;
+  annual_spend?: number;
   data_residency: DataResidency;
   concentration_risk: ConcentrationRisk;
   sub_processor_count: number;

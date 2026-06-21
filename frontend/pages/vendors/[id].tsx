@@ -116,6 +116,7 @@ export default function VendorDetail() {
         gdpr_dpa: v.compliance.gdpr_dpa,
         breach_notification_sla_hours: v.compliance.breach_notification_sla_hours,
         financial_rating: v.financial_rating,
+        annual_spend: v.annual_spend,
         data_sensitivity: v.data_access.data_sensitivity,
         access_type: v.data_access.access_type,
         concentration_risk: v.concentration_risk,
@@ -341,6 +342,7 @@ export default function VendorDetail() {
               <Detail label="Category"         desc="Type of service this vendor provides" value={vendor.category} />
               <Detail label="Risk Score"       desc="Calculated 0–100 score across 5 risk factors" value={`${vendor.risk_score.toFixed(1)} (${vendor.risk_level})`} />
               <Detail label="Financial Rating" desc="Credit rating indicating vendor financial health" value={vendor.financial_rating} />
+              <Detail label="Annual Spend"     desc="Annual contract spend with this vendor" value={vendor.annual_spend ? `$${Number(vendor.annual_spend).toLocaleString()}` : "—"} />
               <Detail label="Data Sensitivity" desc="Classification of data shared with this vendor" value={vendor.data_access.data_sensitivity} />
               <Detail label="Access Type"      desc="Level of system access granted to this vendor" value={vendor.data_access.access_type.replace("_", " ")} />
               <Detail label="Data Residency"   desc="Geographic region where vendor stores your data" value={vendor.data_residency} />

@@ -105,6 +105,7 @@ class VendorScore(BaseModel):
 
     # Financial
     financial_rating: str
+    annual_spend: float = 0
 
     # Engine output
     risk_score: float = Field(ge=0, le=100)
@@ -166,6 +167,7 @@ class VendorCreateRequest(BaseModel):
     gdpr_dpa: bool = False
     breach_notification_sla_hours: int = 72
     financial_rating: str = "BBB"
+    annual_spend: float = 0
     data_residency: str = "EU"
     concentration_risk: str = "LOW"
     sub_processor_count: int = 0
@@ -188,6 +190,7 @@ class VendorUpdateRequest(BaseModel):
     iso27001: Optional[bool] = None
     gdpr_dpa: Optional[bool] = None
     financial_rating: Optional[str] = None
+    annual_spend: Optional[float] = None
     concentration_risk: Optional[str] = None
     under_investigation: Optional[bool] = None
     breach_notification_sla_hours: Optional[int] = None
