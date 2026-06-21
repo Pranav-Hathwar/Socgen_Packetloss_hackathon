@@ -175,8 +175,10 @@ def upsert_vendor(vendor: dict) -> bool:
     Add or update a single vendor in the index (incremental, ~20ms).
     Re-embeds just this one vendor. Returns False if model/index unavailable.
     """
-    global _embeddings, _meta
+    global _embeddings, _meta, _kw_matrix
     import numpy as np
+
+    _kw_matrix = None  # invalidate TF-IDF fallback so it rebuilds with this vendor
 
     if _embeddings is None or not _meta:
         # Index not built yet — build full so this vendor is included.
@@ -209,8 +211,10 @@ def upsert_vendor(vendor: dict) -> bool:
 
 def remove_vendor(vendor_id: str) -> bool:
     """Drop a vendor from the index. Returns False if not present / unavailable."""
-    global _embeddings, _meta
+    global _embeddings, _meta, _kw_matrix
     import numpy as np
+
+    _kw_matrix = None  # invalidate TF-IDF fallback so it rebuilds without this vendor
 
     if _embeddings is None or not _meta:
         return False
@@ -223,19 +227,101 @@ def remove_vendor(vendor_id: str) -> bool:
     return True
 
 
+# ── Lightweight TF-IDF fallback retriever (no torch / no sentence-transformers) ──
+# Used when the embedding model is unavailable (e.g. low-RAM free hosting). Builds
+# a dense TF-IDF matrix over the same vendor docs and ranks by cosine similarity,
+# so semantic-style retrieval still works without the heavy ML stack.
+_WORD_RE = re.compile(r"[a-z0-9]+")
+_kw_meta: list[dict] = []
+_kw_matrix = None                  # numpy (N, V), L2-normalized tf-idf rows
+_kw_vocab: dict[str, int] = {}
+_kw_idf = None                     # numpy (V,)
+
+
+def _kw_tokens(text: str) -> list[str]:
+    return _WORD_RE.findall(text.lower())
+
+
+def _build_keyword_index() -> None:
+    """Build the TF-IDF index over all vendor docs. Pure numpy, ~ms for ~400 docs."""
+    global _kw_meta, _kw_matrix, _kw_vocab, _kw_idf
+    import numpy as np
+
+    rows = _scored_rows()
+    docs = [_vendor_doc(r) for r in rows]
+    _kw_meta = [{"vendor_id": r["vendor_id"], "name": r.get("name", ""), "doc": d}
+                for r, d in zip(rows, docs)]
+    toks = [_kw_tokens(d) for d in docs]
+
+    vocab: dict[str, int] = {}
+    for t in toks:
+        for w in t:
+            if w not in vocab:
+                vocab[w] = len(vocab)
+    n_docs, n_vocab = len(docs), len(vocab)
+    if n_docs == 0 or n_vocab == 0:
+        _kw_matrix = None
+        return
+
+    df = np.zeros(n_vocab, dtype="float32")
+    for t in toks:
+        for w in set(t):
+            df[vocab[w]] += 1.0
+    idf = np.log((1.0 + n_docs) / (1.0 + df)) + 1.0
+
+    mat = np.zeros((n_docs, n_vocab), dtype="float32")
+    for i, t in enumerate(toks):
+        for w in t:
+            mat[i, vocab[w]] += 1.0
+    mat *= idf  # tf-idf
+    norms = np.linalg.norm(mat, axis=1, keepdims=True)
+    norms[norms == 0] = 1.0
+    _kw_matrix = (mat / norms).astype("float32")
+    _kw_vocab, _kw_idf = vocab, idf
+
+
+def _keyword_retrieve(query: str, k: int = 8) -> list[dict]:
+    """TF-IDF cosine top-K over vendor docs. [] if index empty or no term overlap."""
+    import numpy as np
+
+    if _kw_matrix is None or not _kw_meta:
+        _build_keyword_index()
+    if _kw_matrix is None or not _kw_meta:
+        return []
+
+    q = np.zeros(len(_kw_vocab), dtype="float32")
+    for w in _kw_tokens(query):
+        j = _kw_vocab.get(w)
+        if j is not None:
+            q[j] += 1.0
+    q *= _kw_idf
+    norm = float(np.linalg.norm(q))
+    if norm == 0.0:
+        return []
+    q /= norm
+    sims = _kw_matrix @ q
+    top = np.argsort(-sims)[:k]
+    return [{**_kw_meta[i], "score": float(sims[i])} for i in top if sims[i] > 0.0]
+
+
 def retrieve(query: str, k: int = 8) -> list[dict]:
-    """Return top-K vendor meta dicts by cosine similarity. [] on any failure."""
+    """Return top-K vendor meta dicts by similarity.
+
+    Uses sentence-transformer embeddings when available; otherwise falls back to
+    the TF-IDF keyword retriever above so retrieval still works on hosts without
+    torch. Returns [] only on total failure.
+    """
     global _embeddings, _meta
     import numpy as np
+
+    model = _get_model()
+    if model is None:
+        return _keyword_retrieve(query, k)
 
     if _embeddings is None or not _meta:
         build_index()
     if _embeddings is None or not _meta:
-        return []
-
-    model = _get_model()
-    if model is None:
-        return []
+        return _keyword_retrieve(query, k)
 
     try:
         q = model.encode([query], normalize_embeddings=True)
@@ -244,7 +330,7 @@ def retrieve(query: str, k: int = 8) -> list[dict]:
         top = np.argsort(-sims)[:k]
         return [{**_meta[i], "score": float(sims[i])} for i in top]
     except Exception:
-        return []
+        return _keyword_retrieve(query, k)
 
 
 def _doc_for_row(r: dict) -> str:
