@@ -36,11 +36,23 @@
   border-radius: 0;
   margin-bottom: 0;
   border-bottom: 1px solid #f1f5f9;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
+}
+
+.item:hover {
+  transform: translateY(-6px);
+  background-color: white;
+  box-shadow: 0 20px 25px -5px rgba(15, 118, 110, 0.1), 0 8px 10px -6px rgba(15, 118, 110, 0.1); /* Deep teal shadowbox on hover */
+  border-radius: 12px;
+  border-bottom-color: transparent;
+  z-index: 20;
 }
 
 .item.selected {
-  background-color: #f0fdfa; /* teal-50 */
+  background-color: #f0fdf9; /* very light teal */
+  border-left: 4px solid #0f766e;
 }
 
 .item-text {
