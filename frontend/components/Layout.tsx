@@ -99,10 +99,8 @@ export function Layout({ children }: { children: ReactNode }) {
               <ArrowRightOnRectangleIcon className="w-4 h-4" />
             </button>
           </div>
-          <div className="px-3 py-3 bg-brass/10 border border-brass/20 rounded-lg">
-            <p className="text-xs font-semibold text-brass-100">Société Générale</p>
-            <p className="text-[10px] text-slate-400 mt-0.5">Third-Party Risk · 2024</p>
-          </div>
+          
+
         </div>
       </aside>
 
