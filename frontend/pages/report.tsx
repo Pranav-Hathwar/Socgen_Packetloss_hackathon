@@ -445,12 +445,12 @@ export default function ReportPage() {
                 innerRadius: 55,
                 outerRadius: 95,
                 paddingAngle: 4,
-                valueFormatter: (item) => `${item.value} vendors`,
+                valueFormatter: (item: { value: number }) => `${item.value} vendors`,
               },
             ]}
             width={260}
             height={220}
-            slotProps={{ legend: { hidden: true } }}
+            hideLegend
           />
           <div className="flex justify-center gap-6 mt-1">
             {ragData.map((d) => (
