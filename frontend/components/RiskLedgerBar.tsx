@@ -34,7 +34,6 @@ function useRollingNumber(target: number, reduce: boolean | null) {
 interface Props {
   breakdown: ScoreBreakdown;
   score: number;
-  /** previous score for what-if before→after delta */
   previousScore?: number;
   compact?: boolean;
 }
@@ -42,59 +41,59 @@ interface Props {
 export function RiskLedgerBar({ breakdown, score, previousScore, compact = false }: Props) {
   const reduce = useReducedMotion();
   const segs = DIMENSIONS.map((d) => ({ ...d, value: Math.max(0, Number(breakdown?.[d.key] ?? 0)) }));
-  const total = segs.reduce((s, x) => s + x.value, 0) || 1;
+  const maxVal = Math.max(100, ...segs.map((s) => s.value));
   const rolling = useRollingNumber(score, reduce);
   const delta = previousScore != null ? score - previousScore : null;
+  const topDriver = [...segs].sort((a, b) => b.value - a.value)[0];
 
   return (
     <div>
-      <div className="flex items-end justify-between mb-3">
+      {/* Score header */}
+      <div className="flex items-end justify-between mb-5">
         <div>
           <p className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Explainable Risk Score</p>
-          <div className="flex items-baseline gap-2">
+          <div className="flex items-baseline gap-2 mt-0.5">
             <span className="font-display text-4xl font-bold text-ink tabular">{rolling.toFixed(0)}</span>
             <span className="text-sm text-slate-400">/ 100</span>
             {delta != null && delta !== 0 && (
-              <motion.span
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`text-xs font-semibold tabular px-1.5 py-0.5 rounded-md ${
-                  delta < 0 ? "bg-rag-green/10 text-rag-green" : "bg-rag-red/10 text-rag-red"
-                }`}
-              >
-                {delta < 0 ? "▼" : "▲"} {Math.abs(delta).toFixed(1)}
+              <motion.span initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+                className={`text-xs font-semibold tabular px-1.5 py-0.5 rounded-md ${delta < 0 ? "bg-rag-green/10 text-rag-green" : "bg-rag-red/10 text-rag-red"}`}>
+                {delta < 0 ? "down" : "up"} {Math.abs(delta).toFixed(1)}
               </motion.span>
             )}
           </div>
         </div>
+        {topDriver && topDriver.value > 0 && (
+          <div className="text-right">
+            <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Top Driver</p>
+            <p className="text-xs font-semibold mt-0.5" style={{ color: topDriver.color }}>{topDriver.label}</p>
+          </div>
+        )}
       </div>
 
-      {/* Segmented ledger bar */}
-      <div className={`flex w-full ${compact ? "h-3" : "h-5"} rounded-md overflow-hidden ring-1 ring-hairline bg-slate-100`}>
+      {/* Per-dimension horizontal bars */}
+      <div className="space-y-3">
         {segs.map((s, i) => (
-          <motion.div
-            key={s.key}
-            initial={{ width: reduce ? `${(s.value / total) * 100}%` : 0 }}
-            animate={{ width: `${(s.value / total) * 100}%` }}
-            transition={{ duration: reduce ? 0 : 0.6, delay: reduce ? 0 : i * 0.08, ease: "easeOut" }}
-            style={{ backgroundColor: s.color }}
-            title={`${s.label}: ${s.value.toFixed(1)}`}
-            className="h-full"
-          />
+          <div key={s.key} className="flex items-center gap-3">
+            <span className="w-28 shrink-0 text-xs font-medium text-slate-600 truncate">{s.label}</span>
+            <div className="flex-1 h-2.5 rounded-full bg-slate-100 overflow-hidden ring-1 ring-hairline/60">
+              <motion.div
+                initial={{ width: reduce ? `${(s.value / maxVal) * 100}%` : 0 }}
+                animate={{ width: `${(s.value / maxVal) * 100}%` }}
+                transition={{ duration: reduce ? 0 : 0.7, delay: reduce ? 0 : i * 0.07, ease: [0.16, 1, 0.3, 1] }}
+                style={{ backgroundColor: s.color }}
+                className="h-full rounded-full"
+              />
+            </div>
+            <span className="w-9 shrink-0 text-right text-xs font-semibold text-ink tabular">{s.value.toFixed(0)}</span>
+          </div>
         ))}
       </div>
 
-      {/* Legend */}
       {!compact && (
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-x-3 gap-y-2 mt-4">
-          {segs.map((s) => (
-            <div key={s.key} className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: s.color }} />
-              <span className="text-[11px] text-slate-600 leading-tight truncate">{s.label}</span>
-              <span className="text-[11px] font-semibold text-ink tabular ml-auto">{s.value.toFixed(0)}</span>
-            </div>
-          ))}
-        </div>
+        <p className="mt-4 text-[11px] text-slate-400 leading-relaxed">
+          Each bar shows that factor&apos;s contribution to the overall risk score. Longer bars drive more risk.
+        </p>
       )}
     </div>
   );

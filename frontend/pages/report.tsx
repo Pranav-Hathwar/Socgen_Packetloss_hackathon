@@ -1,3 +1,4 @@
+import { SearchSelect, SearchSelectItem } from "@tremor/react";
 import { useEffect, useState, useCallback } from "react";
 import {
   PieChart,
@@ -320,23 +321,26 @@ export default function ReportPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2 no-print">
           <div className="flex items-center gap-2">
-            <select
-              value={selectedVendorId}
-              onChange={(e) => setSelectedVendorId(e.target.value)}
-              className="px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-teal/30 max-w-[240px]"
-            >
-              <option value="">All vendors (portfolio)</option>
-              {vendors.map((v) => (
-                <option key={v.vendor_id} value={v.vendor_id}>
-                  {v.name} ({v.vendor_id})
-                </option>
-              ))}
-            </select>
+            <div className="w-[260px]">
+              <SearchSelect
+                value={selectedVendorId}
+                onValueChange={setSelectedVendorId}
+                placeholder="Search vendor or portfolio..."
+                enableClear
+              >
+                <SearchSelectItem value="">All vendors (portfolio)</SearchSelectItem>
+                {vendors.map((v) => (
+                  <SearchSelectItem key={v.vendor_id} value={v.vendor_id}>
+                    {v.name} ({v.vendor_id})
+                  </SearchSelectItem>
+                ))}
+              </SearchSelect>
+            </div>
             <button
               onClick={downloadVendorReport}
               disabled={!selectedVendorId || vendorReportLoading}
               title={!selectedVendorId ? "Select a vendor first" : "Download a PDF report for this vendor"}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="btn-secondary"
             >
               <DocumentArrowDownIcon className="w-4 h-4" />
               {vendorReportLoading ? "Building…" : "Vendor PDF"}
@@ -344,14 +348,14 @@ export default function ReportPage() {
           </div>
           <button
             onClick={exportCSV}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+            className="btn-secondary"
           >
             <ArrowDownTrayIcon className="w-4 h-4" />
             Export CSV
           </button>
           <button
             onClick={() => window.print()}
-            className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-medium hover:bg-teal-700 transition-colors"
+            className="btn-primary"
           >
             <PrinterIcon className="w-4 h-4" />
             Print Report
