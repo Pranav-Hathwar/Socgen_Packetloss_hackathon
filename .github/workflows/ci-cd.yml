@@ -1,0 +1,66 @@
+name: CI/CD
+
+# Runs build/test checks on every push and PR. On a successful push to `main`,
+# triggers the Render backend deploy. Vercel auto-deploys the frontend on its own
+# via its native GitHub integration (no step needed here).
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend build check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install slim deploy deps
+        run: pip install -r requirements-render.txt
+      - name: Import smoke test (app boots & routers load)
+        run: python -c "from app.main import app; print('OK', app.title, app.version)"
+
+  frontend:
+    name: Frontend build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install deps
+        run: npm ci
+      - name: Build
+        run: npm run build
+        env:
+          # Build-time public API URL. Set this repo/Actions variable to your
+          # Render backend URL, e.g. https://vendorlens-api.onrender.com
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+
+  deploy-backend:
+    name: Deploy backend (Render)
+    needs: [backend, frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy hook
+        run: |
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL secret not set — skipping explicit trigger."
+            echo "Render auto-deploy (autoDeploy: true) will still pick up this push."
+            exit 0
+          fi
+          curl -fsSL -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+          echo "Render deploy triggered."

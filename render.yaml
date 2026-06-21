@@ -1,0 +1,31 @@
+# Render Blueprint — backend (FastAPI) for VendorLens.
+# Render auto-deploys this service on every push to `main` once the repo is
+# connected. Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: vendorlens-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements-render.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      # Auto-generated strong secret for JWT signing.
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      # Set to your Vercel production URL after the frontend deploys,
+      # e.g. https://vendorlens.vercel.app
+      - key: CORS_ORIGINS
+        sync: false
+      # Allows Vercel preview deploys (dynamic subdomains) through CORS.
+      - key: CORS_ORIGIN_REGEX
+        value: "https://.*\\.vercel\\.app"
+      # Optional LLM keys — RAG/QA features degrade gracefully if unset.
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
