@@ -191,7 +191,7 @@ export default function AuditChat() {
           </div>
           <button
             onClick={clearChat}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+            className="btn-liquid flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
           >
             <TrashIcon className="w-3.5 h-3.5" />
             Clear
@@ -325,7 +325,7 @@ export default function AuditChat() {
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="px-5 py-3 bg-teal-600 text-white rounded-xl text-sm font-medium hover:bg-teal-700 disabled:opacity-40 transition-all flex items-center gap-2"
+            className="btn-liquid px-5 py-3 bg-teal-600 text-white rounded-xl text-sm font-medium hover:bg-teal-700 disabled:opacity-40 transition-all flex items-center gap-2"
           >
             <PaperAirplaneIcon className="w-4 h-4" />
             Send

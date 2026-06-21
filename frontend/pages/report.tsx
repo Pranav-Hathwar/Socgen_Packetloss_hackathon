@@ -388,7 +388,7 @@ export default function ReportPage() {
               onClick={downloadVendorReport}
               disabled={!selectedVendorId || vendorReportLoading}
               title={!selectedVendorId ? "Select a vendor first" : "Download a PDF report for this vendor"}
-              className="btn-secondary"
+              className="btn-liquid btn-liquid btn-secondary"
             >
               <DocumentArrowDownIcon className="w-4 h-4" />
               {vendorReportLoading ? "Building…" : "Vendor PDF"}
@@ -396,14 +396,14 @@ export default function ReportPage() {
           </div>
           <button
             onClick={exportCSV}
-            className="btn-secondary"
+            className="btn-liquid btn-liquid btn-secondary"
           >
             <ArrowDownTrayIcon className="w-4 h-4" />
             Export CSV
           </button>
           <button
             onClick={() => window.print()}
-            className="btn-primary"
+            className="btn-liquid btn-primary"
           >
             <PrinterIcon className="w-4 h-4" />
             Print Report
@@ -556,7 +556,7 @@ export default function ReportPage() {
                   <span className="text-xs text-slate-400">{v.category}</span>
                 </div>
                 <div className="flex items-start gap-3 mb-3">
-                  <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border shrink-0 ${
+                  <span className={`btn-liquid px-2.5 py-1 rounded-lg text-xs font-bold border shrink-0 ${
                     v.action_type === "ESCALATE"
                       ? "bg-red-100 text-red-700 border-red-200"
                       : "bg-amber-100 text-amber-700 border-amber-200"

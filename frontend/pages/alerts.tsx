@@ -102,7 +102,7 @@ export default function AlertsPage() {
             {loading ? "Loading..." : `${alerts.length} active alert${alerts.length !== 1 ? "s" : ""} across ${vendorCount} vendor${vendorCount !== 1 ? "s" : ""}`}
           </p>
         </div>
-        <button onClick={fetchAlerts} className="mt-1 text-xs text-teal-700 hover:underline font-medium">Refresh</button>
+        <button onClick={fetchAlerts} className="btn-liquid btn-liquid btn-liquid mt-1 text-xs text-teal-700 hover:underline font-medium">Refresh</button>
       </div>
 
       {!loading && alerts.length > 0 && (
@@ -113,7 +113,7 @@ export default function AlertsPage() {
               <motion.button key={sev} variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
                 onClick={() => { document.getElementById(`grp-${sev}`)?.scrollIntoView({ behavior: "smooth", block: "start" }); setCollapsed((c) => ({ ...c, [sev]: false })); }}
                 className="relative text-left p-4 rounded-xl border bg-white border-hairline hover:border-slate-300 hover:shadow-card transition-all">
-                <span className={`inline-flex w-2.5 h-2.5 rounded-full ${cfg.dot} mb-2`} />
+                <span className={`btn-liquid inline-flex w-2.5 h-2.5 rounded-full ${cfg.dot} mb-2`} />
                 <p className="text-2xl font-display font-bold text-ink tabular">{counts[sev]}</p>
                 <p className="text-xs font-semibold text-slate-500 mt-0.5">{sev}</p>
               </motion.button>
@@ -127,7 +127,7 @@ export default function AlertsPage() {
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           <input type="text" placeholder="Search by vendor or alert text..." value={search} onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-9 py-2.5 bg-white border border-hairline rounded-lg text-sm text-ink placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal/40 transition" />
-          {search && <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><XMarkIcon className="w-4 h-4" /></button>}
+          {search && <button onClick={() => setSearch("")} className="btn-liquid absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><XMarkIcon className="w-4 h-4" /></button>}
         </div>
       )}
 
@@ -143,7 +143,7 @@ export default function AlertsPage() {
         <div className="card p-12 text-center">
           <MagnifyingGlassIcon className="w-8 h-8 text-slate-300 mx-auto mb-3" />
           <h3 className="text-base font-semibold text-slate-600">No matching alerts</h3>
-          <button onClick={() => setSearch("")} className="mt-4 text-xs text-teal-700 hover:underline font-medium">Clear search</button>
+          <button onClick={() => setSearch("")} className="btn-liquid mt-4 text-xs text-teal-700 hover:underline font-medium">Clear search</button>
         </div>
       ) : (
         <div className="space-y-4">
@@ -154,8 +154,8 @@ export default function AlertsPage() {
             const isOpen = !collapsed[sev];
             return (
               <div key={sev} id={`grp-${sev}`} className="card overflow-hidden">
-                <button onClick={() => toggle(sev)} className={`w-full flex items-center justify-between px-5 py-3 ${cfg.head} border-b border-hairline transition-colors`}>
-                  <div className="flex items-center gap-2.5">
+                <button onClick={() => toggle(sev)} className={`btn-liquid w-full flex items-center justify-between px-5 py-3 ${cfg.head} border-b border-hairline transition-colors`}>
+                  <div className="btn-liquid flex items-center gap-2.5">
                     <span className={`w-2.5 h-2.5 rounded-full ${cfg.dot}`} />
                     <span className="text-sm font-display font-bold text-ink">{sev}</span>
                     <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${cfg.badge}`}>{list.length}</span>

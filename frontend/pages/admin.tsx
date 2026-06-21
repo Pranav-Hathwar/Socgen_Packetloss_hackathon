@@ -112,8 +112,8 @@ export default function AdminPage() {
             <ClockIcon className="w-5 h-5 text-teal-600" />
             <h2 className="text-base font-semibold text-slate-800">Continuous Monitoring</h2>
           </div>
-          <button onClick={loadStatus} className="text-slate-400 hover:text-slate-600 transition-colors" title="Refresh status">
-            <ArrowPathIcon className={`w-4 h-4 ${statusLoading ? "animate-spin" : ""}`} />
+          <button onClick={loadStatus} className="btn-liquid btn-liquid btn-liquid text-slate-400 hover:text-slate-600 transition-colors" title="Refresh status">
+            <ArrowPathIcon className={`btn-liquid w-4 h-4 ${statusLoading ? "animate-spin" : ""}`} />
           </button>
         </div>
 
@@ -141,7 +141,7 @@ export default function AdminPage() {
         <button
           onClick={runNow}
           disabled={runLoading}
-          className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 disabled:opacity-50 transition-colors"
+          className="btn-liquid btn-liquid flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 disabled:opacity-50 transition-colors"
         >
           <BoltIcon className="w-4 h-4" />
           {runLoading ? "Rescoring…" : "Run Now"}
@@ -169,7 +169,7 @@ export default function AdminPage() {
                   <div className="flex flex-wrap items-center gap-2 mb-1">
                     <span className="font-semibold text-ink">{c.name}</span>
                     <span className="font-mono text-xs text-slate-400">{c.vendor_id}</span>
-                    <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${up ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}>
+                    <span className={`btn-liquid text-xs font-bold px-1.5 py-0.5 rounded-full ${up ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}>
                       {up ? "▲" : "▼"} {up ? "+" : ""}{c.delta.toFixed(1)}
                     </span>
                   </div>
@@ -215,7 +215,7 @@ export default function AdminPage() {
                 <button
                   key={t}
                   onClick={() => setNotifyType(t)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                  className={`btn-liquid px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
                     notifyType === t
                       ? "bg-teal-600 text-white border-teal-600"
                       : "border-slate-200 text-slate-600 hover:border-teal/40"
@@ -237,7 +237,7 @@ export default function AdminPage() {
         <button
           onClick={sendNotification}
           disabled={notifyLoading || !notifyEmail}
-          className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 disabled:opacity-50 transition-colors"
+          className="btn-liquid btn-liquid flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 disabled:opacity-50 transition-colors"
         >
           <EnvelopeIcon className="w-4 h-4" />
           {notifyLoading ? "Sending…" : "Send Email"}

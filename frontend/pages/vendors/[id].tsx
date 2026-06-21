@@ -282,24 +282,24 @@ export default function VendorDetail() {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => { const next = !editOpen; setEditOpen(next); setEditMsg(null); if (next) setSimOpen(false); }}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+            className={`btn-liquid flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
               editOpen
                 ? "bg-slate-700 text-white"
                 : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
             }`}
           >
-            <PencilSquareIcon className="w-4 h-4" />
+            <PencilSquareIcon className="btn-liquid w-4 h-4" />
             Edit
           </button>
           <button
             onClick={() => { const next = !simOpen; setSimOpen(next); if (next) { setEditOpen(false); setEditMsg(null); } }}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+            className={`btn-liquid flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
               simOpen
                 ? "bg-teal-600 text-white"
                 : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
             }`}
           >
-            <BeakerIcon className="w-4 h-4" />
+            <BeakerIcon className="btn-liquid w-4 h-4" />
             What-If
           </button>
           <Link
@@ -312,13 +312,13 @@ export default function VendorDetail() {
           <button
             onClick={loadSuggestions}
             disabled={suggestionsLoading}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+            className={`btn-liquid flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
               suggestionsOpen
                 ? "bg-amber-500 text-white"
                 : "bg-amber-50 border border-amber-300 text-amber-800 hover:bg-amber-100"
             }`}
           >
-            <LightBulbIcon className="w-4 h-4" />
+            <LightBulbIcon className="btn-liquid w-4 h-4" />
             {suggestionsLoading ? "Loading…" : "AI Suggestions"}
             {suggestions.length > 0 && !suggestionsLoading && (
               <span className="bg-amber-200 text-amber-900 text-xs font-bold px-1.5 py-0.5 rounded-full">{suggestions.length}</span>
@@ -506,11 +506,11 @@ export default function VendorDetail() {
               )}
               <div className="ml-auto flex gap-2">
                 <button onClick={() => { setEditOpen(false); setEditMsg(null); }}
-                  className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+                  className="btn-liquid px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
                   Cancel
                 </button>
                 <button onClick={submitEdit} disabled={editLoading}
-                  className="px-5 py-2 bg-slate-800 text-white rounded-xl text-sm font-semibold hover:bg-ink disabled:opacity-40 transition-colors">
+                  className="btn-liquid btn-liquid px-5 py-2 bg-slate-800 text-white rounded-xl text-sm font-semibold hover:bg-ink disabled:opacity-40 transition-colors">
                   {editLoading ? "Saving…" : "Save Changes"}
                 </button>
               </div>
@@ -528,13 +528,13 @@ export default function VendorDetail() {
               <h2 className="text-sm font-bold text-ink">AI Remediation Suggestions</h2>
               <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded-full">{suggestions.length}</span>
             </div>
-            <button onClick={() => setSuggestionsOpen(false)} className="text-slate-400 hover:text-slate-600">
+            <button onClick={() => setSuggestionsOpen(false)} className="btn-liquid text-slate-400 hover:text-slate-600">
               <XIcon className="w-4 h-4" />
             </button>
           </div>
           <div className="space-y-3">
             {suggestions.map((s) => (
-              <div key={s.id} className={`rounded-xl border p-4 ${
+              <div key={s.id} className={`btn-liquid rounded-xl border p-4 ${
                 s.priority === "CRITICAL" ? "border-red-200 bg-red-50" :
                 s.priority === "HIGH" ? "border-orange-200 bg-orange-50" :
                 s.priority === "MEDIUM" ? "border-amber-200 bg-amber-50" :
@@ -795,7 +795,7 @@ export default function VendorDetail() {
               <h2 className="text-sm font-semibold text-slate-700">Remediation Log</h2>
               <button
                 onClick={() => setRemOpen(!remOpen)}
-                className="px-3 py-1.5 bg-teal-600 text-white rounded-lg text-xs font-medium hover:bg-teal-700 transition-colors"
+                className="btn-liquid px-3 py-1.5 bg-teal-600 text-white rounded-lg text-xs font-medium hover:bg-teal-700 transition-colors"
               >
                 + Log Action
               </button>
@@ -828,13 +828,13 @@ export default function VendorDetail() {
                   <button
                     onClick={submitRemediation}
                     disabled={remLoading || !remForm.issue || !remForm.resolved_by}
-                    className="px-4 py-2 bg-teal-600 text-white rounded-lg text-xs font-semibold hover:bg-teal-700 disabled:opacity-40 transition-colors"
+                    className="btn-liquid btn-liquid px-4 py-2 bg-teal-600 text-white rounded-lg text-xs font-semibold hover:bg-teal-700 disabled:opacity-40 transition-colors"
                   >
                     {remLoading ? "Saving…" : "Save"}
                   </button>
                   <button
                     onClick={() => setRemOpen(false)}
-                    className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-50 transition-colors"
+                    className="btn-liquid px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-50 transition-colors"
                   >
                     Cancel
                   </button>
@@ -916,7 +916,7 @@ export default function VendorDetail() {
               <button
                 onClick={uploadCert}
                 disabled={certLoading || !certFile}
-                className="px-4 py-2 bg-teal-600 text-white rounded-lg text-xs font-semibold hover:bg-teal-700 disabled:opacity-40 transition-colors"
+                className="btn-liquid btn-liquid px-4 py-2 bg-teal-600 text-white rounded-lg text-xs font-semibold hover:bg-teal-700 disabled:opacity-40 transition-colors"
               >
                 {certLoading ? "Uploading…" : "Upload"}
               </button>
@@ -941,7 +941,7 @@ export default function VendorDetail() {
                     <button
                       onClick={() => api.vendors.downloadCert(c.vendor_id, c.id, c.filename)}
                       title="Download certificate"
-                      className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-teal/30 bg-white text-xs font-semibold text-teal-600 hover:bg-teal-600 hover:text-white hover:border-teal-600 transition-all"
+                      className="btn-liquid shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-teal/30 bg-white text-xs font-semibold text-teal-600 hover:bg-teal-600 hover:text-white hover:border-teal-600 transition-all"
                     >
                       <ArrowDownTrayIcon className="w-3.5 h-3.5" />
                       Download
@@ -966,7 +966,7 @@ export default function VendorDetail() {
               <button
                 onClick={parseContract}
                 disabled={!contractFile || contractLoading}
-                className="shrink-0 px-4 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="btn-liquid btn-liquid shrink-0 px-4 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 {contractLoading ? "Analysing…" : "Analyse"}
               </button>
@@ -1056,7 +1056,7 @@ export default function VendorDetail() {
               <button
                 onClick={runSimulation}
                 disabled={simLoading || (!simToggles.renew_soc2 && !simToggles.sign_dpa && !simToggles.revoke_access)}
-                className="w-full py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 transition-colors disabled:opacity-40"
+                className="btn-liquid btn-liquid w-full py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 transition-colors disabled:opacity-40"
               >
                 {simLoading ? "Simulating…" : "Run Simulation"}
               </button>
@@ -1074,7 +1074,7 @@ export default function VendorDetail() {
                       <p className="text-2xl font-display font-bold text-ink">{simResult.simulated_score.toFixed(1)}</p>
                       <p className="text-xs text-slate-500">After</p>
                     </div>
-                    <div className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm font-bold ${
+                    <div className={`btn-liquid flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm font-bold ${
                       simResult.delta < 0
                         ? "bg-emerald-50 text-emerald-700"
                         : "bg-red-50 text-red-700"
@@ -1171,7 +1171,7 @@ function Toggle({
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${
+        className={`btn-liquid relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${
           checked ? "bg-teal-600" : "bg-slate-300"
         }`}
       >

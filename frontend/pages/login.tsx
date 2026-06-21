@@ -87,7 +87,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-teal-600 text-white rounded-lg py-2.5 text-sm font-semibold hover:bg-teal-700 disabled:opacity-50 transition-colors"
+              className="btn-liquid btn-liquid w-full bg-teal-600 text-white rounded-lg py-2.5 text-sm font-semibold hover:bg-teal-700 disabled:opacity-50 transition-colors"
             >
               {loading ? "Signing in…" : "Sign in"}
             </button>
@@ -103,10 +103,10 @@ export default function LoginPage() {
                 <button
                   key={acct.role}
                   onClick={() => fillDemo(acct)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 hover:border-teal/40 hover:bg-teal-50 transition-colors text-left"
+                  className="btn-liquid w-full flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 hover:border-teal/40 hover:bg-teal-50 transition-colors text-left"
                 >
                   <span className="text-sm text-gray-700">{acct.label}</span>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${ROLE_COLORS[acct.role]}`}>
+                  <span className={`btn-liquid text-xs font-semibold px-2 py-0.5 rounded-full ${ROLE_COLORS[acct.role]}`}>
                     {acct.role}
                   </span>
                 </button>

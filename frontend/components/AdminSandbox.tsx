@@ -53,7 +53,7 @@ export function AdminSandbox({ onDataChange }: AdminSandboxProps) {
                 <h3 className="text-sm font-semibold text-white">Admin Sandbox</h3>
                 <p className="text-xs text-slate-400 mt-0.5">Simulate risk events for demo</p>
               </div>
-              <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setOpen(false)} className="btn-liquid text-slate-400 hover:text-white">
                 <XMarkIcon className="w-4 h-4" />
               </button>
             </div>
@@ -62,7 +62,7 @@ export function AdminSandbox({ onDataChange }: AdminSandboxProps) {
             <button
               onClick={handleInjectBreach}
               disabled={loading !== null}
-              className="w-full flex items-center gap-3 px-4 py-3 bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl text-left transition-colors disabled:opacity-50"
+              className="btn-liquid btn-liquid w-full flex items-center gap-3 px-4 py-3 bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl text-left transition-colors disabled:opacity-50"
             >
               <span className="text-xl">🔓</span>
               <div>
@@ -76,7 +76,7 @@ export function AdminSandbox({ onDataChange }: AdminSandboxProps) {
             <button
               onClick={handleAdvanceTime}
               disabled={loading !== null}
-              className="w-full flex items-center gap-3 px-4 py-3 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl text-left transition-colors disabled:opacity-50"
+              className="btn-liquid btn-liquid w-full flex items-center gap-3 px-4 py-3 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl text-left transition-colors disabled:opacity-50"
             >
               <span className="text-xl">⏰</span>
               <div>
@@ -93,13 +93,13 @@ export function AdminSandbox({ onDataChange }: AdminSandboxProps) {
 
       <button
         onClick={() => setOpen(!open)}
-        className={`flex items-center gap-2 px-4 py-3 rounded-full shadow-lg text-sm font-semibold transition-all duration-200 ${
+        className={`btn-liquid flex items-center gap-2 px-4 py-3 rounded-full shadow-lg text-sm font-semibold transition-all duration-200 ${
           open
             ? "bg-ink text-white shadow-slate-300"
             : "bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-teal/30 hover:shadow-teal/40 hover:shadow-xl"
         }`}
       >
-        <BoltIcon className="w-4 h-4" />
+        <BoltIcon className="btn-liquid w-4 h-4" />
         Admin Sandbox
       </button>
     </div>

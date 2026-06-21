@@ -122,7 +122,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full flex items-center justify-center gap-2 bg-teal-600 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-teal-700 disabled:opacity-50 transition-colors"
+            className="btn-liquid btn-liquid w-full flex items-center justify-center gap-2 bg-teal-600 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-teal-700 disabled:opacity-50 transition-colors"
           >
             <UserPlusIcon className="w-4 h-4" />
             {submitting ? "Creating…" : "Create User"}
