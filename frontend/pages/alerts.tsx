@@ -1,6 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import AnimatedList from "../components/AnimatedList";
+import { useRouter } from "next/router";
 import {
   ShieldExclamationIcon, DocumentTextIcon, CheckBadgeIcon, MagnifyingGlassIcon,
   ArrowTopRightOnSquareIcon, BellAlertIcon, ExclamationTriangleIcon, XMarkIcon,
@@ -56,6 +58,7 @@ function AlertTypeIcon({ alertType }: { alertType: string }) {
 
 export default function AlertsPage() {
   const { refreshKey } = useRefresh();
+  const router = useRouter();
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -168,30 +171,36 @@ export default function AlertsPage() {
                   {isOpen && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25, ease: "easeOut" }} className="overflow-hidden">
                       <div className="divide-y divide-hairline/70">
-                        {list.map((alert, i) => (
-                          <div key={i} className={`flex items-start gap-4 px-5 py-4 border-l-4 ${cfg.border} ${cfg.row} transition-colors group`}>
-                            <div className="mt-0.5 flex flex-col items-center gap-2 shrink-0 pt-0.5">
-                              <span className={`w-2.5 h-2.5 rounded-full ${cfg.dot} ring-2 ring-white shadow-sm`} />
-                              <span className="text-slate-400"><AlertTypeIcon alertType={alert.alert_type} /></span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex flex-wrap items-center gap-2 mb-1">
-                                <Link href={`/vendors/${alert.vendor_id}`} className="text-sm font-bold text-ink hover:text-teal-700 transition-colors">{alert.vendor_name}</Link>
-                                <RagBadge rag={alert.rag} size="sm" />
-                                {alert.alert_type && alert.alert_type !== "GENERAL" && (
-                                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${ALERT_TYPE_META[alert.alert_type]?.badge ?? "bg-slate-100 text-slate-600"}`}>
-                                    {ALERT_TYPE_META[alert.alert_type]?.label ?? alert.alert_type}
-                                  </span>
-                                )}
-                                <span className="text-[10px] text-slate-400 tabular">{alert.vendor_id}</span>
+                        <AnimatedList
+                          items={list as any[]}
+                          onItemSelect={(alert: any) => router.push(`/vendors/${alert.vendor_id}`)}
+                          className="w-full"
+                          displayScrollbar={false}
+                          showGradients={false}
+                          renderItem={(alert: any) => (
+                            <div className={`flex items-start gap-4 px-2 py-1 w-full text-left`}>
+                              <div className="mt-0.5 flex flex-col items-center gap-2 shrink-0 pt-0.5">
+                                <span className={`w-2.5 h-2.5 rounded-full ${cfg.dot} ring-2 ring-white shadow-sm`} />
+                                <span className="text-slate-400"><AlertTypeIcon alertType={alert.alert_type} /></span>
                               </div>
-                              <p className="text-sm text-slate-600 leading-relaxed">{alert.alert}</p>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex flex-wrap items-center gap-2 mb-1">
+                                  <span className="text-sm font-bold text-ink hover:text-teal-700 transition-colors">{alert.vendor_name}</span>
+                                  <RagBadge rag={alert.rag} size="sm" />
+                                  {alert.alert_type && alert.alert_type !== "GENERAL" && (
+                                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${ALERT_TYPE_META[alert.alert_type]?.badge ?? "bg-slate-100 text-slate-600"}`}>
+                                      {ALERT_TYPE_META[alert.alert_type]?.label ?? alert.alert_type}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-sm text-slate-600 leading-relaxed">{alert.alert}</p>
+                              </div>
+                              <div className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg border border-hairline bg-white text-xs font-semibold text-slate-600">
+                                View <ArrowTopRightOnSquareIcon className="w-3 h-3" />
+                              </div>
                             </div>
-                            <Link href={`/vendors/${alert.vendor_id}`} className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg border border-hairline bg-white text-xs font-semibold text-slate-600 hover:border-teal/40 hover:text-teal-700 hover:bg-teal-50 transition-all opacity-0 group-hover:opacity-100">
-                              View <ArrowTopRightOnSquareIcon className="w-3 h-3" />
-                            </Link>
-                          </div>
-                        ))}
+                          )}
+                        />
                       </div>
                     </motion.div>
                   )}
