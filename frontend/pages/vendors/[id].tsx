@@ -605,7 +605,7 @@ export default function VendorDetail() {
 
           {/* Radar + Compliance */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up" style={{ animationDelay: "0.1s" }}>
-            <div className="card p-6">
+            <div className="card p-6 lg:col-span-2">
               <div className="flex items-center gap-2 mb-4">
                 <span className="w-6 h-6 rounded-md bg-brass/15 flex items-center justify-center ring-1 ring-brass/30"><span className="w-2 h-2 rounded-full bg-brass-600" /></span>
                 <h2 className="text-sm font-semibold text-slate-700">Risk Ledger — Explainable Breakdown</h2>
