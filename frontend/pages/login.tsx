@@ -3,9 +3,8 @@ import { useRouter } from "next/router";
 import { useAuth } from "../contexts/AuthContext";
 
 const DEMO_ACCOUNTS = [
-  { label: "Admin — full access",    email: "admin@vendorlens.com",   password: "Admin@Demo1",   role: "ADMIN" },
-  { label: "Analyst — view + sim",   email: "analyst@vendorlens.com", password: "Analyst@Demo1", role: "ANALYST" },
-  { label: "Auditor — read-only",    email: "auditor@vendorlens.com", password: "Auditor@Demo1", role: "AUDITOR" },
+  { label: "Admin — full access",              email: "admin@vendorlens.com",   password: "Admin@Demo1",   role: "ADMIN" },
+  { label: "Analyst / Auditor — view + sim",   email: "analyst@vendorlens.com", password: "Analyst@Demo1", role: "ANALYST" },
 ];
 
 const ROLE_COLORS: Record<string, string> = {

@@ -4,11 +4,9 @@ import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
 import { UserPlusIcon } from "@heroicons/react/24/outline";
 
-const ROLES = ["ANALYST", "AUDITOR"] as const;
-const ROLE_DESC: Record<string, string> = {
-  ANALYST: "Can view, simulate, and log remediations",
-  AUDITOR: "Read-only access to all data",
-};
+const ROLES = [
+  { value: "ANALYST", label: "Analyst / Auditor", desc: "Can view, simulate, and log remediations" },
+] as const;
 
 export default function RegisterPage() {
   const { user, loading } = useAuth();
@@ -97,22 +95,22 @@ export default function RegisterPage() {
             <div className="space-y-2">
               {ROLES.map((r) => (
                 <label
-                  key={r}
+                  key={r.value}
                   className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
-                    role === r ? "border-teal-600 bg-teal-50" : "border-slate-200 hover:border-slate-300"
+                    role === r.value ? "border-teal-600 bg-teal-50" : "border-slate-200 hover:border-slate-300"
                   }`}
                 >
                   <input
                     type="radio"
                     name="role"
-                    value={r}
-                    checked={role === r}
-                    onChange={() => setRole(r)}
+                    value={r.value}
+                    checked={role === r.value}
+                    onChange={() => setRole(r.value)}
                     className="mt-0.5 accent-teal-600"
                   />
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">{r}</p>
-                    <p className="text-xs text-slate-500">{ROLE_DESC[r]}</p>
+                    <p className="text-sm font-semibold text-slate-800">{r.label}</p>
+                    <p className="text-xs text-slate-500">{r.desc}</p>
                   </div>
                 </label>
               ))}
