@@ -163,7 +163,8 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="sticky top-0 z-20 -mx-6 lg:-mx-8 px-6 lg:px-8 py-4 bg-slate-50/95 backdrop-blur-sm border-b border-hairline space-y-6">
+        <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-display font-bold text-ink tracking-tight">Vendor Register</h1>
           <p className="text-sm text-slate-500 mt-1">Third-party risk portfolio: {vendors.length} vendors under watch</p>
@@ -178,10 +179,10 @@ export default function Dashboard() {
             <PlusIcon className="w-4 h-4" /> Add Vendor
           </button>
         </div>
-      </div>
+        </div>
 
-      {loading ? <CardRowSkeleton /> : (
-        <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-fr">
+        {loading ? <CardRowSkeleton /> : (
+          <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-fr">
           <motion.div variants={fadeUp} className="h-full">
             <Card className="ring-hairline shadow-card h-full flex flex-col justify-between">
               <div className="flex items-center justify-between">
@@ -226,25 +227,26 @@ export default function Dashboard() {
             </Card>
           </motion.div>
         </motion.div>
-      )}
+        )}
 
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-        <div className="relative flex-1 max-w-md">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search vendors..."
-            className="search-field" />
-        </div>
-        <div className="flex gap-2 items-center">
-          <FunnelIcon className="w-4 h-4 text-slate-400 hidden sm:block" />
-          <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="select-field">
-            <option value="">All Categories</option>
-            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <select value={riskFilter} onChange={(e) => setRiskFilter(e.target.value)} className="select-field">
-            <option value="">All Risk Levels</option>
-            <option value="CRITICAL">Critical</option><option value="HIGH">High</option><option value="MEDIUM">Medium</option><option value="LOW">Low</option>
-          </select>
-          {hasFilters && <button onClick={() => { setSearch(""); setCatFilter(""); setRiskFilter(""); }} className="btn-liquid px-3 py-2.5 text-xs font-medium text-slate-600 hover:text-ink hover:bg-slate-100 rounded-lg transition-colors"><XMarkIcon className="w-4 h-4" /></button>}
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+          <div className="relative flex-1 max-w-md">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search vendors..."
+              className="search-field" />
+          </div>
+          <div className="flex gap-2 items-center">
+            <FunnelIcon className="w-4 h-4 text-slate-400 hidden sm:block" />
+            <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="select-field">
+              <option value="">All Categories</option>
+              {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select value={riskFilter} onChange={(e) => setRiskFilter(e.target.value)} className="select-field">
+              <option value="">All Risk Levels</option>
+              <option value="CRITICAL">Critical</option><option value="HIGH">High</option><option value="MEDIUM">Medium</option><option value="LOW">Low</option>
+            </select>
+            {hasFilters && <button onClick={() => { setSearch(""); setCatFilter(""); setRiskFilter(""); }} className="btn-liquid px-3 py-2.5 text-xs font-medium text-slate-600 hover:text-ink hover:bg-slate-100 rounded-lg transition-colors"><XMarkIcon className="w-4 h-4" /></button>}
+          </div>
         </div>
       </div>
 
