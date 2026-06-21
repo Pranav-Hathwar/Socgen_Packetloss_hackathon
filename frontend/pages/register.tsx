@@ -50,7 +50,7 @@ export default function RegisterPage() {
   return (
     <div className="p-6 lg:p-8 max-w-lg mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Create User</h1>
+        <h1 className="text-2xl font-display font-bold text-ink tracking-tight">Create User</h1>
         <p className="text-sm text-slate-500 mt-1">Admin only — add new analyst or auditor accounts</p>
       </div>
 
@@ -75,7 +75,7 @@ export default function RegisterPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="user@company.com"
               required
-              className="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-600"
             />
           </div>
 
@@ -88,7 +88,7 @@ export default function RegisterPage() {
               placeholder="Min 8 chars, uppercase + number"
               required
               minLength={8}
-              className="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-600"
             />
           </div>
 
@@ -99,7 +99,7 @@ export default function RegisterPage() {
                 <label
                   key={r}
                   className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
-                    role === r ? "border-indigo-400 bg-indigo-50" : "border-slate-200 hover:border-slate-300"
+                    role === r ? "border-teal-600 bg-teal-50" : "border-slate-200 hover:border-slate-300"
                   }`}
                 >
                   <input
@@ -108,7 +108,7 @@ export default function RegisterPage() {
                     value={r}
                     checked={role === r}
                     onChange={() => setRole(r)}
-                    className="mt-0.5 accent-indigo-600"
+                    className="mt-0.5 accent-teal-600"
                   />
                   <div>
                     <p className="text-sm font-semibold text-slate-800">{r}</p>
@@ -122,7 +122,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            className="w-full flex items-center justify-center gap-2 bg-teal-600 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-teal-700 disabled:opacity-50 transition-colors"
           >
             <UserPlusIcon className="w-4 h-4" />
             {submitting ? "Creating…" : "Create User"}

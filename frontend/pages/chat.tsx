@@ -73,7 +73,7 @@ function parseVendorLinks(text: string) {
         <Link
           key={i}
           href={`/vendors/${part}`}
-          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-semibold hover:bg-indigo-200 transition-colors"
+          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-teal-100 text-teal-700 rounded text-xs font-semibold hover:bg-teal/30 transition-colors"
         >
           {part}
           <span className="text-[10px]">→</span>
@@ -169,11 +169,11 @@ export default function AuditChat() {
       <div className="px-6 py-4 border-b border-slate-100 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-center justify-between max-w-3xl mx-auto">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-teal-600 flex items-center justify-center shadow-lg shadow-teal/30">
               <SparklesIcon className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-base font-bold text-slate-900">Audit Co-Pilot</h1>
+              <h1 className="text-base font-bold text-ink">Audit Co-Pilot</h1>
               <div className="flex items-center gap-1.5">
                 <span
                   className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold ${
@@ -208,7 +208,7 @@ export default function AuditChat() {
               className={`flex gap-3 ${m.role === "user" ? "justify-end" : "justify-start"} animate-fade-in`}
             >
               {m.role === "assistant" && (
-                <div className="w-8 h-8 shrink-0 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-sm">
+                <div className="w-8 h-8 shrink-0 rounded-lg bg-gradient-to-br from-violet-500 to-teal-600 flex items-center justify-center shadow-sm">
                   <SparklesIcon className="w-4 h-4 text-white" />
                 </div>
               )}
@@ -216,7 +216,7 @@ export default function AuditChat() {
                 <div
                   className={`px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
                     m.role === "user"
-                      ? "bg-indigo-600 text-white rounded-2xl rounded-br-md"
+                      ? "bg-teal-600 text-white rounded-2xl rounded-br-md"
                       : "bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-bl-md shadow-sm"
                   }`}
                 >
@@ -246,7 +246,7 @@ export default function AuditChat() {
 
           {loading && (
             <div className="flex gap-3 justify-start">
-              <div className="w-8 h-8 shrink-0 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-sm">
+              <div className="w-8 h-8 shrink-0 rounded-lg bg-gradient-to-br from-violet-500 to-teal-600 flex items-center justify-center shadow-sm">
                 <SparklesIcon className="w-4 h-4 text-white animate-pulse" />
               </div>
               <div className="bg-white border border-slate-200 text-slate-500 px-4 py-3 rounded-2xl rounded-bl-md shadow-sm text-sm">
@@ -281,10 +281,10 @@ export default function AuditChat() {
                 <button
                   key={`${q}-${i}`}
                   onClick={() => send(q)}
-                  className="group flex items-start gap-2.5 text-left px-3.5 py-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 hover:bg-indigo-50 hover:border-indigo-300 hover:shadow-sm transition-all"
+                  className="group flex items-start gap-2.5 text-left px-3.5 py-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 hover:bg-teal-50 hover:border-teal/40 hover:shadow-sm transition-all"
                 >
-                  <span className="mt-0.5 w-6 h-6 shrink-0 rounded-lg bg-slate-100 group-hover:bg-indigo-100 flex items-center justify-center transition-colors">
-                    <Icon className="w-3.5 h-3.5 text-slate-500 group-hover:text-indigo-600" />
+                  <span className="mt-0.5 w-6 h-6 shrink-0 rounded-lg bg-slate-100 group-hover:bg-teal-100 flex items-center justify-center transition-colors">
+                    <Icon className="w-3.5 h-3.5 text-slate-500 group-hover:text-teal-600" />
                   </span>
                   <span className="leading-snug pt-0.5">{q}</span>
                 </button>
@@ -308,7 +308,7 @@ export default function AuditChat() {
                   ? `Ask about vendor ${vendorId}…`
                   : "Ask about risk, compliance gaps, or name a vendor…"
               }
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 focus:bg-white transition-all"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal-600 focus:bg-white transition-all"
               disabled={loading}
             />
             {input && !loading && (
@@ -325,7 +325,7 @@ export default function AuditChat() {
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="px-5 py-3 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-40 transition-all flex items-center gap-2"
+            className="px-5 py-3 bg-teal-600 text-white rounded-xl text-sm font-medium hover:bg-teal-700 disabled:opacity-40 transition-all flex items-center gap-2"
           >
             <PaperAirplaneIcon className="w-4 h-4" />
             Send
