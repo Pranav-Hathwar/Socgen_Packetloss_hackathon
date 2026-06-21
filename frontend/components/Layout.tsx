@@ -94,15 +94,13 @@ export function Layout({ children }: { children: ReactNode }) {
             <button
               onClick={() => { logout(); router.replace("/login"); }}
               title="Log out"
-              className="ml-2 p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+              className="btn-liquid ml-2 p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
             >
               <ArrowRightOnRectangleIcon className="w-4 h-4" />
             </button>
           </div>
-          <div className="px-3 py-3 bg-brass/10 border border-brass/20 rounded-lg">
-            <p className="text-xs font-semibold text-brass-100">Société Générale</p>
-            <p className="text-[10px] text-slate-400 mt-0.5">Third-Party Risk · 2024</p>
-          </div>
+          
+
         </div>
       </aside>
 
@@ -114,7 +112,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
           <span className="text-base font-display font-bold text-white">VendorLens</span>
         </Link>
-        <button onClick={() => setMobileOpen(!mobileOpen)} className="p-2 rounded-lg hover:bg-white/10 text-white">
+        <button onClick={() => setMobileOpen(!mobileOpen)} className="btn-liquid p-2 rounded-lg hover:bg-white/10 text-white">
           {mobileOpen ? <XMarkIcon className="w-5 h-5" /> : <Bars3Icon className="w-5 h-5" />}
         </button>
       </div>
@@ -131,7 +129,7 @@ export function Layout({ children }: { children: ReactNode }) {
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${
+                    className={`btn-liquid flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${
                       active ? "bg-teal/15 text-white" : "text-slate-300 hover:bg-white/5"
                     }`}
                   >
@@ -142,7 +140,7 @@ export function Layout({ children }: { children: ReactNode }) {
               })}
               <button
                 onClick={() => { logout(); router.replace("/login"); }}
-                className="w-full flex items-center gap-3 px-3 py-3 text-sm font-medium text-rag-red hover:bg-rag-red/10 rounded-lg"
+                className="btn-liquid w-full flex items-center gap-3 px-3 py-3 text-sm font-medium text-rag-red hover:bg-rag-red/10 rounded-lg"
               >
                 <ArrowRightOnRectangleIcon className="w-5 h-5" />
                 Log out

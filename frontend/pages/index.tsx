@@ -1,6 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { motion, type Variants } from "framer-motion";
+import AnimatedList from "../components/AnimatedList";
+import { useRouter } from "next/router";
 import { Card, DonutChart, Badge } from "@tremor/react";
 import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon, PlusIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 import { ShieldExclamationIcon, UserGroupIcon, BoltIcon, ChevronUpIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
@@ -31,6 +33,7 @@ const fadeUp: Variants = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y:
 
 export default function Dashboard() {
   const { refreshKey } = useRefresh();
+  const router = useRouter();
   const { user } = useAuth();
   const canWrite = user?.role === "ADMIN" || user?.role === "ANALYST";
   const [vendors, setVendors] = useState<VendorSummary[]>([]);
@@ -163,25 +166,26 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="sticky top-0 z-20 -mx-6 lg:-mx-8 px-6 lg:px-8 py-4 bg-slate-50/95 backdrop-blur-sm border-b border-hairline space-y-6">
+        <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-display font-bold text-ink tracking-tight">Vendor Register</h1>
           <p className="text-sm text-slate-500 mt-1">Third-party risk portfolio: {vendors.length} vendors under watch</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => { setIngestOpen(true); setIngestResult(null); setIngestError(null); }} disabled={!canWrite} title={canWrite ? "" : "Read-only role"}
-            className="btn-secondary">
+            className="btn-liquid btn-secondary">
             <ArrowUpTrayIcon className="w-4 h-4" /> Import Data
           </button>
           <button onClick={() => { setAddOpen(true); setAddError(null); }} disabled={!canWrite} title={canWrite ? "" : "Read-only role"}
-            className="btn-primary">
+            className="btn-liquid btn-primary">
             <PlusIcon className="w-4 h-4" /> Add Vendor
           </button>
         </div>
-      </div>
+        </div>
 
-      {loading ? <CardRowSkeleton /> : (
-        <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-fr">
+        {loading ? <CardRowSkeleton /> : (
+          <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-fr">
           <motion.div variants={fadeUp} className="h-full">
             <Card className="ring-hairline shadow-card h-full flex flex-col justify-between">
               <div className="flex items-center justify-between">
@@ -226,25 +230,26 @@ export default function Dashboard() {
             </Card>
           </motion.div>
         </motion.div>
-      )}
+        )}
 
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-        <div className="relative flex-1 max-w-md">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search vendors..."
-            className="search-field" />
-        </div>
-        <div className="flex gap-2 items-center">
-          <FunnelIcon className="w-4 h-4 text-slate-400 hidden sm:block" />
-          <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="select-field">
-            <option value="">All Categories</option>
-            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <select value={riskFilter} onChange={(e) => setRiskFilter(e.target.value)} className="select-field">
-            <option value="">All Risk Levels</option>
-            <option value="CRITICAL">Critical</option><option value="HIGH">High</option><option value="MEDIUM">Medium</option><option value="LOW">Low</option>
-          </select>
-          {hasFilters && <button onClick={() => { setSearch(""); setCatFilter(""); setRiskFilter(""); }} className="px-3 py-2.5 text-xs font-medium text-slate-600 hover:text-ink hover:bg-slate-100 rounded-lg transition-colors"><XMarkIcon className="w-4 h-4" /></button>}
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+          <div className="relative flex-1 max-w-md">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search vendors..."
+              className="search-field" />
+          </div>
+          <div className="flex gap-2 items-center">
+            <FunnelIcon className="w-4 h-4 text-slate-400 hidden sm:block" />
+            <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="select-field">
+              <option value="">All Categories</option>
+              {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select value={riskFilter} onChange={(e) => setRiskFilter(e.target.value)} className="select-field">
+              <option value="">All Risk Levels</option>
+              <option value="CRITICAL">Critical</option><option value="HIGH">High</option><option value="MEDIUM">Medium</option><option value="LOW">Low</option>
+            </select>
+            {hasFilters && <button onClick={() => { setSearch(""); setCatFilter(""); setRiskFilter(""); }} className="btn-liquid px-3 py-2.5 text-xs font-medium text-slate-600 hover:text-ink hover:bg-slate-100 rounded-lg transition-colors"><XMarkIcon className="w-4 h-4" /></button>}
+          </div>
         </div>
       </div>
 
@@ -252,41 +257,51 @@ export default function Dashboard() {
         {loading ? <TableSkeleton /> : sorted.length === 0 ? (
           <EmptyState title="No vendors match" message="Try changing your search or filter criteria." action={hasFilters ? { label: "Clear filters", onClick: () => { setSearch(""); setCatFilter(""); setRiskFilter(""); } } : undefined} />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-hairline bg-slate-50/60">
-                  <SortHeader field="name" label="Vendor" onSort={toggleSort}><SortIcon field="name" /></SortHeader>
-                  <SortHeader field="risk_level" label="RAG" onSort={toggleSort}><SortIcon field="risk_level" /></SortHeader>
-                  <SortHeader field="risk_score" label="Score" onSort={toggleSort}><SortIcon field="risk_score" /></SortHeader>
-                  <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Top Signal</th>
-                  <th className="px-6 py-3.5" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-hairline/70">
-                {sorted.map((v) => (
-                  <tr key={v.vendor_id} className="group hover:bg-teal-50/40 transition-colors">
-                    <td className="px-6 py-3.5">
-                      <Link href={`/vendors/${v.vendor_id}`} className="font-medium text-ink group-hover:text-teal-700 transition-colors">{v.name}</Link>
-                      <p className="text-[11px] text-slate-400">{v.category}</p>
-                    </td>
-                    <td className="px-6 py-3.5"><RagBadge rag={v.rag} pulse={v.risk_level === "CRITICAL"} /></td>
-                    <td className="px-6 py-3.5"><span className="tabular font-semibold text-ink">{v.risk_score.toFixed(1)}</span></td>
-                    <td className="px-6 py-3.5 max-w-xs">
+          <div className="p-4 bg-white">
+            {/* Table Header Wrapper */}
+            <div className="flex items-center justify-between px-6 py-3.5 border-b border-hairline bg-slate-50/60 text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2 rounded-t-lg">
+              <div className="flex-1">Vendor</div>
+              <div className="flex items-center gap-8 pr-4">
+                <div className="w-24 text-center">RAG</div>
+                <div className="w-16 text-center">Score</div>
+                <div className="hidden lg:block w-64 text-left">Top Signal</div>
+                <div className="w-12 text-right">Action</div>
+              </div>
+            </div>
+
+            <AnimatedList
+              items={sorted as any[]}
+              onItemSelect={(v: any) => router.push(`/vendors/${v.vendor_id}`)}
+              className="w-full"
+              itemClassName="!bg-white !p-0 !mb-0 border-b border-hairline/50 hover:bg-slate-50 transition-colors"
+              renderItem={(v: any) => (
+                <div className="flex items-center justify-between w-full text-sm px-6 py-4">
+                  <div className="flex-1">
+                    <h4 className="font-bold text-ink transition-colors">{v.name}</h4>
+                    <p className="text-[11px] text-slate-400">{v.category}</p>
+                  </div>
+                  <div className="flex items-center gap-8 pr-4">
+                    <div className="w-24 flex justify-center">
+                      <RagBadge rag={v.rag} pulse={v.risk_level === "CRITICAL"} />
+                    </div>
+                    <div className="w-16 flex justify-center">
+                      <span className="tabular font-semibold text-ink">{v.risk_score.toFixed(1)}</span>
+                    </div>
+                    <div className="hidden lg:flex w-64 items-center gap-2 overflow-hidden">
                       {v.alerts.length > 0 ? (
-                        <div className="flex items-center gap-2">
-                          <Badge color={v.rag === "RED" ? "red" : v.rag === "AMBER" ? "amber" : "emerald"} size="xs">{v.alerts.length}</Badge>
+                        <>
+                          <Badge color={v.rag === "RED" ? "red" : v.rag === "AMBER" ? "amber" : "emerald"} size="xs" className="shrink-0">{v.alerts.length}</Badge>
                           <span className="text-xs text-slate-600 truncate">{v.alerts[0]}</span>
-                        </div>
+                        </>
                       ) : <span className="text-slate-400 text-xs">No active signals</span>}
-                    </td>
-                    <td className="px-6 py-3.5 text-right">
-                      <Link href={`/vendors/${v.vendor_id}`} className="text-teal-700 hover:text-teal-800 text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity">View</Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                    <div className="w-12 text-right">
+                      <span className="text-teal-700 font-semibold text-xs">View</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            />
           </div>
         )}
       </motion.div>
@@ -296,17 +311,17 @@ export default function Dashboard() {
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg animate-scale-in">
             <div className="flex items-center justify-between px-6 py-4 border-b border-hairline">
               <h2 className="text-base font-display font-bold text-ink">Import Vendor Data</h2>
-              <button onClick={() => { setIngestOpen(false); setIngestResult(null); setIngestError(null); }} className="p-1.5 hover:bg-slate-100 rounded-lg"><XMarkIcon className="w-5 h-5 text-slate-500" /></button>
+              <button onClick={() => { setIngestOpen(false); setIngestResult(null); setIngestError(null); }} className="btn-liquid p-1.5 hover:bg-slate-100 rounded-lg"><XMarkIcon className="w-5 h-5 text-slate-500" /></button>
             </div>
             <div className="flex border-b border-hairline px-6">
               {(["file", "email", "json"] as const).map((tab) => (
                 <button key={tab} onClick={() => { setIngestTab(tab); setIngestResult(null); setIngestError(null); }}
-                  className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${ingestTab === tab ? "border-teal text-teal-700" : "border-transparent text-slate-500 hover:text-ink"}`}>
+                  className={`btn-liquid px-4 py-3 text-sm font-medium border-b-2 transition-colors ${ingestTab === tab ? "border-teal text-teal-700" : "border-transparent text-slate-500 hover:text-ink"}`}>
                   {tab === "file" ? "File" : tab === "email" ? "Email Paste" : "JSON Paste"}
                 </button>
               ))}
             </div>
-            <div className="px-6 py-5 space-y-4">
+            <div className="btn-liquid px-6 py-5 space-y-4">
               {ingestTab === "file" && (
                 <>
                   <p className="text-sm text-slate-500">Upload CSV, JSON, Excel (.xlsx), or YAML. Existing vendors updated; new ones added.</p>
@@ -338,8 +353,8 @@ export default function Dashboard() {
                 </div>
               )}
               <div className="flex justify-end gap-2 pt-1">
-                <button onClick={() => { setIngestOpen(false); setIngestResult(null); setIngestError(null); }} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
-                <button onClick={handleIngest} disabled={ingestLoading} className="flex items-center gap-2 px-4 py-2 bg-teal text-white rounded-lg text-sm font-semibold hover:bg-teal-700 disabled:opacity-50">
+                <button onClick={() => { setIngestOpen(false); setIngestResult(null); setIngestError(null); }} className="btn-liquid px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+                <button onClick={handleIngest} disabled={ingestLoading} className="btn-liquid btn-liquid btn-liquid flex items-center gap-2 px-4 py-2 bg-teal text-white rounded-lg text-sm font-semibold hover:bg-teal-700 disabled:opacity-50">
                   <ArrowUpTrayIcon className="w-4 h-4" /> {ingestLoading ? "Importing..." : "Import"}
                 </button>
               </div>
@@ -353,7 +368,7 @@ export default function Dashboard() {
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between px-6 py-4 border-b border-hairline sticky top-0 bg-white z-10">
               <h2 className="text-base font-display font-bold text-ink">Add New Vendor</h2>
-              <button onClick={() => setAddOpen(false)} className="p-1.5 hover:bg-slate-100 rounded-lg"><XMarkIcon className="w-5 h-5 text-slate-500" /></button>
+              <button onClick={() => setAddOpen(false)} className="btn-liquid p-1.5 hover:bg-slate-100 rounded-lg"><XMarkIcon className="w-5 h-5 text-slate-500" /></button>
             </div>
             <div className="px-6 py-5 space-y-4">
               <div className="grid grid-cols-2 gap-3">
@@ -414,8 +429,8 @@ export default function Dashboard() {
               {addError && <p className="text-xs text-rag-red bg-rag-red/10 px-3 py-2 rounded-lg">{addError}</p>}
             </div>
             <div className="flex justify-end gap-2 px-6 py-4 border-t border-hairline sticky bottom-0 bg-white">
-              <button onClick={() => setAddOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
-              <button onClick={handleAddVendor} disabled={addLoading || !addForm.name.trim()} className="px-5 py-2 bg-teal text-white rounded-lg text-sm font-semibold hover:bg-teal-700 disabled:opacity-40">{addLoading ? "Creating..." : "Create Vendor"}</button>
+              <button onClick={() => setAddOpen(false)} className="btn-liquid px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+              <button onClick={handleAddVendor} disabled={addLoading || !addForm.name.trim()} className="btn-liquid btn-liquid btn-liquid px-5 py-2 bg-teal text-white rounded-lg text-sm font-semibold hover:bg-teal-700 disabled:opacity-40">{addLoading ? "Creating..." : "Create Vendor"}</button>
             </div>
           </div>
         </div>
