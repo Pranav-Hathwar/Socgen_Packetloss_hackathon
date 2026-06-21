@@ -11,6 +11,36 @@ from ..schema import AskRequest, AskResponse
 router = APIRouter(prefix="/ask", tags=["ask"])
 
 
+@router.get("/_diag")
+def diag():
+    """TEMPORARY diagnostic — confirms whether the Groq key + model work. Remove after."""
+    import os
+    key = os.getenv("GROQ_API_KEY", "").strip()
+    info = {
+        "groq_key_present": bool(key),
+        "groq_key_len": len(key),
+        "gemini_key_present": bool(os.getenv("GEMINI_API_KEY", "").strip()),
+        "model": "llama-3.3-70b-versatile",
+    }
+    if not key:
+        info["groq_call"] = "skipped (no key)"
+        return info
+    try:
+        from groq import Groq
+        client = Groq(api_key=key)
+        resp = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": "Reply with the single word OK."}],
+            max_tokens=5,
+        )
+        info["groq_call"] = "ok"
+        info["groq_reply"] = resp.choices[0].message.content
+    except Exception as e:
+        info["groq_call"] = "error"
+        info["groq_error"] = f"{type(e).__name__}: {e}"
+    return info
+
+
 @router.post("", response_model=AskResponse)
 def ask(body: AskRequest, _user: AnyUser):
     # ── Single-vendor question: strictly scoped to that one vendor ──
