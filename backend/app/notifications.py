@@ -22,7 +22,7 @@ from typing import Optional
 
 from .db import fetch_all_vendors, get_conn
 
-TODAY = date(2024, 6, 19)
+TODAY = date(2026, 6, 21)
 
 SMTP_HOST = os.getenv("SMTP_HOST", "")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))

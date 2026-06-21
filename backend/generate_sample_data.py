@@ -9,7 +9,7 @@ random.seed(42)
 OUT = os.path.join(os.path.dirname(__file__), "..", "sample_data")
 os.makedirs(OUT, exist_ok=True)
 
-TODAY = date(2024, 6, 19)
+TODAY = date(2026, 6, 21)
 
 CATEGORIES = [
     "Cloud Infrastructure", "Payment Processing", "HR Software",
@@ -23,7 +23,7 @@ SYSTEMS_POOL = [
 ]
 FINANCIAL_RATINGS = ["AAA", "AA", "A", "BBB", "BB", "BB+", "B", "CCC"]
 
-def rand_date(start_year=2020, end_year=2024):
+def rand_date(start_year=2022, end_year=2026):
     start = date(start_year, 1, 1)
     end = date(end_year, 12, 31)
     return start + timedelta(days=random.randint(0, (end - start).days))

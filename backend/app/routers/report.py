@@ -10,7 +10,7 @@ from ..deps import AnyUser
 
 router = APIRouter(prefix="/report", tags=["report"])
 
-TODAY = date(2024, 6, 19)
+TODAY = date(2026, 6, 21)
 
 
 @router.get("")

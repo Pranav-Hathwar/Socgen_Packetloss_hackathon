@@ -19,7 +19,7 @@ from .db import fetch_vendor, load_labels_csv, load_registry_csv, save_scores
 from .engine import score_vendor
 from .enrichment import enrich
 
-TODAY = date(2024, 6, 19)
+TODAY = date(2026, 6, 21)
 
 # ── Field normalisation ───────────────────────────────────────────────────
 

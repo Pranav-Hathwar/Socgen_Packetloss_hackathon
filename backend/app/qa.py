@@ -18,7 +18,7 @@ from typing import Any
 from .db import fetch_all_vendors
 from .engine import _safe_date
 
-TODAY = date(2024, 6, 19)
+TODAY = date(2026, 6, 21)
 
 # ── 1. Intent / attribute extraction ─────────────────────────────────────
 

@@ -21,7 +21,7 @@ from typing import Any
 
 from .enrichment import enrich_scoring_signals
 
-TODAY = date(2024, 6, 19)
+TODAY = date(2026, 6, 21)
 
 # ── Weight table (tune via eval.py) ───────────────────────────────────────
 W = {

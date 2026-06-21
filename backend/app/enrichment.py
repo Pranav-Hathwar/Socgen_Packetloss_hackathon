@@ -10,7 +10,7 @@ import hashlib
 from datetime import date, datetime, timedelta
 from typing import Any
 
-TODAY = date(2024, 6, 19)
+TODAY = date(2026, 6, 21)
 
 
 def _det_int(vendor_id: str, salt: str, lo: int, hi: int) -> int:
